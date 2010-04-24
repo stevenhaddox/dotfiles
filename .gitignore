@@ -1,0 +1,8 @@
+database.yml
+config/*.yml
+log/*.log
+tmp/**/*
+doc/api
+doc/app
+.DS_Store
+.gitconfig
