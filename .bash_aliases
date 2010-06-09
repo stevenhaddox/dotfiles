@@ -13,6 +13,7 @@ alias whyte="cd ~/Sites/thewhytelife.com/dev"
 
 # SLKd aliases
 alias f4t="cd ~/Sites/SLKD/flickr4twitter.com"
+alias rvm-fw="cd ~/Sites/_projects/rvm-fw"
 alias dozens="cd ~/Sites/SLKD/thedozenskits.com/dev"
 alias haiti="cd ~/Sites/SLKD/haitian_voices"
 alias jwhyte="cd ~/Sites/SLKD/azcashhomebuyer.com/dev"
@@ -23,5 +24,5 @@ alias errorlog="tail -f /var/log/apache2/error_log"
 
 # command aliases
 alias flushdns="dscacheutil -flushcache"
-
-
+alias ssh-macpro="ssh steven@slk-macpro.home"
+alias ssh-mbp="ssh steven@slk-mbp.home"
