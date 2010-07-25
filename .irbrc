@@ -93,5 +93,17 @@ unless defined? ETC_IRBRC_LOADED
     Object.const_set(:RAILS_DEFAULT_LOGGER, Logger.new(STDOUT))
   end
 
+  # copy and paste
+  def copy(str)
+    IO.popen('pbcopy', 'w') { |f| f << str.inspect.to_s }
+  end
+  def paste
+    `pbpaste`
+  end
+  def ep
+    eval(paste)
+  end
+
+
   ETC_IRBRC_LOADED=true
 end

@@ -11,10 +11,15 @@ alias phaddox="cd ~/Sites/paisleyhaddox.com/dev"
 alias slk="cd ~/Sites/stevenloveskatie.com/dev"
 alias whyte="cd ~/Sites/thewhytelife.com/dev"
 
-# SLKd aliases
+# project aliases
+alias rvm-fw="cd ~/Sites/_projects/rvm-fw"
 alias f4t="cd ~/Sites/SLKD/flickr4twitter.com"
-alias dozens="cd ~/Sites/SLKD/thedozenskits.com/dev"
 alias haiti="cd ~/Sites/SLKD/haitian_voices"
+
+# SLKd aliases
+alias lafun="cd ~/Sites/SLKD/lafuntickets.net"
+alias dainty="cd ~/Sites/SLKD/daintyhandcrafted.com"
+alias dozens="cd ~/Sites/SLKD/thedozenskits.com/dev"
 alias jwhyte="cd ~/Sites/SLKD/azcashhomebuyer.com/dev"
 
 # Log aliases
