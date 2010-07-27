@@ -14,11 +14,6 @@ alias whyte="cd ~/Sites/thewhytelife.com/dev"
 # project aliases
 alias rvm-fw="cd ~/Sites/_projects/rvm-fw"
 alias f4t="cd ~/Sites/SLKD/flickr4twitter.com"
-<<<<<<< HEAD
-=======
-alias rvm-fw="cd ~/Sites/_projects/rvm-fw"
-alias dozens="cd ~/Sites/SLKD/thedozenskits.com/dev"
->>>>>>> b09653896393773fadc71d29003b088556cacd90
 alias haiti="cd ~/Sites/SLKD/haitian_voices"
 
 # SLKd aliases
