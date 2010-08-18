@@ -14,6 +14,7 @@ alias whyte="cd ~/Sites/thewhytelife.com/dev"
 # project aliases
 alias rvm-fw="cd ~/Sites/_projects/rvm-fw"
 alias f4t="cd ~/Sites/SLKD/flickr4twitter.com"
+alias ten_pin="cd ~/Sites/_projects/ten_pin"
 alias haiti="cd ~/Sites/SLKD/haitian_voices"
 
 # SLKd aliases
