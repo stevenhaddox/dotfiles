@@ -2,14 +2,18 @@
 # = When adding aliases, remember to execute: $ . ~/.bash_profile  =
 # ==================================================================
 
+# server aliases
+alias sandbox="ssh 174.143.173.240"
+
 # Personal aliases
 alias slkd="cd ~/Sites/slkdesign.net"
-alias shaddox="cd ~/Sites/stevenhaddox.com/dev"
-alias khaddox="cd ~/Sites/katiehaddox.com/dev"
+alias blog="cd ~/Sites/blog.stevenhaddox.com"
+alias shaddox="cd ~/Sites/stevenhaddox.com"
+alias khaddox="cd ~/Sites/katiehaddox.com"
 alias kcupcake="cd ~/Sites/katiecupcake-blog"
-alias phaddox="cd ~/Sites/paisleyhaddox.com/dev"
-alias slk="cd ~/Sites/stevenloveskatie.com/dev"
-alias whyte="cd ~/Sites/thewhytelife.com/dev"
+alias phaddox="cd ~/Sites/paisleyhaddox.com"
+alias slk="cd ~/Sites/stevenloveskatie.com"
+alias whyte="cd ~/Sites/thewhytelife.com"
 
 # project aliases
 alias rvm-fw="cd ~/Sites/_projects/rvm-fw"
@@ -18,6 +22,7 @@ alias ten_pin="cd ~/Sites/_projects/ten_pin"
 alias haiti="cd ~/Sites/SLKD/haitian_voices"
 
 # SLKd aliases
+alias greenbean="cd ~/Sites/SLKD/greenbeanroasting.com"
 alias lafun="cd ~/Sites/SLKD/lafuntickets.net"
 alias dainty="cd ~/Sites/SLKD/daintyhandcrafted.com"
 alias dozens="cd ~/Sites/SLKD/thedozenskits.com/dev"
