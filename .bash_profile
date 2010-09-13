@@ -8,6 +8,10 @@ export F4T_FLICKR_SECRET=0ee8abe41041e1d7
 export F4T_TWITTER_TOKEN=BykDPJuN58E9j8QYpAWfQA
 export F4T_TWITTER_SECRET=BkzXx7okCj8P9lccx1Cx43uCbhC3Wz7TWaN9CnTWA
 
+###
+# General settings
+export EDITOR=mate
+
 
 ###
 # OS X terminal settings
