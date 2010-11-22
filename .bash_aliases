@@ -16,9 +16,9 @@ alias slk="cd ~/Sites/stevenloveskatie.com"
 alias whyte="cd ~/Sites/thewhytelife.com"
 
 # project aliases
+alias dotfiles="cd ~/Dropbox/dotfiles"
 alias rvm_fw="cd ~/Sites/_projects/rvm_fw"
 alias f4t="cd ~/Sites/SLKD/flickr4twitter.com"
-alias haiti="cd ~/Sites/SLKD/haitian_voices"
 
 # SLKd aliases
 alias greenbean="cd ~/Sites/SLKD/greenbeanroasting.com"
@@ -36,3 +36,6 @@ alias errorlog="tail -f /var/log/apache2/error_log"
 alias flushdns="dscacheutil -flushcache"
 alias ssh-macpro="ssh steven@slk-macpro.home"
 alias ssh-mbp="ssh steven@slk-mbp.home"
+alias b="bundle exec"
+alias bc="bundle console"
+
