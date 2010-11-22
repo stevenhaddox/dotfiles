@@ -16,13 +16,13 @@ alias slk="cd ~/Sites/stevenloveskatie.com"
 alias whyte="cd ~/Sites/thewhytelife.com"
 
 # project aliases
-alias rvm-fw="cd ~/Sites/_projects/rvm-fw"
+alias rvm_fw="cd ~/Sites/_projects/rvm_fw"
 alias f4t="cd ~/Sites/SLKD/flickr4twitter.com"
-alias ten_pin="cd ~/Sites/_projects/ten_pin"
 alias haiti="cd ~/Sites/SLKD/haitian_voices"
 
 # SLKd aliases
 alias greenbean="cd ~/Sites/SLKD/greenbeanroasting.com"
+alias willvastine="cd ~/Sites/SLKD/willvastine.com"
 alias lafun="cd ~/Sites/SLKD/lafuntickets.net"
 alias dainty="cd ~/Sites/SLKD/daintyhandcrafted.com"
 alias dozens="cd ~/Sites/SLKD/thedozenskits.com/dev"
