@@ -14,6 +14,7 @@ alias checkvpn="netstat -rn | grep 192.168" #check if VPN is working
 alias dotfiles="cd ~/Dropbox/dotfiles"
 alias rvm_fw="cd ~/Sites/_projects/rvm_fw"
 alias f4t="cd ~/Sites/SLKD/flickr4twitter.com"
+alias presentations="cd ~/Sites/presentations.stevenhaddox.com"
 
 # SLKd aliases
 alias SLKD="cd ~/Sites/SLKD"

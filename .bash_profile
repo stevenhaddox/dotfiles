@@ -12,12 +12,12 @@ export F4T_TWITTER_SECRET=BkzXx7okCj8P9lccx1Cx43uCbhC3Wz7TWaN9CnTWA
 # General settings
 export EDITOR=mate
 
-
 ###
 # OS X terminal settings
 export PS1='\[\033[36m\]\W\[\033[m\] $(__git_ps1 "(\[\033[32m\]%s\[\033[m\]) ")\[\033[31m\]$\[\033[m\] '
 export CLICOLOR=1
-export LS_COLORS=exfxcxdxbxegedabagacad
+export LSCOLORS="ExFxCxDxBxegedabagacad"
+export LSCOLORS="gxfxcxdxbxegedabagacad"
 
 source ~/.git_completion.sh
 source ~/.bash_aliases
