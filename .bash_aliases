@@ -4,6 +4,7 @@
 
 # server aliases
 alias sandbox="ssh 174.143.173.240"
+alias vhosts="cd /etc/apache2/vhosts/"
 
 # Networking
 alias ssh-imac="ssh steven@PEARL.local"
@@ -13,6 +14,7 @@ alias checkvpn="netstat -rn | grep 192.168" #check if VPN is working
 # project aliases
 alias dotfiles="cd ~/Dropbox/dotfiles"
 alias rvm_fw="cd ~/Sites/_projects/rvm_fw"
+alias presentor="cd ~/Sites/_projects/presentor"
 alias f4t="cd ~/Sites/SLKD/flickr4twitter.com"
 alias presentations="cd ~/Sites/presentations.stevenhaddox.com"
 
