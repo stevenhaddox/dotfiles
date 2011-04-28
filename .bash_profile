@@ -1,4 +1,5 @@
-PATH="/usr/local/bin:/usr/local/sbin:/usr/local/mysql/bin:/usr/local/git/bin:/opt/local/bin:/opt/local/sbin:/opt/subversion/bin:${PATH}"
+#PATH="/usr/local/bin:/usr/local/sbin:/opt/local/bin:/opt/local/sbin:${PATH}"
+PATH="/usr/local/bin:${PATH}"
 export PATH
 
 ###
