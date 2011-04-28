@@ -3,13 +3,6 @@ PATH="/usr/local/bin:${PATH}"
 export PATH
 
 ###
-# Dev Application ENV settings
-export F4T_FLICKR_KEY=c3c9b0deb49e0a8884f7f2eed6c1f18d
-export F4T_FLICKR_SECRET=0ee8abe41041e1d7
-export F4T_TWITTER_TOKEN=BykDPJuN58E9j8QYpAWfQA
-export F4T_TWITTER_SECRET=BkzXx7okCj8P9lccx1Cx43uCbhC3Wz7TWaN9CnTWA
-
-###
 # General settings
 export EDITOR=mate
 
@@ -19,6 +12,8 @@ export PS1='\[\033[36m\]\W\[\033[m\] $(__git_ps1 "(\[\033[32m\]%s\[\033[m\]) ")\
 export CLICOLOR=1
 export LSCOLORS="ExFxCxDxBxegedabagacad"
 export LSCOLORS="gxfxcxdxbxegedabagacad"
+# LINUX:
+# export LS_COLORS='di=36:ln=35:so=32;40:pi=33:ex=31:bd=34;46:cd=34;43:su=0;41:sg=0;46:tw=0;42:ow=30;42:*.rb=31'
 
 source ~/.git_completion.sh
 source ~/.bash_aliases
