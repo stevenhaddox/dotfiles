@@ -12,6 +12,8 @@ alias ssh-mbp="ssh steven@slk-mbp.local"
 alias checkvpn="netstat -rn | grep 192.168" #check if VPN is working 
 
 # project aliases
+alias sites="cd ~/Sites"
+alias projects="cd ~/Sites/_projects"
 alias dotfiles="cd ~/Dropbox/dotfiles"
 alias rvm_fw="cd ~/Sites/_projects/rvm_fw"
 alias presentor="cd ~/Sites/_projects/presentor"
