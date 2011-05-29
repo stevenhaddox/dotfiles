@@ -1,5 +1,5 @@
 #PATH="/usr/local/bin:/usr/local/sbin:/opt/local/bin:/opt/local/sbin:${PATH}"
-PATH="/usr/local/bin:${PATH}"
+PATH="/usr/local/bin:/usr/local/sbin:${PATH}"
 export PATH
 
 ###
