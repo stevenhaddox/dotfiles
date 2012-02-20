@@ -1,0 +1,9 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =7
+let g:netrw_dirhist_1='/usr/local/.git'
+let g:netrw_dirhist_2='/Users/steven/Sites/_projects/CardKeeper'
+let g:netrw_dirhist_3='/Users/steven/Sites/_projects/CardKeeper/CardKeeper'
+let g:netrw_dirhist_4='/Users/steven/Sites/_projects/CardKeeper/CardKeeper.xcodeproj'
+let g:netrw_dirhist_5='/Users/steven/Sites/kyck/top_kycks/docs/wiki/.git'
+let g:netrw_dirhist_6='/Users/steven/Sites/kyck/forks/top_kycks/app/views'
+let g:netrw_dirhist_7='/Users/steven/Sites/new.blog.stevenhaddox.com/sass/partials'

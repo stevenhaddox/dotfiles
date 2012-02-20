@@ -7,7 +7,7 @@ hi clear
 if exists("syntax_on")
   syntax reset
 endif
-let colors_name = "tomorrow_night"
+let colors_name = "Tomorrow-Night"
 
 " Vim >= 7.0 Colours
 if version >= 700

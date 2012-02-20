@@ -1,4 +1,4 @@
-echo -e '---
+---
 :benchmark: false
 gem: --no-ri --no-rdoc
 :update_sources: true
@@ -7,4 +7,4 @@ gem: --no-ri --no-rdoc
 :sources:
 - http://rubygems.org
 - http://gems.github.com
-:backtrace: false' > ~/.gemrc
+:backtrace: false

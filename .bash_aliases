@@ -14,6 +14,7 @@ alias checkvpn="netstat -rn | grep 192.168" #check if VPN is working
 # project aliases
 alias sites="cd ~/Sites"
 alias projects="cd ~/Sites/_projects"
+alias iphone="cd ~/Sites/iPhone"
 alias dotfiles="cd ~/Dropbox/dotfiles"
 alias rvm_fw="cd ~/Sites/_projects/rvm_fw"
 alias presentor="cd ~/Sites/_projects/presentor"
@@ -29,6 +30,7 @@ alias lafun="cd ~/Sites/SLKD/lafuntickets.net"
 # Personal aliases
 alias slkd="cd ~/Sites/slkdesign.net"
 alias blog="cd ~/Sites/blog.stevenhaddox.com"
+alias blog_new="cd ~/Sites/new.blog.stevenhaddox.com"
 alias blueprint="cd ~/Sites/src/blueprint/lib"
 alias shaddox="cd ~/Sites/stevenhaddox.com"
 alias khaddox="cd ~/Sites/katiehaddox.com"
