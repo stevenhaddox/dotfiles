@@ -18,19 +18,19 @@ alias iphone="cd ~/Sites/iPhone"
 alias dotfiles="cd ~/Dropbox/dotfiles"
 alias rvm_fw="cd ~/Sites/_projects/rvm_fw"
 alias presentor="cd ~/Sites/_projects/presentor"
-alias f4t="cd ~/Sites/SLKD/flickr4twitter.com"
+alias f4t="cd ~/Sites/SLKd/flickr4twitter.com"
 alias presentations="cd ~/Sites/presentations"
 
 # SLKd aliases
-alias SLKD="cd ~/Sites/SLKD"
-alias greenbean="cd ~/Sites/SLKD/greenbeanroasting.com"
-alias willvastine="cd ~/Sites/SLKD/willvastine.com"
-alias lafun="cd ~/Sites/SLKD/lafuntickets.net"
+alias slkd="cd ~/Sites/SLKd"
+alias wurs="cd ~/Sites/SLKd/msi/wurs"
+alias greenbean="cd ~/Sites/SLKd/greenbeanroasting.com"
+alias willvastine="cd ~/Sites/SLKd/willvastine.com"
+alias lafun="cd ~/Sites/SLKd/lafuntickets.net"
 
 # Personal aliases
 alias slkd="cd ~/Sites/slkdesign.net"
 alias blog="cd ~/Sites/blog.stevenhaddox.com"
-alias blog_new="cd ~/Sites/new.blog.stevenhaddox.com"
 alias blueprint="cd ~/Sites/src/blueprint/lib"
 alias shaddox="cd ~/Sites/stevenhaddox.com"
 alias khaddox="cd ~/Sites/katiehaddox.com"
@@ -49,6 +49,7 @@ alias bc="bundle console"
 alias flush='sudo dscacheutil -flushcache'
 alias o='open ./'
 alias m='mate'
+alias edit='open -a Byword'
 
 #This fixes the blue tint problem as described here: http://tinyurl.com/mac-blue-tint
 alias fixtint='/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/Resources/DMProxy'

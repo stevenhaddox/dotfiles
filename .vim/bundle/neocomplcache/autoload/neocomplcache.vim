@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Feb 2012.
+" Last Modified: 26 Feb 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -374,7 +374,7 @@ function! neocomplcache#enable() "{{{
         \ 'int-php', 'php')
   "}}}
 
-  " Initialize include filetype lists."{{{
+  " Initialize context filetype lists."{{{
   if exists('g:neocomplcache_filetype_include_lists')
     let g:neocomplcache_context_filetype_lists =
           \ g:neocomplcache_filetype_include_lists
@@ -1540,13 +1540,15 @@ endfunction"}}}
 " Command functions."{{{
 function! neocomplcache#toggle_lock()"{{{
   if !neocomplcache#is_enabled()
-    call neocomplcache#print_warning('neocomplcache is disabled! This command is ignored.')
+    call neocomplcache#enable()
     return
   endif
 
   if !has_key(s:complete_lock, bufnr('%')) || !s:complete_lock[bufnr('%')]
+    echo 'neocomplcache is locked!'
     call neocomplcache#lock()
   else
+    echo 'neocomplcache is unlocked!'
     call neocomplcache#unlock()
   endif
 endfunction"}}}
