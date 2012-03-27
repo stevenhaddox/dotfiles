@@ -42,6 +42,12 @@ if [ -f `brew --prefix`/etc/bash_completion ]; then
 fi
 
 # RVM
+export CC=gcc-4.2 # Ruby compile fix with Lion
+
 if [[ -s /Users/steven/.rvm/scripts/rvm ]] ; then 
   source /Users/steven/.rvm/scripts/rvm ; 
+fi
+
+if [ -f `brew --prefix`/etc/bash_completion ]; then
+  . `brew --prefix`/etc/bash_completion
 fi

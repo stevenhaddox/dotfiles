@@ -21,6 +21,10 @@ alias presentor="cd ~/Sites/_projects/presentor"
 alias f4t="cd ~/Sites/SLKd/flickr4twitter.com"
 alias presentations="cd ~/Sites/presentations"
 
+# work aliass
+alias wsites="cd ~/Sites/us_contracting"
+alias strands="cd ~/Sites/us_contracting/strands"
+
 # SLKd aliases
 alias slkd="cd ~/Sites/SLKd"
 alias wurs="cd ~/Sites/SLKd/msi/wurs"
@@ -39,7 +43,6 @@ alias phaddox="cd ~/Sites/paisleyhaddox.com"
 alias slk="cd ~/Sites/stevenloveskatie.com"
 alias whyte="cd ~/Sites/thewhytelife.com"
 
-# Log aliases
 alias weblogs="tail -f /var/log/apache2/*_log"
 alias errorlog="tail -f /var/log/apache2/error_log"
 
