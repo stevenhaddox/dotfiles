@@ -43,6 +43,7 @@ git_bundles = %w{
   git://github.com/Shougo/neocomplcache.git
   git://github.com/sickill/vim-pasta.git
   git://github.com/ecomba/vim-ruby-refactoring.git
+  git://github.com/Lokaltog/vim-powerline.git
 }
 
 require 'fileutils'

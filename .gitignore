@@ -6,6 +6,7 @@ doc/api
 doc/app
 .DS_Store
 .gitconfig
+.vim/.netrwhist
 vendor/gems/gems
 vendor/gems/specifications
 vendor/gems/doc

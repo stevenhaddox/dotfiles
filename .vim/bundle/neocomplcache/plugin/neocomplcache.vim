@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 Feb 2012.
+" Last Modified: 10 Apr 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -26,13 +26,15 @@
 " GetLatestVimScripts: 2620 1 :AutoInstall: neocomplcache
 "=============================================================================
 
-if v:version < 702
+if exists('g:loaded_neocomplcache')
+  finish
+elseif v:version < 702
   echoerr 'neocomplcache does not work this version of Vim (' . v:version . ').'
   finish
-elseif exists('g:loaded_neocomplcache')
-  finish
-elseif $SUDO_USER != ''
-  echoerr '"sudo vim" is detected. Please use sudo.vim or other plugins instead.'
+elseif $SUDO_USER != '' && $USER !=# $SUDO_USER
+      \ && $HOME !=# expand('~'.$USER)
+  echoerr '"sudo vim" and $HOME is not same to /root are detected.'
+        \.'Please use sudo.vim plugin instead of sudo command or set always_set_home in sudoers.'
   finish
 endif
 
@@ -97,6 +99,8 @@ let g:neocomplcache_enable_underbar_completion =
       \ get(g:, 'neocomplcache_enable_underbar_completion', 0)
 let g:neocomplcache_enable_fuzzy_completion =
       \ get(g:, 'neocomplcache_enable_fuzzy_completion', 0)
+let g:neocomplcache_fuzzy_completion_start_length =
+      \ get(g:, 'neocomplcache_fuzzy_completion_start_length', 3)
 let g:neocomplcache_enable_caching_message =
       \ get(g:, 'neocomplcache_enable_caching_message', 1)
 let g:neocomplcache_enable_insert_char_pre =
@@ -121,12 +125,13 @@ let g:neocomplcache_ctags_program =
       \ get(g:, 'neocomplcache_ctags_program', 'ctags')
 let g:neocomplcache_force_overwrite_completefunc =
       \ get(g:, 'neocomplcache_force_overwrite_completefunc', 0)
-" Note: ^X mode has problem in xim.
 let g:neocomplcache_enable_prefetch =
       \ get(g:, 'neocomplcache_enable_prefetch',
-      \  !(v:version > 703 || v:version == 703 && has('patch418')
-      \  && (!has('xim') || !has('gui_running'))
-      \ ))
+      \ 1)
+" Note: This feature is temporary disabled.
+      " \  !(v:version > 703 || v:version == 703 && has('patch418')
+      " \  && (!has('xim') || !has('gui_running'))
+      " \ ))
 let g:neocomplcache_release_cache_time =
       \ get(g:, 'neocomplcache_release_cache_time', 900)
 
@@ -150,9 +155,6 @@ let g:neocomplcache_source_rank =
 
 let g:neocomplcache_temporary_dir =
       \ get(g:, 'neocomplcache_temporary_dir', expand('~/.neocon'))
-if !isdirectory(g:neocomplcache_temporary_dir)
-  call mkdir(g:neocomplcache_temporary_dir, 'p')
-endif
 let g:neocomplcache_enable_debug =
       \ get(g:, 'neocomplcache_enable_debug', 0)
 if exists('g:neocomplcache_enable_at_startup') && g:neocomplcache_enable_at_startup
