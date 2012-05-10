@@ -13,13 +13,9 @@ export EDITOR=vim
 export RSPEC_DRB=3001
 export CUCUMBER_DRB=3002
 
-###
-# OS X terminal settings
+# Colors
 export PS1='\[\033[36m\]\W\[\033[m\] $(__git_ps1 "(\[\033[32m\]%s\[\033[m\]) ")\[\033[31m\]$\[\033[m\] '
 export CLICOLOR=1
-export LSCOLORS="gxfxcxdxbxegedabagacad"
-# LINUX:
-# export LS_COLORS='di=36:ln=35:so=32;40:pi=33:ex=31:bd=34;46:cd=34;43:su=0;41:sg=0;46:tw=0;42:ow=30;42:*.rb=31'
 
 # Important for Jekyll / encoding issues in Ruby 1.9
 LANG=en_US.UTF-8
@@ -35,15 +31,13 @@ fi
 if [ -f ~/.bash_local ]; then
   source ~/.bash_local
 fi
-
-# RVM
-export CC=gcc-4.2 # Ruby compile fix with Lion
+if [ -f ~/.bash_osx ]; then
+  source ~/.bash_osx
+fi
+if [ -f ~/.bash_linux ]; then
+  source ~/.bash_linux
+fi
 
 if [[ -s $HOME/.rvm/scripts/rvm ]] ; then 
   source $HOME/.rvm/scripts/rvm ; 
-fi
-
-# Autocompletion
-if [ -f `brew --prefix`/etc/bash_completion ]; then
-  . `brew --prefix`/etc/bash_completion
 fi
