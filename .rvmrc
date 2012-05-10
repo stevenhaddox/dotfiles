@@ -1,5 +1,5 @@
-rvm_trust_rvmrcs_flag=1
-rvm_project_rvmrc_default=1
+export rvm_trust_rvmrcs_flag=1
+export rvm_project_rvmrc_default=1
 export rvm_pretty_print_flag=1
-export rvm_path="/Users/steven/.rvm"
+export rvm_path="$HOME/.rvm"
 rvm_archflags="-arch x86_64"

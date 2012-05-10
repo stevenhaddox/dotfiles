@@ -2,6 +2,10 @@
 # = When adding aliases, remember to execute: $ . ~/.bash_profile  =
 # ==================================================================
 
+# VM ssh tunnel aliases
+alias vm80="ssh -f strands@strands.vm -L 1380:strands.vm:80 -N"
+alias vm443="ssh -f strands@strands.vm -L 13443:strands.vm:443 -N"
+
 # server aliases
 alias sandbox="ssh 174.143.173.240"
 alias vhosts="cd /etc/apache2/vhosts/"
@@ -22,8 +26,9 @@ alias f4t="cd ~/Sites/SLKd/flickr4twitter.com"
 alias presentations="cd ~/Sites/presentations"
 
 # work aliass
-alias wsites="cd ~/Sites/us_contracting"
-alias strands="cd ~/Sites/us_contracting/strands"
+alias wsites="cd ~/Sites/work"
+alias strands="cd ~/Sites/work/strands"
+alias strands.old="cd ~/Sites/work/strands.old"
 
 # SLKd aliases
 alias slkd="cd ~/Sites/SLKd"

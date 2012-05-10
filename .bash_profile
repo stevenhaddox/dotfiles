@@ -36,18 +36,14 @@ if [ -f ~/.bash_local ]; then
   source ~/.bash_local
 fi
 
-# Homebrew
-if [ -f `brew --prefix`/etc/bash_completion ]; then
-  . `brew --prefix`/etc/bash_completion
-fi
-
 # RVM
 export CC=gcc-4.2 # Ruby compile fix with Lion
 
-if [[ -s /Users/steven/.rvm/scripts/rvm ]] ; then 
-  source /Users/steven/.rvm/scripts/rvm ; 
+if [[ -s $HOME/.rvm/scripts/rvm ]] ; then 
+  source $HOME/.rvm/scripts/rvm ; 
 fi
 
+# Autocompletion
 if [ -f `brew --prefix`/etc/bash_completion ]; then
   . `brew --prefix`/etc/bash_completion
 fi
