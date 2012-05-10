@@ -1,0 +1,10 @@
+## OS X Colors
+export LSCOLORS="gxfxcxdxbxegedabagacad"
+
+# RVM
+export CC=gcc-4.2 # Ruby compile fix with Lion
+
+# Autocompletion
+if [ -f `brew --prefix`/etc/bash_completion ]; then
+  . `brew --prefix`/etc/bash_completion
+fi
