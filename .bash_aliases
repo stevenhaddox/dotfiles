@@ -26,16 +26,17 @@ alias f4t="cd ~/Sites/SLKd/flickr4twitter.com"
 alias presentations="cd ~/Sites/presentations"
 
 # work aliass
-alias wsites="cd ~/Sites/work"
+alias work="cd ~/Sites/work"
 alias strands="cd ~/Sites/work/strands"
 alias strands.old="cd ~/Sites/work/strands.old"
 
 # SLKd aliases
 alias slkd="cd ~/Sites/SLKd"
-alias wurs="cd ~/Sites/SLKd/msi/wurs"
 alias greenbean="cd ~/Sites/SLKd/greenbeanroasting.com"
-alias willvastine="cd ~/Sites/SLKd/willvastine.com"
 alias lafun="cd ~/Sites/SLKd/lafuntickets.net"
+alias seedhouse="cd ~/Sites/SLKd/seedhousestationers.com"
+alias willvastine="cd ~/Sites/SLKd/willvastine.com"
+alias wurs="cd ~/Sites/SLKd/msi/wurs"
 
 # Personal aliases
 alias slkd="cd ~/Sites/slkdesign.net"
