@@ -27,8 +27,8 @@ alias presentations="cd ~/Sites/presentations"
 
 # work aliass
 alias work="cd ~/Sites/work"
-alias strands="cd ~/Sites/work/strands"
-alias strands.old="cd ~/Sites/work/strands.old"
+alias strands="cd ~/Sites/work/strands/releases/strands.new"
+alias strands.old="cd ~/Sites/work/strands/releases/strands.old"
 
 # SLKd aliases
 alias slkd="cd ~/Sites/SLKd"
