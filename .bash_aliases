@@ -59,6 +59,10 @@ alias flush='sudo dscacheutil -flushcache'
 alias o='open ./'
 alias m='mate'
 alias edit='open -a Byword'
+alias spotlight_off='sudo launchctl unload -w /System/Library/LaunchDaemons/com.apple.metadata.mds.plist'
+alias spotlight_on='sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.metadata.mds.plist'
+alias spotlight_hide='sudo chmod 600 /System/Library/CoreServices/Search.bundle/Contents/MacOS/Search; killall SystemUIServer'
+alias spotlight_show='sudo chmod 755 /System/Library/CoreServices/Search.bundle/Contents/MacOS/Search; killall SystemUIServer'
 
 #This fixes the blue tint problem as described here: http://tinyurl.com/mac-blue-tint
 alias fixtint='/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/Resources/DMProxy'
