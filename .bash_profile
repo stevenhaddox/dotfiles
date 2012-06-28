@@ -9,6 +9,7 @@ export PATH
 ###
 # General settings
 export EDITOR=vim
+export RACK_ENV=development
 # spork DRB ports
 export RSPEC_DRB=3001
 export CUCUMBER_DRB=3002

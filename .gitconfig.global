@@ -1,0 +1,16 @@
+[user]
+  name = Steven Haddox
+  email = steven@haddox.us
+[github]
+  user = stevenhaddox
+[color]
+  ui = true
+[core]
+  quotepath = false
+[alias]
+  ahead = log origin/master..HEAD --oneline
+  graph = log --graph --format='%h %Cred %ar %Cgreen %s %Cblue %an'
+[branch "master"]
+  rebase = true
+[config "branch"]
+  autosetuprebase = always

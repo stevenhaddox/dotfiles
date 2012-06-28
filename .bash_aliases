@@ -26,9 +26,10 @@ alias f4t="cd ~/Sites/SLKd/flickr4twitter.com"
 alias presentations="cd ~/Sites/presentations"
 
 # work aliass
+alias wproxy="ssh -N onyx"
 alias work="cd ~/Sites/work"
-alias strands="cd ~/Sites/work/strands/releases/strands.new"
-alias strands.old="cd ~/Sites/work/strands/releases/strands.old"
+alias strands="cd ~/SitesPrivate/strands/releases/strands.new"
+alias strands.old="cd ~/SitesPrivate/strands/releases/strands.old"
 
 # SLKd aliases
 alias slkd="cd ~/Sites/SLKd"
@@ -63,6 +64,7 @@ alias spotlight_off='sudo launchctl unload -w /System/Library/LaunchDaemons/com.
 alias spotlight_on='sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.metadata.mds.plist'
 alias spotlight_hide='sudo chmod 600 /System/Library/CoreServices/Search.bundle/Contents/MacOS/Search; killall SystemUIServer'
 alias spotlight_show='sudo chmod 755 /System/Library/CoreServices/Search.bundle/Contents/MacOS/Search; killall SystemUIServer'
+alias size_dir='du -hs'
 
 #This fixes the blue tint problem as described here: http://tinyurl.com/mac-blue-tint
 alias fixtint='/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/Resources/DMProxy'
