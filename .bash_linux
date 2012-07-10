@@ -1,3 +1,11 @@
 # LINUX .bash_profile settings
 
 export LS_COLORS='di=36:ln=35:so=32;40:pi=33:ex=31:bd=34;46:cd=34;43:su=0;41:sg=0;46:tw=0;42:ow=30;42:*.rb=31'
+
+# LAMP
+alias ap.start="sudo apachectl start"
+alias ap.stop="sudo apachectl stop"
+alias ap.restart="sudo apachectl restart"
+alias mysql.starat='mysql.server start'
+alias mysql.stop='mysql.server stop'
+alias mysql.restart='mysql.server restart'

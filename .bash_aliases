@@ -10,11 +10,6 @@ alias vm443="ssh -f strands@strands.vm -L 13443:strands.vm:443 -N"
 alias sandbox="ssh 174.143.173.240"
 alias vhosts="cd /etc/apache2/vhosts/"
 
-# Networking
-alias ssh-imac="ssh steven@PEARL.local"
-alias ssh-mbp="ssh steven@slk-mbp.local"
-alias checkvpn="netstat -rn | grep 192.168" #check if VPN is working 
-
 # project aliases
 alias sites="cd ~/Sites"
 alias projects="cd ~/Sites/_projects"
@@ -26,8 +21,10 @@ alias f4t="cd ~/Sites/SLKd/flickr4twitter.com"
 alias presentations="cd ~/Sites/presentations"
 
 # work aliass
+alias proxy="ssh -N tunnel.slk"
 alias wproxy="ssh -N onyx"
 alias work="cd ~/Sites/work"
+alias sshuttle="~/scripts/sshuttle/sshuttle --dns -Nr"
 alias strands="cd ~/SitesPrivate/strands/releases/strands.new"
 alias strands.old="cd ~/SitesPrivate/strands/releases/strands.old"
 
@@ -50,13 +47,17 @@ alias phaddox="cd ~/Sites/paisleyhaddox.com"
 alias slk="cd ~/Sites/stevenloveskatie.com"
 alias whyte="cd ~/Sites/thewhytelife.com"
 
-alias weblogs="tail -f /var/log/apache2/*_log"
-alias errorlog="tail -f /var/log/apache2/error_log"
+# Logs
+alias tail.logs="tail -f /var/log/apache2/*log /var/log/mysql-query.log ./*.log ./log/*.log"
+alias tail.rails="tail -f log/*"
+alias tail.apache="tail -f /var/log/apache2/*log "
+alias tail.errors="tail -f /var/log/apache2/error*"
+alias tail.mysql="tail -f /var/log/mysql-query.log"
 
 # command aliases
 alias b="bundle exec"
 alias bc="bundle console"
-alias flush='sudo dscacheutil -flushcache'
+alias dns.flush='sudo dscacheutil -flushcache'
 alias o='open ./'
 alias m='mate'
 alias edit='open -a Byword'
@@ -82,15 +83,4 @@ alias ag='ack'
 ## System Monitoring
 alias cpu='top -F -R -o cpu -n 10'
 
-# LAMP
-alias ap.1="sudo apachectl start"
-alias ap.0="sudo apachectl stop"
-alias ap.rs="sudo apachectl restart"
-alias mysql.1='mysql.server start'
-alias mysql.0='mysql.server stop'
-alias mysql.rs='mysql.server restart'
-
-# PostgreSQL (installed with Homebrew)
-alias pg.1="pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start"
-alias pg.0="pg_ctl -D /usr/local/var/postgres stop -s -m fast"
-
+# DB Aliases for mysql and postgres live in ~/.bash_osx and ~/.bash_linux

@@ -8,3 +8,11 @@ export CC=gcc-4.2 # Ruby compile fix with Lion
 if [ -f `brew --prefix`/etc/bash_completion ]; then
   . `brew --prefix`/etc/bash_completion
 fi
+
+# PostgreSQL (installed via Homebrew)
+alias pg.start="pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start"
+alias pg.stop="pg_ctl -D /usr/local/var/postgres stop -s -m fast"
+
+# MySQL (installed via Homebrew)
+alias mysql.start="launchctl load ~/Library/LaunchAgents/homebrew.mxcl.mysql.plist"
+alias mysql.stop="launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.mysql.plist"

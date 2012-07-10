@@ -1,0 +1,2 @@
+[mysqld]
+log=/var/log/mysql-query.log
