@@ -48,7 +48,7 @@ alias slk="cd ~/Sites/stevenloveskatie.com"
 alias whyte="cd ~/Sites/thewhytelife.com"
 
 # Logs
-alias tail.logs="tail -f /var/log/apache2/*log /var/log/mysql-query.log ./*.log ./log/*.log"
+alias tail.logs="tail -f /var/log/apache2/*log /var/log/httpd/*log /var/log/mysql*.log ./*.log ./log/*.log"
 alias tail.rails="tail -f log/*"
 alias tail.apache="tail -f /var/log/apache2/*log "
 alias tail.errors="tail -f /var/log/apache2/error*"
