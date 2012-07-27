@@ -7,7 +7,6 @@ doc/app
 .bundle
 *.swp
 .DS_Store
-.gitconfig
 .vim/.netrwhist
 *.un~
 vendor/gems/gems
