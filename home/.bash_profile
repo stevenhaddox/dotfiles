@@ -13,7 +13,10 @@ export RACK_ENV=development
 # spork DRB ports
 export RSPEC_DRB=3001
 export CUCUMBER_DRB=3002
+# tsocks proxy config
 export TSOCKS_CONF_FILE=~/.tsocks
+# vmail conf
+export VMAIL_HTML_PART_READER='elinks -dump'
 
 # Colors
 export PS1='\[\033[36m\]\W\[\033[m\] $(__git_ps1 "(\[\033[32m\]%s\[\033[m\]) ")\[\033[31m\]$\[\033[m\] '
