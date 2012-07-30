@@ -57,6 +57,7 @@ alias tail.mysql="tail -f /var/log/mysql-query.log"
 # command aliases
 alias b="bundle exec"
 alias bc="bundle console"
+alias chmod_public="find public -type f -print0 | xargs -0 chmod 664" # Apache permissions
 alias dns.flush='sudo dscacheutil -flushcache'
 alias o='open ./'
 alias m='mate'
