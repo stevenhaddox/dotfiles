@@ -6,7 +6,11 @@ fi
 PATH="/usr/local/bin:/usr/local/sbin:${PATH}"
 export PATH
 
-###
+# Prompt/Title
+export TITLEBAR='\[\033]0;\h \007\]'
+export PS1='\[\033[36m\]\W\[\033[m\] $(__git_ps1 "(\[\033[32m\]%s\[\033[m\]) ")\[\033[31m\]$\[\033[m\] '
+export CLICOLOR=1
+
 # General settings
 export EDITOR=vim
 export RACK_ENV=development
@@ -17,17 +21,6 @@ export CUCUMBER_DRB=3002
 export TSOCKS_CONF_FILE=~/.tsocks
 # vmail conf
 export VMAIL_HTML_PART_READER='elinks -dump'
-
-# Prompt/Title
-export TITLEBAR='\[\033]0;\h \007\]'
-export PS1='\[\033[36m\]\W\[\033[m\] $(__git_ps1 "(\[\033[32m\]%s\[\033[m\]) ")\[\033[31m\]$\[\033[m\] '
-export CLICOLOR=1
-case "$TERM_PROGRAM" in
-  "Apple_Terminal")PS1="$TITLEBAR$PS1"
-esac
-case "$TERM" in
-  "xterm")PS1="$TITLEBAR$PS1"
-esac
 
 # Important for Jekyll / encoding issues in Ruby 1.9
 LANG=en_US.UTF-8

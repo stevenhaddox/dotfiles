@@ -1,4 +1,7 @@
-## OS X Colors
+# iTerm Titlebar
+export PROMPT_COMMAND='echo -ne "\033]0;${HOSTNAME} \007"'
+
+# OS X Colors
 export LSCOLORS="gxfxcxdxbxegedabagacad"
 
 # RVM
