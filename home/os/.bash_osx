@@ -13,6 +13,9 @@ if [ -f /etc/grc.bashrc ]; then
   source "`brew --prefix`/etc/grc.bashrc"
 fi
 
+# Terminal-Notifier (https://github.com/alloy/terminal-notifier)
+alias notify="terminal-notifier"
+
 # PostgreSQL (installed via Homebrew)
 alias pg.start="pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start"
 alias pg.stop="pg_ctl -D /usr/local/var/postgres stop -s -m fast"
