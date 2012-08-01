@@ -8,6 +8,7 @@ export PATH
 
 # Prompt/Title
 export TITLEBAR='\[\033]0;\h \007\]'
+export PROMPT_COMMAND='echo -ne "\033]0;${HOSTNAME} \007"' # iTerm
 export PS1='\[\033[36m\]\W\[\033[m\] $(__git_ps1 "(\[\033[32m\]%s\[\033[m\]) ")\[\033[31m\]$\[\033[m\] '
 export CLICOLOR=1
 
