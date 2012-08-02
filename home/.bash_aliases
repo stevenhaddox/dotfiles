@@ -21,7 +21,9 @@ alias f4t="cd ~/Sites/SLKd/flickr4twitter.com"
 alias presentations="cd ~/Sites/presentations"
 
 # work aliass
-alias proxy="ssh -N tunnel.slk"
+alias proxy="proxychains4"
+alias proxychains="proxychains4"
+alias sproxy="ssh -N tunnel.slk"
 alias wproxy="ssh -N onyx"
 alias work="cd ~/Sites/work"
 alias sshuttle="~/scripts/sshuttle/sshuttle --dns -Nr"
