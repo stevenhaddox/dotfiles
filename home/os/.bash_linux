@@ -10,3 +10,7 @@ alias ap.restart="sudo apachectl restart"
 alias mysql.starat='mysql.server start'
 alias mysql.stop='mysql.server stop'
 alias mysql.restart='mysql.server restart'
+
+# Sys Maintenance
+alias find_large_dirs="du -a / | sort -rn | head -n 20"
+alias find_most_large_dirs="du --max-depth=3 / | sort -n -r" # Find largest folders
