@@ -17,8 +17,9 @@ alias iphone="cd ~/Sites/iPhone"
 alias dotfiles="cd ~/.homesick/repos/dotfiles/home"
 alias rvm_fw="cd ~/Sites/_projects/rvm_fw"
 alias presentor="cd ~/Sites/_projects/presentor"
-alias f4t="cd ~/Sites/SLKd/flickr4twitter.com"
 alias presentations="cd ~/Sites/presentations"
+alias rcheckin="cd ~/Sites/_projects/rcheckin"
+alias f4t="cd ~/Sites/SLKd/flickr4twitter.com"
 
 # work aliass
 alias proxy="proxychains4"
