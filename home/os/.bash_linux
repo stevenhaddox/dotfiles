@@ -3,6 +3,10 @@ export LS_COLORS='di=36:ln=35:so=32;40:pi=33:ex=31:bd=34;46:cd=34;43:su=0;41:sg=
 PATH="${HOME}/bin:${PATH}"
 export PATH
 
+if [ -f /etc/bash_completion ]; then
+  source /etc/bash_completion
+fi
+
 # LAMP
 alias ap.start="sudo apachectl start"
 alias ap.stop="sudo apachectl stop"
