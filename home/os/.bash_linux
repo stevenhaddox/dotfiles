@@ -5,6 +5,7 @@ export PATH
 
 if [ -f /etc/bash_completion ]; then
   source /etc/bash_completion
+  for f in ~/.bash_completion.d/.*; do source $f; done
 fi
 
 # LAMP
