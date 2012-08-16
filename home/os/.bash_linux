@@ -6,7 +6,7 @@ export PATH
 # Source autocompletion scripts
 if [ -f /etc/bash_completion ]; then
   source /etc/bash_completion
-  for f in ~/.bash_completion.d/.*; do source $f; done
+  source ~/.bash_completion
 fi
 
 # LAMP

@@ -7,7 +7,7 @@ export CC=gcc-4.2 # Ruby compile fix with Lion
 # Source autocompletion scripts
 if [ -f `brew --prefix`/etc/bash_completion ]; then
   source `brew --prefix`/etc/bash_completion
-  for f in ~/.bash_completion.d/.*; do source $f; done
+  source ~/.bash_completion
 fi
 
 if [ -f `brew --prefix`/etc/grc.bashrc ]; then
