@@ -24,3 +24,16 @@ alias pg.stop="pg_ctl -D /usr/local/var/postgres stop -s -m fast"
 # MySQL (installed via Homebrew)
 alias mysql.start="launchctl load ~/Library/LaunchAgents/homebrew.mxcl.mysql.plist"
 alias mysql.stop="launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.mysql.plist"
+
+# command aliases
+alias spotlight_off='sudo launchctl unload -w /System/Library/LaunchDaemons/com.apple.metadata.mds.plist'
+alias spotlight_on='sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.metadata.mds.plist'
+alias spotlight_hide='sudo chmod 600 /System/Library/CoreServices/Search.bundle/Contents/MacOS/Search; killall SystemUIServer'
+alias spotlight_show='sudo chmod 755 /System/Library/CoreServices/Search.bundle/Contents/MacOS/Search; killall SystemUIServer'
+#This fixes the blue tint problem as described here: http://tinyurl.com/mac-blue-tint
+alias fixtint='/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/Resources/DMProxy'
+alias mailoptimize="sqlite3 ~/Library/Mail/Envelope\ Index vacuum index; sqlite3 ~/Library/Mail/Envelope\ Index vacuum subjects;"
+alias showhidden='defaults write com.apple.finder AppleShowAllFiles -bool TRUE; killall Finder'
+alias hidehidden='defaults write com.apple.finder AppleShowAllFiles -bool FALSE; killall Finder'
+alias growl="growlnotify -m"
+alias ok='afplay /System/Library/Sounds/Glass.aiff'

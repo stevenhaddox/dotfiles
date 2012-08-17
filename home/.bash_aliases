@@ -58,34 +58,24 @@ alias tail.errors="tail -f /var/log/apache2/error*"
 alias tail.mysql="tail -f /var/log/mysql-query.log"
 
 # command aliases
-alias b="bundle exec"
-alias bc="bundle console"
-alias dns.flush='sudo dscacheutil -flushcache'
-alias o='open ./'
-alias m='mate'
-alias edit='open -a Byword'
-alias spotlight_off='sudo launchctl unload -w /System/Library/LaunchDaemons/com.apple.metadata.mds.plist'
-alias spotlight_on='sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.metadata.mds.plist'
-alias spotlight_hide='sudo chmod 600 /System/Library/CoreServices/Search.bundle/Contents/MacOS/Search; killall SystemUIServer'
-alias spotlight_show='sudo chmod 755 /System/Library/CoreServices/Search.bundle/Contents/MacOS/Search; killall SystemUIServer'
-alias size_dir='du -hs'
-# Apache permissions
-alias chmod_public="find public -type f -print0 | xargs -0 chmod 664; find public -type d -print0 | xargs -0 chmod 755"
-
-#This fixes the blue tint problem as described here: http://tinyurl.com/mac-blue-tint
-alias fixtint='/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/Resources/DMProxy'
-alias mailoptimize="sqlite3 ~/Library/Mail/Envelope\ Index vacuum index; sqlite3 ~/Library/Mail/Envelope\ Index vacuum subjects;"
-alias showhidden='defaults write com.apple.finder AppleShowAllFiles -bool TRUE; killall Finder'
-alias hidehidden='defaults write com.apple.finder AppleShowAllFiles -bool FALSE; killall Finder'
-alias growl="growlnotify -m"
-alias ok='afplay /System/Library/Sounds/Glass.aiff'
 alias ll='ls -la'
 alias lt='ls -ltra'
 alias la='ls -alF'
 alias l='ls -CFa'
 alias ag='ack'
 
+alias b="bundle exec"
+alias bc="bundle console"
+alias dns.flush='sudo dscacheutil -flushcache'
+alias o='open ./'
+alias m='mate'
+alias edit='open -a Byword'
+alias vi="vim"
+alias size_dir='du -hs'
+# Apache permissions
+alias chmod_public="find public -type f -print0 | xargs -0 chmod 664; find public -type d -print0 | xargs -0 chmod 755"
+
 ## System Monitoring
 alias cpu='top -F -R -o cpu -n 10'
 
-# DB Aliases for mysql and postgres live in ~/.bash_osx and ~/.bash_linux
+# DB Aliases live in ~/.bash_osx and ~/.bash_linux
