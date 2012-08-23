@@ -28,6 +28,7 @@ colorscheme Tomorrow-Night
 set number
 set tabstop=2 shiftwidth=2 softtabstop=2 expandtab
 set smarttab autoindent
+set pastetoggle=<F2> " Toggle pastemode via F2 to prevent cascading indents
 " }}}
 
 " Vim Sanity {{{
