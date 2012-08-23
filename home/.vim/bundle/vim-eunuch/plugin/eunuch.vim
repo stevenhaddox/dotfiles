@@ -21,9 +21,13 @@ command! -bar -bang Remove :Unlink<bang>
 command! -bar -nargs=1 -bang -complete=file Rename :
       \ let s:file = expand('%:p') |
       \ setlocal modified |
-      \ saveas<bang> <args> |
+      \ keepalt saveas<bang> <args> |
       \ if s:file !=# expand('%:p') |
-      \   call delete(s:file) |
+      \   if delete(s:file) |
+      \     echoerr 'Failed to delete "'.s:file.'"' |
+      \   else |
+      \     execute 'bwipe '.fnameescape(s:file) |
+      \   endif |
       \ endif |
       \ unlet s:file
 

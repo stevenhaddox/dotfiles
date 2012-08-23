@@ -3,10 +3,11 @@ let g:Powerline#Themes#default#theme = Pl#Theme#Create(
 		\ , 'paste_indicator'
 		\ , 'mode_indicator'
 		\ , 'fugitive:branch'
+		\ , 'hgrev:branch'
 		\ , 'fileinfo'
 		\ , 'syntastic:errors'
 		\ , Pl#Segment#Truncate()
-		\ , 'cfi:current_function'
+		\ , 'tagbar:currenttag'
 		\ , Pl#Segment#Split()
 		\ , 'rvm:string'
 		\ , 'virtualenv:statusline'
@@ -38,7 +39,7 @@ let g:Powerline#Themes#default#theme = Pl#Theme#Create(
 		\ , Pl#Segment#Split()
 	\ ),
 	\
-	\ Pl#Theme#Buffer('ft_help'
+	\ Pl#Theme#Buffer('bt_help'
 		\ , ['static_str.name', 'Help']
 		\ , 'filename'
 		\ , Pl#Segment#Truncate()
