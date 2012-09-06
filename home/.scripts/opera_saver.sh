@@ -7,7 +7,7 @@ fi
 
 while [ `ps -ef | grep "opera -fullscreen" | grep -v grep | wc -l` -gt 0 ]; do
 
-  urls=$(cat ~/.scripts/.webscreen_pages)
+  urls=$(cat ~/.scripts/webscreen_pages)
 
   for i in $urls
   do

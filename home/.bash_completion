@@ -1,4 +1,4 @@
-source ~/.bash_completion.d/.git_completion.sh
-source ~/.bash_completion.d/.git_flow_completion.sh
-source ~/.bash_completion.d/.cucumber_completion.sh
-source ~/.bash_completion.d/.rails_test_unit_completion.sh
+source ~/.bash_completion.d/git_completion.sh
+source ~/.bash_completion.d/git_flow_completion.sh
+source ~/.bash_completion.d/cucumber_completion.sh
+source ~/.bash_completion.d/rails_test_unit_completion.sh
