@@ -3,8 +3,8 @@
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
 " @Created:     2007-09-17.
-" @Last Change: 2012-07-08.
-" @Revision:    0.0.461
+" @Last Change: 2012-09-20.
+" @Revision:    0.0.482
 
 " call tlog#Log('Load: '. expand('<sfile>')) " vimtlib-sfile
 
@@ -284,6 +284,7 @@ call tcomment#DefineType('html_block',       g:tcommentBlockXML )
 call tcomment#DefineType('htmldjango',           '{# %s #}'     )
 call tcomment#DefineType('htmldjango_block',     "{%% comment %%}%s{%% endcomment %%}\n ")
 call tcomment#DefineType('io',               '// %s'            )
+call tcomment#DefineType('jasmine',          '# %s'             )
 call tcomment#DefineType('javaScript',       '// %s'            )
 call tcomment#DefineType('javaScript_inline', g:tcommentInlineC )
 call tcomment#DefineType('javaScript_block', g:tcommentBlockC   )
@@ -345,13 +346,15 @@ call tcomment#DefineType('sgml',             '<!-- %s -->'      )
 call tcomment#DefineType('sgml_inline',      g:tcommentInlineXML)
 call tcomment#DefineType('sgml_block',       g:tcommentBlockXML )
 call tcomment#DefineType('sh',               '# %s'             )
-call tcomment#DefineType('sql',              '-- %s'            )
+call tcomment#DefineType('smarty',           '{* %s *}'         )
 call tcomment#DefineType('spec',             '# %s'             )
 call tcomment#DefineType('sps',              '* %s.'            )
 call tcomment#DefineType('sps_block',        "* %s."            )
 call tcomment#DefineType('spss',             '* %s.'            )
 call tcomment#DefineType('spss_block',       "* %s."            )
+call tcomment#DefineType('sql',              '-- %s'            )
 call tcomment#DefineType('squid',            '# %s'             )
+call tcomment#DefineType('st',               '" %s "'           )
 call tcomment#DefineType('tcl',              '# %s'             )
 call tcomment#DefineType('tex',              '%% %s'            )
 call tcomment#DefineType('tpl',              '<!-- %s -->'      )
@@ -423,7 +426,7 @@ let s:nullCommentString    = '%s'
 function! tcomment#Comment(beg, end, ...)
     let commentMode   = (a:0 >= 1 ? a:1 : 'G') . g:tcommentModeExtra
     let commentAnyway = a:0 >= 2 ? (a:2 == '!') : 0
-    " TLogVAR a:beg, a:end, a:1, commentMode, commentAnyway
+    " TLogVAR a:beg, a:end, commentMode, commentAnyway
     " save the cursor position
     let pos = getpos('.')
     let s:pos_end = getpos("'>")
@@ -592,6 +595,7 @@ endf
 function! tcomment#Operator(type, ...) "{{{3
     let commentMode = a:0 >= 1 ? a:1 : ''
     let bang = a:0 >= 2 ? a:2 : ''
+    " TLogVAR a:type, commentMode, bang
     if !exists('w:tcommentPos')
         let w:tcommentPos = getpos(".")
     endif
@@ -599,7 +603,6 @@ function! tcomment#Operator(type, ...) "{{{3
     set selection=inclusive
     let reg_save = @@
     " let pos = getpos('.')
-    " TLogVAR a:type
     try
         if a:type == 'line'
             silent exe "normal! '[V']"
@@ -621,6 +624,7 @@ function! tcomment#Operator(type, ...) "{{{3
         let lend = line("']")
         let cbeg = col("'[")
         let cend = col("']")
+        " TLogVAR lbeg, lend, cbeg, cend
         " echom "DBG tcomment#Operator" lbeg col("'[") col("'<") lend col("']") col("'>")
         norm! 
         let commentMode .= g:tcommentOpModeExtra
@@ -796,6 +800,7 @@ function! s:GetCommentDefinition(beg, end, commentMode, ...)
 endf
 
 function! s:StartPosRx(mode, line, col)
+    " TLogVAR a:mode, a:line, a:col
     if a:mode =~# 'I'
         return s:StartLineRx(a:line) . s:StartColRx(a:col)
     else
@@ -952,7 +957,10 @@ endf
 " endf
 
 function! s:CommentBlock(beg, end, uncomment, checkRx, cdef, indentStr)
+    " TLogVAR a:beg, a:end, a:uncomment, a:checkRx, a:cdef, a:indentStr
     let t = @t
+    let sel_save = &selection
+    set selection=exclusive
     try
         silent exec 'norm! '. a:beg.'G1|v'.a:end.'G$"td'
         let ms = s:BlockGetMiddleString(a:cdef)
@@ -977,6 +985,7 @@ function! s:CommentBlock(beg, end, uncomment, checkRx, cdef, indentStr)
         endif
         silent norm! "tP
     finally
+        let &selection = sel_save
         let @t = t
     endtry
 endf

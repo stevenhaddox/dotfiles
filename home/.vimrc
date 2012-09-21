@@ -24,7 +24,8 @@ nnoremap <leader>q gqip
 " }}}
 
 " Some semblance of sanity with Ruby spacing {{{
-colorscheme Tomorrow-Night
+colorscheme base16-default
+set background=dark
 set number
 set tabstop=2 shiftwidth=2 softtabstop=2 expandtab
 set smarttab autoindent
@@ -51,12 +52,11 @@ set relativenumber
 " }}}
 
 " Make the colorcolumn light gray {{{
-highlight ColorColumn ctermbg=7
 "Columns
 set wrap
 set textwidth=79
 set formatoptions=qrn1
-"set colorcolumn=85
+" set colorcolumn=85 " Column highlights at 85th character
 " }}}
 
 " Folding {{{

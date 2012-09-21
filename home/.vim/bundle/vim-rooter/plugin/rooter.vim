@@ -1,5 +1,8 @@
-" Vim plugin to change the working directory to the project root
-" (identified by the presence of a known SCM tool directory).
+" Vim plugin to change the working directory to the project root.
+"
+" The project root is identified by the presence of a directory,
+" such as a VCS directory, or a file, such as a Rakefile.  See
+" the Options section below for how to configure this.
 "
 " Copyright 2010 Andrew Stewart, <boss@airbladesoftware.com>
 " Released under the MIT licence.
@@ -18,8 +21,23 @@
 " ... where <Leader>foo is your preferred mapping.
 "
 " Options:
-"   let g:rooter_use_lcd = 1
-"     Use :lcd instead of :cd
+"   g:rooter_patterns
+"
+"   This is an array of directories and files to look for.
+"   By default it is an array of common VCS directories.
+"   You can set your own patterns with something like:
+"
+"     let g:rooter_patterns = ['Rakefile', '.git/']
+"
+"   Note this overwrites the default patterns.
+"
+"
+"   g:rooter_user_lcd
+"
+"   This tells Vim to use `lcd` instead of `cd` (the default)
+"   when changing directory.  Set it like this:
+"
+"     let g:rooter_use_lcd = 1
 "
 
 
@@ -35,8 +53,17 @@ let loaded_rooter = 1
 let s:save_cpo = &cpo
 set cpo&vim
 
+
+"
+" User configuration
+"
+"
 if !exists("g:rooter_use_lcd")
   let g:rooter_use_lcd = 0
+endif
+
+if !exists('g:rooter_patterns')
+  let g:rooter_patterns = ['.git/', '.git', '_darcs/', '.hg/', '.bzr/', '.svn/']
 endif
 
 "
@@ -44,31 +71,38 @@ endif
 "
 
 " Find the root directory of the current file, i.e the closest parent directory
-" containing a <scm_type> directory, or an empty string if no such directory
+" containing a <pattern> directory, or an empty string if no such directory
 " is found.
-function! s:FindSCMDirectory(scm_type)
+function! s:FindInCurrentPath(pattern)
   " Don't try to change directories when on a virtual filesystem (netrw, fugitive,...).
   if match(expand('%:p'), '^\<.\+\>://.*') != -1
     return ""
   endif
 
   let dir_current_file = expand("%:p:h")
-  let scm_dir = finddir(a:scm_type, dir_current_file . ";")
+  let pattern_dir = ""
+
+  " Check for directory or a file
+  if (stridx(a:pattern, "/")) != -1
+    let pattern = substitute(a:pattern, "/", "", "")
+    let pattern_dir = finddir(a:pattern, dir_current_file . ";")
+  else
+    let pattern_dir = findfile(a:pattern, dir_current_file . ";")
+  endif
+
   " If we're at the project root or we can't find one above us
-  if scm_dir == a:scm_type || empty(scm_dir)
+  if pattern_dir == a:pattern || empty(pattern_dir)
     return ""
   else
-    return substitute(scm_dir, a:scm_type . "$", "", "")
+    return substitute(pattern_dir, a:pattern . "$", "", "")
   endif
 endfunction
 
 " Returns the root directory for the current file based on the list of
 " known SCM directory names.
 function! s:FindRootDirectory()
-  " add any future tools here
-  let scm_list = ['.git', '_darcs', '.hg', '.bzr', '.svn']
-  for scmdir in scm_list
-    let result = s:FindSCMDirectory(scmdir)
+  for pattern in g:rooter_patterns
+    let result = s:FindInCurrentPath(pattern)
     if !empty(result)
       return result
     endif
