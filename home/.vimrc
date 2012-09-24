@@ -26,6 +26,7 @@ nnoremap <leader>q gqip
 " Some semblance of sanity with Ruby spacing {{{
 colorscheme base16-default
 set background=dark
+" let base16colorspace=256  " Access colors present in 256 colorspace
 set number
 set tabstop=2 shiftwidth=2 softtabstop=2 expandtab
 set smarttab autoindent

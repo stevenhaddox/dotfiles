@@ -1,5 +1,6 @@
 # OS X Colors
-source $HOME/.colors/base16.sh # Shell colors
+# source $HOME/.colors/base16.sh # Shell colors
+export LSCOLORS="gxfxcxdxbxegedabagacad"
 
 # RVM
 export CC=gcc-4.2 # Ruby compile fix with Lion
