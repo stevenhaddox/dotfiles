@@ -3,7 +3,10 @@
 export LSCOLORS="gxfxcxdxbxegedabagacad"
 
 # RVM
+export CPPFLAGS=-I/opt/X11/include
 export CC=gcc-4.2 # Ruby compile fix with Lion
+
+# Pow: See ~/.powconfig
 
 # Source autocompletion scripts
 if [ -f `brew --prefix`/etc/bash_completion ]; then

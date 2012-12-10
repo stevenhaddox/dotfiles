@@ -6,6 +6,7 @@ doc/api
 doc/app
 .bundle
 *.swp
+*.bak
 .DS_Store
 .vim/.netrwhist
 *.un~
