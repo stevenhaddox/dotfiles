@@ -18,31 +18,48 @@ command! -bar -bang Unlink :
 
 command! -bar -bang Remove :Unlink<bang>
 
-command! -bar -nargs=1 -bang -complete=file Rename :
-      \ let s:file = expand('%:p') |
-      \ setlocal modified |
-      \ keepalt saveas<bang> <args> |
-      \ if s:file !=# expand('%:p') |
-      \   if delete(s:file) |
-      \     echoerr 'Failed to delete "'.s:file.'"' |
-      \   else |
-      \     execute 'bwipe '.fnameescape(s:file) |
+command! -bar -nargs=1 -bang -complete=file Move :
+      \ let s:src = expand('%:p') |
+      \ let s:dst = expand(<q-args>) |
+      \ if isdirectory(s:dst) |
+      \   let s:dst .= '/' . fnamemodify(s:src, ':t') |
+      \ endif |
+      \ if <bang>1 && filereadable(s:dst) |
+      \   exe 'keepalt saveas '.fnameescape(s:dst) |
+      \ elseif rename(s:src, s:dst) |
+      \   echoerr 'Failed to rename "'.s:src.'" to "'.s:dst.'"' |
+      \ else |
+      \   setlocal modified |
+      \   exe 'keepalt saveas! '.fnameescape(s:dst) |
+      \   if s:src !=# expand('%:p') |
+      \     execute 'bwipe '.fnameescape(s:src) |
       \   endif |
       \ endif |
-      \ unlet s:file
+      \ unlet s:src |
+      \ unlet s:dst
+
+command! -bar -nargs=1 -bang -complete=file Rename :Move<bang> <args>
+
+command! -bar -nargs=1 Chmod :
+      \ echoerr split(system('chmod '.<q-args>.' -- '.shellescape(expand('%'))), "\n")[0] |
 
 command! -bar -bang -complete=file -nargs=+ Find   :call s:Grep(<q-bang>, <q-args>, 'find')
 command! -bar -bang -complete=file -nargs=+ Locate :call s:Grep(<q-bang>, <q-args>, 'locate')
 function! s:Grep(bang,args,prg) abort
   let grepprg = &l:grepprg
   let grepformat = &l:grepformat
+  let shellpipe = &shellpipe
   try
     let &l:grepprg = a:prg
     setlocal grepformat=%f
+    if &shellpipe ==# '2>&1| tee' || &shellpipe ==# '|& tee'
+      let &shellpipe = "| tee"
+    endif
     execute 'grep'.a:bang.' '.a:args
   finally
     let &l:grepprg = grepprg
     let &l:grepformat = grepformat
+    let &shellpipe = shellpipe
   endtry
 endfunction
 
@@ -60,7 +77,7 @@ function! s:W() abort
     let seen[bufnr('')] = 1
     write
   endif
-  tabdo windo if !&readonly && expand('%') !=# '' && !has_key(seen, bufnr('')) | silent write | let seen[bufnr('')] = 1 | endif
+  tabdo windo if !&readonly && &buftype =~# '^\%(acwrite\)\=$' && expand('%') !=# '' && !has_key(seen, bufnr('')) | silent write | let seen[bufnr('')] = 1 | endif
   execute 'tabnext '.tab
   execute win.'wincmd w'
 endfunction

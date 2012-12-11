@@ -75,11 +75,11 @@ endif
 " is found.
 function! s:FindInCurrentPath(pattern)
   " Don't try to change directories when on a virtual filesystem (netrw, fugitive,...).
-  if match(expand('%:p'), '^\<.\+\>://.*') != -1
+  if match(expand('%:p'), '^\w\+://.*') != -1
     return ""
   endif
 
-  let dir_current_file = expand("%:p:h")
+  let dir_current_file = fnameescape(expand("%:p:h"))
   let pattern_dir = ""
 
   " Check for directory or a file
@@ -118,9 +118,9 @@ function! s:ChangeToRootDirectory()
       set noautochdir
     endif
     if g:rooter_use_lcd ==# 1
-      exe ":lcd " . root_dir
+      exe ":lcd " . fnameescape(root_dir)
     else
-      exe ":cd " . root_dir
+      exe ":cd " . fnameescape(root_dir)
     endif
   endif
 endfunction
@@ -142,7 +142,13 @@ noremap <SID>ChangeToRootDirectory :call <SID>ChangeToRootDirectory()<CR>
 command! Rooter :call <SID>ChangeToRootDirectory()
 augroup rooter
   autocmd!
-  autocmd BufEnter *.rb,*.html,*.haml,*.erb,*.rjs,*.css,*.js :Rooter
+  autocmd BufEnter *.rb,*.py,
+        \*.html,*.haml,*.erb,
+        \*.css,*.scss,*.sass,*.less,
+        \*.js,*.rjs,*.coffee,
+        \*.php,*.xml,*.yaml,
+        \*.markdown,*.md
+        \ :Rooter
 augroup END
 
 "

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: member_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Sep 2012.
+" Last Modified: 16 Nov 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -46,7 +46,8 @@ function! s:source.initialize()"{{{
   augroup END"}}}
 
   " Set rank.
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_source_rank,
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_source_rank',
         \ 'member_complete', 5)
 
   " Set completion length.
@@ -56,17 +57,17 @@ function! s:source.initialize()"{{{
   if !exists('g:neocomplcache_member_prefix_patterns')
     let g:neocomplcache_member_prefix_patterns = {}
   endif
-  call neocomplcache#set_dictionary_helper(
-        \ g:neocomplcache_member_prefix_patterns,
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_member_prefix_patterns',
         \ 'c,cpp,objc,objcpp', '\.\|->')
-  call neocomplcache#set_dictionary_helper(
-        \ g:neocomplcache_member_prefix_patterns,
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_member_prefix_patterns',
         \ 'perl,php', '->')
-  call neocomplcache#set_dictionary_helper(
-        \ g:neocomplcache_member_prefix_patterns,
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_member_prefix_patterns',
         \ 'cs,java,javascript,d,vim,ruby,python,perl6,scala,vb', '\.')
-  call neocomplcache#set_dictionary_helper(
-        \ g:neocomplcache_member_prefix_patterns,
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_member_prefix_patterns',
         \ 'lua', '\.\|:')
   "}}}
 
@@ -74,8 +75,8 @@ function! s:source.initialize()"{{{
   if !exists('g:neocomplcache_member_patterns')
     let g:neocomplcache_member_patterns = {}
   endif
-  call neocomplcache#set_dictionary_helper(
-        \ g:neocomplcache_member_patterns,
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_member_patterns',
         \'default', '\h\w*\%(()\|\[\h\w*\]\)\?')
   "}}}
 
@@ -103,6 +104,11 @@ endfunction"}}}
 function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)"{{{
   " Check member prefix pattern.
   let filetype = neocomplcache#get_context_filetype()
+  if !has_key(g:neocomplcache_member_prefix_patterns, filetype)
+        \ || g:neocomplcache_member_prefix_patterns[filetype] == ''
+    return []
+  endif
+
   let cur_text = neocomplcache#get_cur_text()
   let var_name = matchstr(cur_text,
         \ '\%(' . s:get_member_pattern(filetype) . '\%(' .

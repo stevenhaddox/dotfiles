@@ -23,3 +23,17 @@ variable = # evil comment
   else
     other
   end
+
+array = [
+  :one,
+].each do |x|
+  puts x.to_s
+end
+
+x { y >>
+    z }
+w
+
+x { y >>
+    [z] }
+w
