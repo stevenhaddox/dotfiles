@@ -37,6 +37,11 @@ if [ -f ~/.bash_local ]; then
   source ~/.bash_local
 fi
 
-if [[ -s $HOME/.rvm/scripts/rvm ]] ; then 
-  source $HOME/.rvm/scripts/rvm ; 
+# Since rvm and rbenv conflict, try one or the other
+if [[ -s $HOME/.rvm/scripts/rvm ]] ; then
+  source $HOME/.rvm/scripts/rvm
+elif [[ -s $HOME/.rbenv ]] ; then
+  PATH="${HOME}/.rbenv/bin:${PATH}"
+  export PATH
+  eval "$(rbenv init -)"
 fi
