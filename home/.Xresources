@@ -1,5 +1,5 @@
 ! Font defaults
-XTerm*faceName: Inconsolata
+XTerm*faceName: Inconsolata-Powerline
 XTerm*faceSize: 11
 
 ! Base16 Default
