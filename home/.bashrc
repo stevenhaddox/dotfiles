@@ -37,6 +37,11 @@ if [ -f ~/.bash_local ]; then
   source ~/.bash_local
 fi
 
+# Use base user python (virtualenv)
+#if [ -f ~/venv/base/bin/activate ]; then
+#  source ~/venv/base/bin/activate
+#fi
+
 # Since rvm and rbenv conflict, try one or the other
 if [[ -s $HOME/.rvm/scripts/rvm ]] ; then
   source $HOME/.rvm/scripts/rvm
