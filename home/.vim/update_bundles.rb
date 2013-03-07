@@ -29,7 +29,6 @@ git_bundles = %w{
   git://github.com/tpope/vim-rake.git
   git://github.com/tpope/vim-repeat.git
   git://github.com/tpope/vim-rhubarb.git
-  git://github.com/tpope/vim-rvm.git
   git://github.com/tpope/vim-speeddating.git
   git://github.com/tpope/vim-surround.git
   git://github.com/tpope/vim-unimpaired.git

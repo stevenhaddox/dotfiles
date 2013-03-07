@@ -1,10 +1,9 @@
-" tcomment.vim
 " @Author:      Tom Link (mailto:micathom AT gmail com?subject=[vim])
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
 " @Created:     2007-09-17.
-" @Last Change: 2012-12-10.
-" @Revision:    0.0.614
+" @Last Change: 2013-03-07.
+" @Revision:    768
 
 " call tlog#Log('Load: '. expand('<sfile>')) " vimtlib-sfile
 
@@ -64,7 +63,7 @@ if !exists("g:tcommentGuessFileType")
     let g:tcommentGuessFileType = 0   "{{{2
 endif
 if !exists("g:tcommentGuessFileType_dsl")
-    " For dsl documents, assumet filetype = xml.
+    " For dsl documents, assume filetype = xml.
     let g:tcommentGuessFileType_dsl = 'xml'   "{{{2
 endif
 if !exists("g:tcommentGuessFileType_php")
@@ -88,6 +87,9 @@ endif
 if !exists("g:tcommentGuessFileType_eruby")
     let g:tcommentGuessFileType_eruby = 1   "{{{2
 endif
+if !exists("g:tcommentGuessFileType_smarty")
+    let g:tcommentGuessFileType_smarty = 1   "{{{2
+endif
 
 if !exists("g:tcommentIgnoreTypes_php")
     " In php files, some syntax regions are wrongly highlighted as sql 
@@ -104,6 +106,14 @@ if !exists('g:tcomment#syntax_substitute')
                 \ }
 endif
 
+if !exists('g:tcomment#filetype_map')
+    " Keys must match the full |filetype|. Regexps must be |magic|. No 
+    " regexp modifiers (like |\V|) are allowed.
+    " let g:tcomment#filetype_map = {...}   "{{{2
+    let g:tcomment#filetype_map = {
+                \ }
+endif
+
 if !exists('g:tcommentSyntaxMap')
     " tcomment guesses filetypes based on the name of the current syntax 
     " region. This works well if the syntax names match 
@@ -111,6 +121,7 @@ if !exists('g:tcommentSyntaxMap')
     " mapped onto the corresponding filetype.
     " :read: let g:tcommentSyntaxMap = {...}   "{{{2
     let g:tcommentSyntaxMap = {
+            \ 'erubyExpression':   'ruby',
             \ 'vimMzSchemeRegion': 'scheme',
             \ 'vimPerlRegion':     'perl',
             \ 'vimPythonRegion':   'python',
@@ -178,13 +189,30 @@ if !exists("g:tcommentInlineC")
     let g:tcommentInlineC = g:tcommentLineC   "{{{2
 endif
 
+if !exists('g:tcomment#replacements_xml')
+    " Replacements for xml filetype.
+    " :read: let g:tcomment#replacements_xml = {...}   "{{{2
+    let g:tcomment#replacements_xml = {
+                \     '-': '&#45;',
+                \     '&': '&#38;',
+                \ }
+endif
+
 if !exists("g:tcommentBlockXML")
     " Generic xml-like block comments.
-    let g:tcommentBlockXML = "<!--%s-->\n  "   "{{{2
+    " :read: let g:tcommentBlockXML = {...}   "{{{2
+    let g:tcommentBlockXML = {
+                \ 'commentstring': "<!--%s-->\n  ",
+                \ 'replacements': g:tcomment#replacements_xml
+                \ }
 endif
 if !exists("g:tcommentInlineXML")
     " Generic xml-like comments.
-    let g:tcommentInlineXML = "<!-- %s -->"   "{{{2
+    " :read: let g:tcommentInlineXML = {...}   "{{{2
+    let g:tcommentInlineXML = {
+                \ 'commentstring': "<!-- %s -->",
+                \ 'replacements': g:tcomment#replacements_xml
+                \ }
 endif
 
 let s:typesDirty = 1
@@ -273,6 +301,7 @@ call tcomment#DefineType('c',                g:tcommentLineC    )
 call tcomment#DefineType('c_inline',         g:tcommentInlineC  )
 call tcomment#DefineType('c_block',          g:tcommentBlockC   )
 call tcomment#DefineType('cfg',              '# %s'             )
+call tcomment#DefineType('chromemanifest',   '# %s'             )
 call tcomment#DefineType('clojure',          {'commentstring': '; %s', 'count': 2})
 call tcomment#DefineType('clojure_inline',   '; %s'             )
 call tcomment#DefineType('clojurescript',    ';; %s'            )
@@ -288,7 +317,7 @@ call tcomment#DefineType('debsources',       '# %s'             )
 call tcomment#DefineType('debcontrol',       '# %s'             )
 call tcomment#DefineType('desktop',          '# %s'             )
 call tcomment#DefineType('dnsmasq',          '# %s'             )
-call tcomment#DefineType('docbk',            '<!-- %s -->'      )
+call tcomment#DefineType('docbk',            g:tcommentInlineXML)
 call tcomment#DefineType('docbk_inline',     g:tcommentInlineXML)
 call tcomment#DefineType('docbk_block',      g:tcommentBlockXML )
 call tcomment#DefineType('dosbatch',         'rem %s'           )
@@ -313,11 +342,12 @@ call tcomment#DefineType('haml',             '-# %s'            )
 call tcomment#DefineType('haskell',          '-- %s'            )
 call tcomment#DefineType('haskell_block',    "{-%s-}\n   "      )
 call tcomment#DefineType('haskell_inline',   '{- %s -}'         )
-call tcomment#DefineType('html',             '<!-- %s -->'      )
+call tcomment#DefineType('html',             g:tcommentInlineXML)
 call tcomment#DefineType('html_inline',      g:tcommentInlineXML)
 call tcomment#DefineType('html_block',       g:tcommentBlockXML )
 call tcomment#DefineType('htmldjango',       '{# %s #}'     )
 call tcomment#DefineType('htmldjango_block', "{%% comment %%}%s{%% endcomment %%}\n ")
+call tcomment#DefineType('ini',              '; %s'             ) " php ini (/etc/php5/...)
 call tcomment#DefineType('io',               '// %s'            )
 call tcomment#DefineType('jasmine',          '# %s'             )
 call tcomment#DefineType('javaScript',       '// %s'            )
@@ -373,12 +403,15 @@ call tcomment#DefineType('ruby_nodoc_block', "=begin%s=end"     )
 call tcomment#DefineType('r',                '# %s'             )
 call tcomment#DefineType('samba',            '# %s'             )
 call tcomment#DefineType('sbs',              "' %s"             )
+call tcomment#DefineType('scala',            '// %s'            )
+call tcomment#DefineType('scala_inline',     g:tcommentInlineC  )
+call tcomment#DefineType('scala_block',      g:tcommentBlockC   )
 call tcomment#DefineType('scheme',           '; %s'             )
 call tcomment#DefineType('scss',             '// %s'            )
 call tcomment#DefineType('scss_inline',      g:tcommentInlineC  )
 call tcomment#DefineType('scss_block',       g:tcommentBlockC   )
 call tcomment#DefineType('sed',              '# %s'             )
-call tcomment#DefineType('sgml',             '<!-- %s -->'      )
+call tcomment#DefineType('sgml',             g:tcommentInlineXML)
 call tcomment#DefineType('sgml_inline',      g:tcommentInlineXML)
 call tcomment#DefineType('sgml_block',       g:tcommentBlockXML )
 call tcomment#DefineType('sh',               '# %s'             )
@@ -403,12 +436,12 @@ call tcomment#DefineType('vim',              '" %s'             )
 call tcomment#DefineType('vim_3',            '""" %s'           )
 call tcomment#DefineType('websec',           '# %s'             )
 call tcomment#DefineType('x86conf',          '# %s'             )
-call tcomment#DefineType('xml',              '<!-- %s -->'      )
+call tcomment#DefineType('xml',              g:tcommentInlineXML)
 call tcomment#DefineType('xml_inline',       g:tcommentInlineXML)
 call tcomment#DefineType('xml_block',        g:tcommentBlockXML )
 call tcomment#DefineType('xs',               '// %s'            )
 call tcomment#DefineType('xs_block',         g:tcommentBlockC   )
-call tcomment#DefineType('xslt',             '<!-- %s -->'      )
+call tcomment#DefineType('xslt',             g:tcommentInlineXML)
 call tcomment#DefineType('xslt_inline',      g:tcommentInlineXML)
 call tcomment#DefineType('xslt_block',       g:tcommentBlockXML )
 call tcomment#DefineType('yaml',             '# %s'             )
@@ -442,6 +475,8 @@ let s:nullCommentString    = '%s'
 "                              that should be multiplied by "count"
 "         rxend=N          ... The above for "end"
 "         rxmid=N          ... The above for "middle"
+"         mixedindent=BOOL ... If true, allow use of mixed 
+"                              characters for indentation
 "         commentstring_rx ... A regexp format string that matches 
 "                              commented lines (no new groups may be 
 "                              introduced, the |regexp| is |\V|; % have 
@@ -507,6 +542,7 @@ function! tcomment#Comment(beg, end, ...)
                         \ . s:EncodeCommentPart(get(cdef, 'end', ''))
         endif
         let commentMode = cdef.mode
+        " TLogVAR commentMode
     endif
     if exists('s:temp_options')
         let cdef = s:ExtendCDef(lbeg, lend, commentMode, cdef, s:temp_options)
@@ -525,11 +561,14 @@ function! tcomment#Comment(beg, end, ...)
     " whitespace
     let cmtCheck = substitute(cms0, '\([	 ]\)', '\1\\?', 'g')
     " turn commentstring into a search pattern
+    " TLogVAR cmtCheck
     let cmtCheck = printf(cmtCheck, '\(\_.\{-}\)')
+    " TLogVAR cdef, cmtCheck
+    let s:cdef = cdef
     " set commentMode and indentStr
     let [indentStr, uncomment] = s:CommentDef(lbeg, lend, cmtCheck, commentMode, cbeg, cend)
     " TLogVAR indentStr, uncomment
-    let col = get(cdef, 'col', -1)
+    let col = get(s:cdef, 'col', -1)
     if col >= 0
         let col -= 1
         let indent = len(indentStr)
@@ -546,23 +585,26 @@ function! tcomment#Comment(beg, end, ...)
     " go
     if commentMode =~# 'B'
         " We want a comment block
-        call s:CommentBlock(lbeg, lend, uncomment, cmtCheck, cdef, indentStr)
+        call s:CommentBlock(lbeg, lend, uncomment, cmtCheck, s:cdef, indentStr)
     else
         " call s:CommentLines(lbeg, lend, cbeg, cend, uncomment, cmtCheck, cms0, indentStr)
         " We want commented lines
         " final search pattern for uncommenting
         let cmtCheck   = escape('\V\^\(\s\{-}\)'. cmtCheck .'\$', '"/\')
         " final pattern for commenting
-        let cmtReplace = s:GetCommentReplace(cdef, cms0)
+        let cmtReplace = s:GetCommentReplace(s:cdef, cms0)
         " TLogVAR cmtReplace
-        let s:cdef = cdef
+        if get(s:cdef, 'mixedindent', 0) && !empty(indentStr)
+            let cbeg = strdisplaywidth(indentStr, cbeg)
+            let indentStr = ''
+        endif
+        " TLogVAR commentMode, lbeg, cbeg, lend, cend
         let cmd = lbeg .','. lend .'s/\V'. 
                     \ s:StartPosRx(commentMode, lbeg, cbeg) . indentStr .'\zs\(\_.\{-}\)'. s:EndPosRx(commentMode, lend, cend) .'/'.
                     \ '\=s:ProcessedLine('. uncomment .', submatch(0), "'. cmtCheck .'", "'. cmtReplace .'")/ge'
         " TLogVAR cmd
         exec cmd
         call histdel('search', -1)
-		unlet s:cdef
     endif
     " reposition cursor
     " TLogVAR commentMode
@@ -579,7 +621,7 @@ function! tcomment#Comment(beg, end, ...)
     else
         call setpos('.', s:current_pos)
     endif
-    unlet s:cursor_pos s:current_pos
+    unlet! s:cursor_pos s:current_pos s:cdef
 endf
 
 
@@ -825,8 +867,14 @@ function! tcomment#Complete(ArgLead, CmdLine, CursorPos) "{{{3
 endf
 
 
+let s:first_completion = 0
+
 " :nodoc:
 function! tcomment#CompleteArgs(ArgLead, CmdLine, CursorPos) "{{{3
+    if v:version < 703 && !s:first_completion
+        redraw
+        let s:first_completion = 1
+    endif
     let completions = ['as=', 'col=', 'count=', 'mode=', 'begin=', 'end=', 'rxbeg=', 'rxend=', 'rxmid=']
     if !empty(a:ArgLead)
         if a:ArgLead =~ '^as='
@@ -870,7 +918,7 @@ function! s:GetCommentDefinition(beg, end, commentMode, ...)
     " TLogVAR cdef
     let cms = get(cdef, 'commentstring', '')
     if empty(cms)
-        let filetype = s:Filetype()
+        let filetype = s:Filetype(ft)
         if exists('b:commentstring')
             let cms = b:commentstring
             " TLogVAR 1, cms
@@ -882,17 +930,14 @@ function! s:GetCommentDefinition(beg, end, commentMode, ...)
                 let cms = cms .' '. s:EncodeCommentPart(b:commentEnd)
             endif
             return s:GetCustomCommentString(filetype, a:commentMode, cms)
-        elseif g:tcommentGuessFileType || (exists('g:tcommentGuessFileType_'. filetype) 
-                    \ && g:tcommentGuessFileType_{filetype} =~ '[^0]')
-            if g:tcommentGuessFileType_{filetype} == 1
-                let altFiletype = ''
-            else
-                let altFiletype = g:tcommentGuessFileType_{filetype}
-            endif
-            " TLogVAR altFiletype
-            return s:GuessFileType(a:beg, a:end, a:commentMode, filetype, altFiletype)
         else
-            return s:GetCustomCommentString(filetype, a:commentMode, s:GuessCurrentCommentString(a:commentMode))
+            let [use_guess_ft, altFiletype] = s:AltFiletype(ft)
+            " TLogVAR use_guess_ft, altFiletype
+            if use_guess_ft
+                return s:GuessFileType(a:beg, a:end, a:commentMode, filetype, altFiletype)
+            else
+                return s:GetCustomCommentString(filetype, a:commentMode, s:GuessCurrentCommentString(a:commentMode))
+            endif
         endif
         let cdef.commentstring = cms
     endif
@@ -901,10 +946,11 @@ endf
 
 function! s:StartPosRx(mode, line, col)
     " TLogVAR a:mode, a:line, a:col
+    let col = get(s:cdef, 'mixedindent', 0) ? a:col - 1 : a:col
     if a:mode =~# 'I'
-        return s:StartLineRx(a:line) . s:StartColRx(a:col)
+        return s:StartLineRx(a:line) . s:StartColRx(col)
     else
-        return s:StartColRx(a:col)
+        return s:StartColRx(col)
     endif
 endf
 
@@ -925,8 +971,10 @@ function! s:EndLineRx(pos)
 endf
 
 function! s:StartColRx(pos)
-    if a:pos == 0
+    if a:pos <= 1
         return '\^'
+    elseif get(s:cdef, 'mixedindent', 0)
+        return '\%>'. a:pos .'v'
     else
         return '\%'. a:pos .'c'
     endif
@@ -1026,14 +1074,8 @@ endf
 
 function! s:ReplaceInLine(text) "{{{3
     if has_key(s:cdef, 'replacements')
-        let text = a:text
-        " TLogVAR text
-        for [token, substitution] in items(s:cdef.replacements)
-            let text = substitute(text, '\V'. escape(token, '\'), substitution, 'g')
-            " TLogVAR token, substitution, text
-        endfor
-        " TLogVAR text
-        return text
+        let replacements = s:cdef.replacements
+        return s:DoReplacements(a:text, keys(replacements), values(replacements))
     else
         return a:text
     endif
@@ -1042,15 +1084,43 @@ endf
 
 function! s:UnreplaceInLine(text) "{{{3
     if has_key(s:cdef, 'replacements')
-        let text = a:text
-        " TLogVAR text
-        for [substitution, token] in items(s:cdef.replacements)
-            " TLogVAR substitution, token
-            let text = substitute(text, '\V'. escape(token, '\'), substitution, 'g')
-        endfor
-        return text
+        let replacements = s:cdef.replacements
+        return s:DoReplacements(a:text, values(replacements), keys(replacements))
     else
         return a:text
+    endif
+endf
+
+
+function! s:DoReplacements(text, tokens, replacements) "{{{3
+    if empty(a:tokens)
+        return a:text
+    else
+        let rx = '\V\('. join(map(a:tokens, 'escape(v:val, ''\'')'), '\|') .'\)'
+        let texts = split(a:text, rx .'\zs', 1)
+        let texts = map(texts, 's:InlineReplacement(v:val, rx, a:tokens, a:replacements)')
+        let text = join(texts, '')
+        return text
+    endif
+endf
+
+
+function! s:InlineReplacement(text, rx, tokens, replacements) "{{{3
+    " TLogVAR a:text, a:rx, a:replacements
+    let matches = split(a:text, '\ze'. a:rx .'\$', 1)
+    if len(matches) == 1
+        return a:text
+    else
+        let match = matches[-1]
+        let idx = index(a:tokens, match)
+        " TLogVAR matches, match, idx
+        if idx != -1
+            let matches[-1] = a:replacements[idx]
+            " TLogVAR matches
+            return join(matches, '')
+        else
+            throw 'TComment: Internal error: cannot find '. string(match) .' in '. string(a:tokens)
+        endif
     endif
 endf
 
@@ -1091,9 +1161,51 @@ endf
 
 
 function! s:Filetype(...) "{{{3
-    let ft = a:0 >= 1 ? a:1 : &filetype
-    let ft = substitute(ft, '\..*$', '', '')
-    return ft
+    let ft = a:0 >= 1 && !empty(a:1) ? a:1 : &filetype
+    let pos = a:0 >= 2 ? a:2 : 0
+    " TLogVAR ft, pos
+    if !exists('s:filetype_map_rx')
+        let fts_rx = '^'. join(map(keys(g:tcomment#filetype_map), 'escape(v:val, ''\'')'), '\|') .'$'
+    endif
+    if ft =~ fts_rx
+        for [ft_rx, ftrv] in items(g:tcomment#filetype_map)
+            if ft =~ ft_rx
+                return substitute(ft, ft_rx, ftrv, '')
+            endif
+        endfor
+    endif
+    let fts = split(ft, '^\@!\.')
+    " TLogVAR fts
+    " let ft = substitute(ft, '\..*$', '', '')
+    let rv = get(fts, pos, ft)
+    " TLogVAR fts, rv
+    return rv
+endf
+
+
+function! s:AltFiletype(filetype) "{{{3
+    let filetype = empty(a:filetype) ? &filetype : a:filetype
+    " TLogVAR a:filetype, filetype
+    if g:tcommentGuessFileType || (exists('g:tcommentGuessFileType_'. filetype) 
+                \ && g:tcommentGuessFileType_{filetype} =~ '[^0]')
+        if g:tcommentGuessFileType_{filetype} == 1
+            if filetype =~ '^.\{-}\..\+$'
+                let altFiletype = s:Filetype(filetype, 1)
+            else
+                let altFiletype = ''
+            endif
+        else
+            let altFiletype = g:tcommentGuessFileType_{filetype}
+        endif
+        " TLogVAR altFiletype
+        return [1, altFiletype]
+    elseif filetype =~ '^.\{-}\..\+$'
+        let altFiletype = s:Filetype(filetype, 1)
+        " TLogVAR altFiletype
+        return [1, altFiletype]
+    else
+        return [0, '']
+    endif
 endf
 
 
@@ -1353,7 +1465,5 @@ function! s:BlockGetMiddleString(cdef)
     endif
 endf
 
-
-redraw
 
 " vi: ft=vim:tw=72:ts=4:fo=w2croql

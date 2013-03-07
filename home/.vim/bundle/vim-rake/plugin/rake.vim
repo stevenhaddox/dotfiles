@@ -1,6 +1,6 @@
 " rake.vim - It's like rails.vim without the rails
 " Maintainer:   Tim Pope <http://tpo.pe/>
-" Version:      1.0
+" Version:      1.1
 " GetLatestVimScripts: 3669 1 :AutoInstall: rake.vim
 
 if exists('g:loaded_rake') || &cp || v:version < 700
@@ -119,6 +119,8 @@ function! s:find_root(path) abort
       else
         return root
       endif
+    elseif root =~# '[\/]gems[\/][0-9.]\+[\/]gems[\/][[:alnum:]._-]\+$'
+      return root
     endif
     let previous = root
     let root = fnamemodify(root, ':h')
@@ -277,7 +279,9 @@ function! s:Rake(bang,arg)
   let old_errorformat = &l:errorformat
   call s:push_chdir()
   try
-    if exists('b:bundle_root') && b:bundler_root ==# s:project().path()
+    if filereadable(s:project().path('bin/rake'))
+      let &l:makeprg = 'ruby bin/rake'
+    elseif filereadable(s:project().path('Gemfile'))
       let &l:makeprg = 'bundle exec rake'
     else
       let &l:makeprg = 'rake'
@@ -330,7 +334,7 @@ call s:add_methods('project',['tasks'])
 call s:command("-bar -bang -nargs=? -complete=customlist,s:RakeComplete Rake :execute s:Rake('<bang>',<q-args>)")
 
 " }}}1
-" Rcd, Rlcd {{{1
+" Cd, Lcd {{{1
 
 function! s:DirComplete(A,L,P) abort
   return s:project().dirglob(a:A)
@@ -338,9 +342,11 @@ endfunction
 
 call s:command("-bar -bang -nargs=? -complete=customlist,s:DirComplete Rcd  :cd<bang>  `=s:project().path(<q-args>)`")
 call s:command("-bar -bang -nargs=? -complete=customlist,s:DirComplete Rlcd :lcd<bang> `=s:project().path(<q-args>)`")
+call s:command("-bar -bang -nargs=? -complete=customlist,s:DirComplete Cd   :cd<bang>  `=s:project().path(<q-args>)`")
+call s:command("-bar -bang -nargs=? -complete=customlist,s:DirComplete Lcd  :lcd<bang> `=s:project().path(<q-args>)`")
 
 " }}}1
-" R {{{1
+" A {{{1
 
 function! s:buffer_related() dict abort
   if self.name() =~# '^lib/'
@@ -440,19 +446,28 @@ call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete RV :execute
 call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete RT :execute s:R('T','<bang>',<f-args>)")
 call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete RD :execute s:R('D','<bang>',<f-args>)")
 
+call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete E  :execute s:R('E','<bang>',<f-args>)")
+call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete S  :execute s:R('S','<bang>',<f-args>)")
+call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete V  :execute s:R('V','<bang>',<f-args>)")
+call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete T  :execute s:R('T','<bang>',<f-args>)")
+call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete D  :execute s:R('D','<bang>',<f-args>)")
+
 call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete A  :execute s:R('E','<bang>',<f-args>)")
+call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete AE :execute s:R('E','<bang>',<f-args>)")
 call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete AS :execute s:R('S','<bang>',<f-args>)")
 call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete AV :execute s:R('V','<bang>',<f-args>)")
 call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete AT :execute s:R('T','<bang>',<f-args>)")
 call s:command("-bar -bang -nargs=? -complete=customlist,s:RComplete AD :execute s:R('D','<bang>',<f-args>)")
 
 " }}}1
-" Rlib, etc. {{{1
+" Elib, etc. {{{1
 
 function! s:navcommand(name) abort
-  for type in ['', 'S', 'V', 'T', 'D']
+  for type in ['E', 'S', 'V', 'T', 'D']
+    call s:command("-bar -bang -nargs=? -complete=customlist,s:R".a:name."Complete ".type.a:name." :execute s:Edit('".type."','<bang>',s:R".a:name."(matchstr(<q-args>,'[^:#]*')).matchstr(<q-args>,'[:#].*'))")
     call s:command("-bar -bang -nargs=? -complete=customlist,s:R".a:name."Complete R".type.a:name." :execute s:Edit('".type."','<bang>',s:R".a:name."(matchstr(<q-args>,'[^:#]*')).matchstr(<q-args>,'[:#].*'))")
   endfor
+  call s:command("-bar -bang -nargs=? -complete=customlist,s:R".a:name."Complete R".a:name." :execute s:Edit('E','<bang>',s:R".a:name."(matchstr(<q-args>,'[^:#]*')).matchstr(<q-args>,'[:#].*'))")
 endfunction
 
 function! s:Edit(cmd,bang,file)
@@ -525,7 +540,7 @@ call s:navcommand('spec')
 call s:navcommand('task')
 
 " }}}1
-" Rtags {{{1
+" Ctags {{{1
 
 function! s:project_tags_file() dict abort
   if filereadable(self.path('tags')) || filewritable(self.path())
@@ -558,6 +573,8 @@ function! s:Tags(args)
 endfunction
 
 call s:command("-bar -bang -nargs=? Rtags :execute s:Tags(<q-args>)")
+call s:command("-bar -bang -nargs=? Ctags :execute s:Tags(<q-args>)")
+call s:command("-bar -bang -nargs=? Tags  :execute s:Tags(<q-args>)")
 
 augroup rake_tags
   autocmd!

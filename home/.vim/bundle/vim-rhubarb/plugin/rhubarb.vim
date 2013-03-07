@@ -6,6 +6,10 @@ if exists("g:loaded_rhubarb") || v:version < 700 || &cp
 endif
 let g:loaded_rhubarb = 1
 
+if get(g:, 'fugitive_git_executable', 'git') ==# 'git' && executable('hub')
+  let g:fugitive_git_executable = 'hub'
+endif
+
 " Utility {{{1
 
 function! s:throw(string) abort
@@ -66,7 +70,7 @@ function! rhubarb#json_parse(string) abort
     catch
     endtry
   endif
-  call s:throw("invalid JSON: ".stripped)
+  call s:throw("invalid JSON: ".a:string)
 endfunction
 
 function! rhubarb#json_generate(object) abort

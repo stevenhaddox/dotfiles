@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: include_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Nov 2012.
+" Last Modified: 24 Feb 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,63 +27,14 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-if !exists('s:include_info')
-  let s:include_info = {}
-  let s:include_cache = {}
-  let s:cache_accessed_time = {}
-  let s:async_include_cache = {}
-  let s:cached_pattern = {}
-
-  " Initialize include pattern."{{{
-  let g:neocomplcache_include_patterns =
-        \ get(g:, 'neocomplcache_include_patterns', {})
-  call neocomplcache#util#set_default_dictionary(
-        \ 'g:neocomplcache_include_patterns',
-        \ 'java,haskell', '^\s*\<import')
-  call neocomplcache#util#set_default_dictionary(
-        \ 'g:neocomplcache_include_patterns',
-        \ 'cs', '^\s*\<using')
-  call neocomplcache#util#set_default_dictionary(
-        \ 'g:neocomplcache_include_patterns',
-        \ 'ruby', '^\s*\<\%(load\|require\|require_relative\)\>')
-  "}}}
-  " Initialize expr pattern."{{{
-  call neocomplcache#util#set_default(
-        \ 'g:neocomplcache_include_exprs', {})
-  call neocomplcache#util#set_default_dictionary(
-        \ 'g:neocomplcache_include_exprs',
-        \ 'haskell,cs',
-        \ "substitute(v:fname, '\\.', '/', 'g')")
-  "}}}
-  " Initialize path pattern."{{{
-  call neocomplcache#util#set_default(
-        \ 'g:neocomplcache_include_paths', {})
-  "}}}
-  " Initialize include suffixes."{{{
-  call neocomplcache#util#set_default(
-        \ 'g:neocomplcache_include_suffixes', {})
-  call neocomplcache#util#set_default_dictionary(
-        \ 'g:neocomplcache_include_suffixes',
-        \ 'haskell', '.hs')
-  "}}}
-  " Initialize include functions."{{{
-  call neocomplcache#util#set_default(
-        \ 'g:neocomplcache_include_functions', {})
-  " call neocomplcache#util#set_default_dictionary(
-  "       \ 'g:neocomplcache_include_functions', 'vim',
-  "       \ 'neocomplcache#sources#include_complete#analyze_vim_include_files')
-  call neocomplcache#util#set_default_dictionary(
-        \ 'g:neocomplcache_include_functions', 'ruby',
-        \ 'neocomplcache#sources#include_complete#analyze_ruby_include_files')
-  "}}}
-endif
-
 let s:source = {
       \ 'name' : 'include_complete',
       \ 'kind' : 'plugin',
       \}
 
-function! s:source.initialize()"{{{
+function! s:source.initialize() "{{{
+  call s:initialize_variables()
+
   " Set rank.
   call neocomplcache#util#set_default_dictionary(
         \ 'g:neocomplcache_source_rank', 'include_complete', 8)
@@ -109,7 +60,7 @@ function! s:source.initialize()"{{{
   endif
 endfunction"}}}
 
-function! s:source.finalize()"{{{
+function! s:source.finalize() "{{{
   delcommand NeoComplCacheCachingInclude
   
   if neocomplcache#exists_echodoc()
@@ -117,7 +68,7 @@ function! s:source.finalize()"{{{
   endif
 endfunction"}}}
 
-function! s:source.get_keyword_list(cur_keyword_str)"{{{
+function! s:source.get_keyword_list(cur_keyword_str) "{{{
   if neocomplcache#within_comment()
     return []
   endif
@@ -144,11 +95,11 @@ function! s:source.get_keyword_list(cur_keyword_str)"{{{
         \ neocomplcache#dup_filter(keyword_list), a:cur_keyword_str)
 endfunction"}}}
 
-function! neocomplcache#sources#include_complete#define()"{{{
+function! neocomplcache#sources#include_complete#define() "{{{
   return s:source
 endfunction"}}}
 
-function! neocomplcache#sources#include_complete#get_include_files(bufnumber)"{{{
+function! neocomplcache#sources#include_complete#get_include_files(bufnumber) "{{{
   if has_key(s:include_info, a:bufnumber)
     return copy(s:include_info[a:bufnumber].include_files)
   else
@@ -156,7 +107,7 @@ function! neocomplcache#sources#include_complete#get_include_files(bufnumber)"{{
   endif
 endfunction"}}}
 
-function! neocomplcache#sources#include_complete#get_include_tags(bufnumber)"{{{
+function! neocomplcache#sources#include_complete#get_include_tags(bufnumber) "{{{
   return filter(map(
         \ neocomplcache#sources#include_complete#get_include_files(a:bufnumber),
         \ "neocomplcache#cache#encode_name('tags_output', v:val)"),
@@ -164,17 +115,17 @@ function! neocomplcache#sources#include_complete#get_include_tags(bufnumber)"{{{
 endfunction"}}}
 
 " For Debug.
-function! neocomplcache#sources#include_complete#get_current_include_files()"{{{
+function! neocomplcache#sources#include_complete#get_current_include_files() "{{{
   return s:get_buffer_include_files(bufnr('%'))
 endfunction"}}}
 
-" For echodoc."{{{
+" For echodoc. "{{{
 let s:doc_dict = {
       \ 'name' : 'include_complete',
       \ 'rank' : 5,
       \ 'filetypes' : {},
       \ }
-function! s:doc_dict.search(cur_text)"{{{
+function! s:doc_dict.search(cur_text) "{{{
   if &filetype ==# 'vim' || !has_key(s:include_info, bufnr('%'))
     return []
   endif
@@ -221,7 +172,7 @@ function! s:doc_dict.search(cur_text)"{{{
 endfunction"}}}
 "}}}
 
-function! s:check_buffer(bufnumber, is_force)"{{{
+function! s:check_buffer(bufnumber, is_force) "{{{
   if !neocomplcache#is_enabled_source('include_complete')
     return
   endif
@@ -292,7 +243,7 @@ function! s:check_buffer(bufnumber, is_force)"{{{
     endif
   endfor
 endfunction"}}}
-function! s:get_buffer_include_files(bufnumber)"{{{
+function! s:get_buffer_include_files(bufnumber) "{{{
   let filetype = getbufvar(a:bufnumber, '&filetype')
   if filetype == ''
     return []
@@ -359,9 +310,9 @@ function! s:get_buffer_include_files(bufnumber)"{{{
 
   return include_files
 endfunction"}}}
-function! s:get_include_files(nestlevel, lines, filetype, pattern, path, expr)"{{{
+function! s:get_include_files(nestlevel, lines, filetype, pattern, path, expr) "{{{
   let include_files = []
-  for line in a:lines"{{{
+  for line in a:lines "{{{
     if line =~ a:pattern
       let match_end = matchend(line, a:pattern)
       if a:expr != ''
@@ -393,7 +344,7 @@ function! s:get_include_files(nestlevel, lines, filetype, pattern, path, expr)"{
   return include_files
 endfunction"}}}
 
-function! s:check_cache()"{{{
+function! s:check_cache() "{{{
   if neocomplcache#is_disabled_source('include_complete')
     return
   endif
@@ -408,7 +359,7 @@ function! s:check_cache()"{{{
   endfor
 endfunction"}}}
 
-function! s:initialize_include(filename, filetype)"{{{
+function! s:initialize_include(filename, filetype) "{{{
   " Initialize include list from tags.
   return {
         \ 'filename' : a:filename,
@@ -416,7 +367,7 @@ function! s:initialize_include(filename, filetype)"{{{
         \              'include_cache', a:filename, a:filetype, 'I', 1)
         \ }
 endfunction"}}}
-function! neocomplcache#sources#include_complete#caching_include(bufname)"{{{
+function! neocomplcache#sources#include_complete#caching_include(bufname) "{{{
   let bufnumber = (a:bufname == '') ? bufnr('%') : bufnr(a:bufname)
   if has_key(s:async_include_cache, bufnumber)
         \ && filereadable(s:async_include_cache[bufnumber].cache_name)
@@ -433,7 +384,7 @@ function! neocomplcache#sources#include_complete#caching_include(bufname)"{{{
 endfunction"}}}
 
 " Analyze include files functions.
-function! neocomplcache#sources#include_complete#analyze_vim_include_files(lines, path)"{{{
+function! neocomplcache#sources#include_complete#analyze_vim_include_files(lines, path) "{{{
   let include_files = []
   let dup_check = {}
   for line in a:lines
@@ -454,7 +405,7 @@ function! neocomplcache#sources#include_complete#analyze_vim_include_files(lines
 
   return include_files
 endfunction"}}}
-function! neocomplcache#sources#include_complete#analyze_ruby_include_files(lines, path)"{{{
+function! neocomplcache#sources#include_complete#analyze_ruby_include_files(lines, path) "{{{
   let include_files = []
   let dup_check = {}
   for line in a:lines
@@ -479,6 +430,61 @@ function! neocomplcache#sources#include_complete#analyze_ruby_include_files(line
 
   return include_files
 endfunction"}}}
+
+function! s:initialize_variables() "{{{
+  let s:include_info = {}
+  let s:include_cache = {}
+  let s:cache_accessed_time = {}
+  let s:async_include_cache = {}
+  let s:cached_pattern = {}
+
+  " Initialize include pattern. "{{{
+  let g:neocomplcache_include_patterns =
+        \ get(g:, 'neocomplcache_include_patterns', {})
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_include_patterns',
+        \ 'java,haskell', '^\s*\<import')
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_include_patterns',
+        \ 'cs', '^\s*\<using')
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_include_patterns',
+        \ 'ruby', '^\s*\<\%(load\|require\|require_relative\)\>')
+  "}}}
+  " Initialize expr pattern. "{{{
+  call neocomplcache#util#set_default(
+        \ 'g:neocomplcache_include_exprs', {})
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_include_exprs',
+        \ 'haskell,cs',
+        \ "substitute(v:fname, '\\.', '/', 'g')")
+  "}}}
+  " Initialize path pattern. "{{{
+  call neocomplcache#util#set_default(
+        \ 'g:neocomplcache_include_paths', {})
+  "}}}
+  " Initialize include suffixes. "{{{
+  call neocomplcache#util#set_default(
+        \ 'g:neocomplcache_include_suffixes', {})
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_include_suffixes',
+        \ 'haskell', '.hs')
+  "}}}
+  " Initialize include functions. "{{{
+  call neocomplcache#util#set_default(
+        \ 'g:neocomplcache_include_functions', {})
+  " call neocomplcache#util#set_default_dictionary(
+  "       \ 'g:neocomplcache_include_functions', 'vim',
+  "       \ 'neocomplcache#sources#include_complete#analyze_vim_include_files')
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_include_functions', 'ruby',
+        \ 'neocomplcache#sources#include_complete#analyze_ruby_include_files')
+  "}}}
+endfunction"}}}
+
+if !exists('s:include_info')
+  call s:initialize_variables()
+endif
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
