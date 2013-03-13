@@ -884,9 +884,9 @@ function! s:app_background_script_command(cmd) dict abort
   try
     if has("gui_win32")
       exe "!start ".cmd
-    elseif exists("$STY") && !has("gui_running") && executable("screen")
+    elseif exists("$STY") && executable("screen")
       silent exe "!screen -ln -fn -t ".title.' '.cmd
-    elseif exists("$TMUX") && !has("gui_running") && executable("tmux")
+    elseif exists("$TMUX") && executable("tmux")
       silent exe '!tmux new-window -n "'.title.'" "'.cmd.'"'
     else
       exe "!".cmd
@@ -944,7 +944,7 @@ function! s:BufCommands()
   call s:BufScriptWrappers()
   command! -buffer -bar -nargs=+ Rnavcommand :call s:Navcommand(<bang>0,<f-args>)
   command! -buffer -bar -nargs=* -bang Rabbrev :call s:Abbrev(<bang>0,<f-args>)
-  command! -buffer -bar -nargs=? -bang -count -complete=customlist,s:Complete_rake    Rake     :call s:Rake(<bang>0,!<count> && <line1> ? -1 : <count>,<q-args>)
+  command! -buffer -bar -nargs=? -bang -count -complete=customlist,rails#complete_rake Rake    :call s:Rake(<bang>0,!<count> && <line1> ? -1 : <count>,<q-args>)
   command! -buffer -bar -nargs=? -bang -range -complete=customlist,s:Complete_preview Rpreview :call s:Preview(<bang>0,<line1>,<q-args>)
   command! -buffer -bar -nargs=? -bang -complete=customlist,s:Complete_environments   Rlog     :call s:Log(<bang>0,<q-args>)
   command! -buffer -bar -nargs=* -bang -complete=customlist,s:Complete_set            Rset     :call s:Set(<bang>0,<f-args>)
@@ -1126,7 +1126,7 @@ endfunction
 
 call s:add_methods('app', ['rake_tasks'])
 
-let s:efm_backtrace='%D(in\ %f),'
+let g:rails#rake_errorformat = '%D(in\ %f),'
       \.'%\\s%#from\ %f:%l:%m,'
       \.'%\\s%#from\ %f:%l:,'
       \.'%\\s#{RAILS_ROOT}/%f:%l:\ %#%m,'
@@ -1168,7 +1168,7 @@ function! s:Rake(bang,lnum,arg)
     else
       let &l:makeprg = 'rake'
     endif
-    let &l:errorformat = s:efm_backtrace
+    let &l:errorformat = g:rails#rake_errorformat
     let arg = a:arg
     if &filetype =~# '^ruby\>' && arg == ''
       let mnum = s:lastmethodline(lnum)
@@ -1239,9 +1239,9 @@ function! s:Rake(bang,lnum,arg)
   endtry
 endfunction
 
-function! s:readable_default_rake_task(lnum) dict abort
+function! s:readable_default_rake_task(...) dict abort
   let app = self.app()
-  let lnum = a:lnum < 0 ? 0 : a:lnum
+  let lnum = a:0 ? (a:1 < 0 ? 0 : a:1) : 0
   if self.getvar('&buftype') == 'quickfix'
     return '-'
   elseif self.getline(lnum) =~# '# rake '
@@ -1344,7 +1344,7 @@ function! s:readable_default_rake_task(lnum) dict abort
   endif
 endfunction
 
-function! s:Complete_rake(A,L,P)
+function! rails#complete_rake(A,L,P)
   return s:completion_filter(rails#app().rake_tasks(),a:A)
 endfunction
 
@@ -1476,7 +1476,7 @@ endfunction
 " Script Wrappers {{{1
 
 function! s:BufScriptWrappers()
-  command! -buffer -bang -bar -nargs=* -complete=customlist,s:Complete_script   Rscript       :execute rails#app().script_command(<bang>0,<f-args>)
+  command! -buffer -bang -bar -nargs=* -complete=customlist,s:Complete_script   Rscript       :execute empty(<q-args>) ? rails#app().script_command(<bang>0, 'console') ? rails#app().script_command(<bang>0,<f-args>)
   command! -buffer -bang -bar -nargs=* -complete=customlist,s:Complete_script   Rails         :execute rails#app().script_command(<bang>0,<f-args>)
   command! -buffer -bang -bar -nargs=* -complete=customlist,s:Complete_generate Rgenerate     :execute rails#app().generator_command(<bang>0,'generate',<f-args>)
   command! -buffer -bar -nargs=*       -complete=customlist,s:Complete_destroy  Rdestroy      :execute rails#app().generator_command(1,'destroy',<f-args>)
@@ -1484,7 +1484,6 @@ function! s:BufScriptWrappers()
   command! -buffer -bang -nargs=1 -range=0 -complete=customlist,s:Complete_ruby Rrunner       :execute rails#app().runner_command(<bang>0 ? -2 : (<count>==<line2>?<count>:-1),<f-args>)
   command! -buffer       -nargs=1 -range=0 -complete=customlist,s:Complete_ruby Rp            :execute rails#app().runner_command(<count>==<line2>?<count>:-1,'p begin '.<f-args>.' end')
   command! -buffer       -nargs=1 -range=0 -complete=customlist,s:Complete_ruby Rpp           :execute rails#app().runner_command(<count>==<line2>?<count>:-1,'require %{pp}; pp begin '.<f-args>.' end')
-  command! -buffer       -nargs=1 -range=0 -complete=customlist,s:Complete_ruby Ry            :execute rails#app().runner_command(<count>==<line2>?<count>:-1,'y begin '.<f-args>.' end')
 endfunction
 
 function! s:app_gems() dict abort
@@ -1526,17 +1525,11 @@ function! s:app_script_command(bang,...) dict
     echo msg." (Rails-".rails#buffer().type_name().")"
     return
   endif
-  let str = ""
-  let cmd = a:0 ? a:1 : "console"
-  let c = 2
-  while c <= a:0
-    let str .= " " . s:rquote(a:{c})
-    let c += 1
-  endwhile
-  if a:bang || cmd =~# 'console'
-    return self.background_script_command(cmd.str)
+  let str = join(map(copy(a:000), 's:rquote(v:val)'), ' ')
+  if a:bang || str =~# '^\%(c\|console\|db\|dbconsole\|s\|server\)\>'
+    return self.background_script_command(str)
   else
-    return self.execute_script_command(cmd.str)
+    return self.execute_script_command(str)
   endif
 endfunction
 
@@ -1597,7 +1590,7 @@ function! s:app_server_command(bang,arg) dict
       return
     endif
   endif
-  if has("win32") || has("win64") || (exists("$STY") && !has("gui_running") && executable("screen")) || (exists("$TMUX") && !has("gui_running") && executable("tmux"))
+  if has("win32") || has("win64") || (exists("$STY") && executable("screen")) || (exists("$TMUX") && executable("tmux"))
     call self.background_script_command('server '.a:arg)
   else
     " --daemon would be more descriptive but lighttpd does not support it

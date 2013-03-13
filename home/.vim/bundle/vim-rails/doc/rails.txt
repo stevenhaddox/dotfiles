@@ -477,9 +477,8 @@ A limited amount of completion with <Tab> is supported.
 :[range]Rp {code}	Like :Rrunner, but call the Ruby p method on the
 			result. Literally "p begin {code} end".
 
-						*rails-:Rpp* *rails-:Ry*
-:[range]Rpp {code}	Like :Rp, but with pp (pretty print) or y (YAML
-:[range]Ry  {code}	output).
+						*rails-:Rpp*
+:[range]Rpp {code}	Like :Rp, but with pp (pretty print).
 
 						*rails-:Rgenerate*
 :Rgenerate {options}	Calls rails generate {options} and loads the
@@ -698,9 +697,6 @@ Rails specific keywords are highlighted in a filetype specific manner.  For
 example, in a model, has_many is highlighted, whereas in a controller,
 before_filter is highlighted.  A wide variety of syntax groups are used but
 they all link by default to railsMethod.
-
-If you feel a method has been wrongfully omitted, submit it to the
-|rails-plugin-author|.
 
 						*rails-syntax-classes*
 Models, helpers, and controllers are given special highlighting.  Depending on
