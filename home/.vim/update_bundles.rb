@@ -3,6 +3,7 @@
 git_bundles = %w{
   git://github.com/astashov/vim-ruby-debugger.git
   git://github.com/bronson/vim-trailing-whitespace.git
+  git://github.com/cespare/vim-toml.git
   git://github.com/chriskempson/base16-vim.git
   git://github.com/chriskempson/tomorrow-theme.git
   git://github.com/godlygeek/tabular.git
