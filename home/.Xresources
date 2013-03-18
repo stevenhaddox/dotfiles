@@ -1,7 +1,3 @@
-! Font defaults
-#XTerm*faceName: Inconsolata-Powerline
-#XTerm*faceSize: 11
-
 ! Base16 Default
 ! Scheme: Chris Kempson (http://chriskempson.com)
 
