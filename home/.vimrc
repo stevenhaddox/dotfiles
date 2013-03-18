@@ -11,7 +11,7 @@ call pathogen#infect()
 call pathogen#helptags()
 " }}}
 
-" Leader mappings {{{ 
+" Leader mappings {{{
 let mapleader = ","
 "v to select just pasted text for manipulation
 nnoremap <leader>v V`]
