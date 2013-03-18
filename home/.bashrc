@@ -24,16 +24,21 @@ LANG=en_US.UTF-8
 LC_ALL=en_US.UTF-8
 
 # includes
-if [ -f ~/.bash_aliases ]; then
+if [ -f $HOME/.bash_aliases ]; then
   source ~/.bash_aliases
 fi
-if [ -f ~/.bash_osx ]; then
+if [ -d $HOME/.scripts/ ]; then
+  PATH="${PATH}:/${HOME}/.scripts"
+  export PATH
+fi
+
+if [ -f $HOME/.bash_osx ]; then
   source ~/.bash_osx
 fi
-if [ -f ~/.bash_linux ]; then
+if [ -f $HOME/.bash_linux ]; then
   source ~/.bash_linux
 fi
-if [ -f ~/.bash_local ]; then
+if [ -f $HOME/.bash_local ]; then
   source ~/.bash_local
 fi
 
