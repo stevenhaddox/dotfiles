@@ -1,19 +1,13 @@
-#!/bin/bash
- 
-# The syntax for escaped color sequences looks like:
-#
-#    BLUE="\[\033[0;34m\]"
-#
-# Lets see what we can find...
- 
-NONE="\033[0m"
- 
-for COLOR in $(seq 30 40) ; do
-    for STYLE in $(seq 0 1) 4 5 7; do
-        TAG="\033[${STYLE};${COLOR}m"
-        STR="Color:${COLOR}--Style:${STYLE}"
- 
-        echo -ne "${TAG}${STR}${NONE}  "
-    done
-    echo
-done
+#!/usr/bin/env python
+import sys
+terse = "-t" in sys.argv[1:] or "--terse" in sys.argv[1:]
+
+for i in range(2 if terse else 10):
+    for j in range(30, 38):
+        for k in range(40, 48):
+            if terse:
+                print "\33[%d;%d;%dm%d;%d;%d\33[m " % (i, j, k, i, j, k),
+            else:
+                print ("%d;%d;%d: \33[%d;%d;%dm Hello, World! \33[m " %
+                    (i, j, k, i, j, k, ))
+        print
