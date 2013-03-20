@@ -12,11 +12,14 @@ if [ -f /etc/bash_completion ]; then
   source ~/.bash_completion
 fi
 
+# Configure Powerline
 export POWERLINE="$HOME/.local/lib/python2.7/site-packages/powerline"
-if [ -d $POWERLINE ]; then
-  export POWERLINE=$POWERLINE #placeholder
-  #TODO: Below line breaks ability to ssh into OS X boxes currently!!
-  #. $POWERLINE/bindings/bash/powerline.sh
+if [ -f ${HOME}/.local/bin/powerline ]; then
+  export PATH=${PATH}:${HOME}/.local/bin
+  if [ -d $POWERLINE ]; then
+    export POWERLINE=$POWERLINE #placeholder
+    . $POWERLINE/bindings/bash/powerline.sh
+  fi
 fi
 
 # SSH Agent Startup / Caching
