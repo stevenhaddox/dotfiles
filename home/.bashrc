@@ -1,5 +1,5 @@
 # Get aliases and functions
-PATH="${HOME}/bin:/usr/local/heroku/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
+PATH="${HOME}/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
 export PATH
 
 # Prompt/Title
@@ -26,6 +26,9 @@ LC_ALL=en_US.UTF-8
 # includes
 if [ -f $HOME/.bash_aliases ]; then
   source ~/.bash_aliases
+fi
+if [ -d "/usr/local/heroku/bin" ]; then
+  export PATH="${PATH}:/usr/local/heroku/bin"
 fi
 if [ -d $HOME/.scripts/ ]; then
   PATH="${PATH}:/${HOME}/.scripts"

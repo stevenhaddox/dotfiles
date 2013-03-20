@@ -14,7 +14,7 @@ fi
 
 export POWERLINE="$HOME/.local/lib/python2.7/site-packages/powerline"
 if [ -d $POWERLINE ]; then
-  echo "fix powerline..."
+  export POWERLINE=$POWERLINE #placeholder
   #TODO: Below line breaks ability to ssh into OS X boxes currently!!
   #. $POWERLINE/bindings/bash/powerline.sh
 fi
