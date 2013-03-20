@@ -14,6 +14,14 @@ if [ -f `brew --prefix`/etc/bash_completion ]; then
   source ~/.bash_completion
 fi
 
+# Setup Powerline
+export POWERLINE="/usr/local/lib/python2.7/site-packages/powerline"
+if [ -d $POWERLINE ]; then
+  echo "fix powerline..."
+  #TODO: Below line breaks ability to ssh into OS X boxes currently!!
+  #. $POWERLINE/bindings/bash/powerline.sh
+fi
+
 if [ -f `brew --prefix`/etc/grc.bashrc ]; then
   source "`brew --prefix`/etc/grc.bashrc"
 fi

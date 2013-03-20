@@ -92,6 +92,7 @@ vnoremap <tab> %`
 
 " Powerline bar config {{{
 " set t_Co=256 " Needed for OS X iTerm but not Linux terminals?
+set rtp+=$POWERLINE/bindings/vim
 let g:Powerline_colorscheme = 'base16'
 set nocompatible
 set laststatus=2
