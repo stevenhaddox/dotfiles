@@ -31,8 +31,11 @@ if [ -d "/usr/local/heroku/bin" ]; then
   export PATH="${PATH}:/usr/local/heroku/bin"
 fi
 if [ -d $HOME/.scripts/ ]; then
-  PATH="${PATH}:/${HOME}/.scripts"
-  export PATH
+  export PATH="${PATH}:/${HOME}/.scripts"
+fi
+
+if [ -d "/usr/local/share/npm/bin" ]; then
+  export PATH="${PATH}:/usr/local/share/npm/bin"
 fi
 
 if [ -f $HOME/.bash_osx ]; then
