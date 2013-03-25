@@ -14,10 +14,15 @@ if [ -f `brew --prefix`/etc/bash_completion ]; then
   source ~/.bash_completion
 fi
 
+# Add homebrew python executables to PATH
+# This also hooks powerline
+if [ -d /usr/local/share/python ]; then
+  export PATH=${PATH}:/usr/local/share/python
+fi
+
 # Setup Powerline
 export POWERLINE="/usr/local/lib/python2.7/site-packages/powerline"
 if [ -f /usr/local/share/python/powerline ]; then
-  export PATH=${PATH}:/usr/local/share/python
   if [ -d $POWERLINE ]; then
     . $POWERLINE/bindings/bash/powerline.sh
   fi
