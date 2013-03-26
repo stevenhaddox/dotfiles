@@ -23,10 +23,12 @@ nnoremap <leader>ft Vatzf
 nnoremap <leader>q gqip
 " }}}
 
-" Some semblance of sanity with Ruby spacing {{{
+" Colorschemes
 colorscheme base16-default
+"let base16colorspace=256  " Access colors present in 256 colorspace
 set background=dark
-" let base16colorspace=256  " Access colors present in 256 colorspace
+
+" Some semblance of sanity with Ruby spacing {{{
 set number
 set tabstop=2 shiftwidth=2 softtabstop=2 expandtab
 set smarttab autoindent
@@ -91,7 +93,7 @@ vnoremap <tab> %`
 " }}}
 
 " Powerline bar config {{{
-" set t_Co=256 " Needed for OS X iTerm but not Linux terminals?
+"set t_Co=256 " Needed for OS X iTerm but not Linux terminals?
 set rtp+=$POWERLINE/bindings/vim
 let g:Powerline_colorscheme = 'base16'
 set nocompatible

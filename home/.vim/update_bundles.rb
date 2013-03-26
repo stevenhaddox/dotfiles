@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 git_bundles = %w{
+  git://github.com/altercation/vim-colors-solarized.git
   git://github.com/astashov/vim-ruby-debugger.git
   git://github.com/bronson/vim-trailing-whitespace.git
   git://github.com/cespare/vim-toml.git
