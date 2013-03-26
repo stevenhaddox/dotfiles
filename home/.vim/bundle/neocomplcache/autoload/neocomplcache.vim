@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Mar 2013.
+" Last Modified: 24 Mar 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -490,6 +490,8 @@ function! s:initialize_others() "{{{
         \  'start' : '^\s*py\%[thon\]3\? <<\s*\(\h\w*\)', 'end' : '^\1'},
         \ {'filetype' : 'ruby',
         \  'start' : '^\s*rub\%[y\] <<\s*\(\h\w*\)', 'end' : '^\1'},
+        \ {'filetype' : 'lua',
+        \  'start' : '^\s*lua <<\s*\(\h\w*\)', 'end' : '^\1'},
         \])
   call neocomplcache#util#set_default_dictionary(
         \ 'g:neocomplcache_context_filetype_lists',
@@ -798,11 +800,12 @@ function! neocomplcache#manual_complete(findstart, base) "{{{
     if v:version > 703 || v:version == 703 && has('patch418')
       let dict = { 'words' : neocomplcache.complete_words }
 
-      if (!empty(filter(copy(neocomplcache.complete_words),
-            \    "get(v:val, 'neocomplcache__refresh', 0)")) ||
-            \ len(neocomplcache.complete_words) >= g:neocomplcache_max_list)
-            \  && (g:neocomplcache_enable_cursor_hold_i
+      if (g:neocomplcache_enable_cursor_hold_i
             \      || v:version > 703 || v:version == 703 && has('patch561'))
+            \ && (len(a:base) < g:neocomplcache_auto_completion_start_length
+            \   || !empty(filter(copy(neocomplcache.complete_words),
+            \          "get(v:val, 'neocomplcache__refresh', 0)"))
+            \   || len(neocomplcache.complete_words) >= g:neocomplcache_max_list)
         " Note: If Vim is less than 7.3.561, it have broken register "." problem.
         let dict.refresh = 'always'
       endif
@@ -2514,9 +2517,9 @@ function! s:on_complete_done() "{{{
   let frequencies = s:get_frequencies()
   if !has_key(frequencies, candidate)
     let frequencies[candidate] = 20
+  else
+    let frequencies[candidate] += 20
   endif
-
-  let frequencies[candidate] += 20
 endfunction"}}}
 function! s:change_update_time() "{{{
   if &updatetime > g:neocomplcache_cursor_hold_i_time

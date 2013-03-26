@@ -37,6 +37,10 @@ function! s:startswith(string,prefix)
   return strpart(a:string, 0, strlen(a:prefix)) ==# a:prefix
 endfunction
 
+function! s:endswith(string,suffix)
+  return strpart(a:string, len(a:string) - len(a:suffix), len(a:suffix)) ==# a:suffix
+endfunction
+
 function! s:uniq(list) abort
   let i = 0
   let seen = {}
@@ -54,9 +58,18 @@ function! s:uniq(list) abort
   return a:list
 endfunction
 
+function! s:getlist(arg, key)
+  let value = get(a:arg, a:key, [])
+  return type(value) == type([]) ? copy(value) : [value]
+endfunction
+
 function! s:split(arg, ...)
   return type(a:arg) == type([]) ? copy(a:arg) : split(a:arg, a:0 ? a:1 : "\n")
 endfunction
+
+function! rails#lencmp(i1, i2) abort
+  return len(a:i1) - len(a:i2)
+endfunc
 
 function! s:escarg(p)
   return s:gsub(a:p,'[ !%#]','\\&')
@@ -313,6 +326,22 @@ endfunction
 
 call s:add_methods('readable',['end_of','last_opening_line','last_method_line','last_method','format','define_pattern'])
 
+function! s:readable_find_affinity() dict abort
+  let f = self.name()
+  let all = self.app().projections()
+  for pattern in reverse(sort(filter(keys(all), 'v:val =~# "^[^*]*\\*[^*]*$"'), s:function('rails#lencmp')))
+    if !has_key(all[pattern], 'affinity')
+      continue
+    endif
+    let [prefix, suffix; _] = split(pattern, '\*', 1)
+    if s:startswith(f, prefix) && s:endswith(f, suffix)
+      let root = f[strlen(prefix) : -strlen(suffix)-1]
+      return [all[pattern].affinity, root]
+    endif
+  endfor
+  return ['', '']
+endfunction
+
 function! s:controller(...)
   return rails#buffer().controller_name(a:0 ? a:1 : 0)
 endfunction
@@ -322,9 +351,11 @@ function! s:readable_controller_name(...) dict abort
   if has_key(self,'getvar') && self.getvar('rails_controller') != ''
     return self.getvar('rails_controller')
   endif
-  let [root, _] = s:find_projection(filter(values(self.app().projections()), 'get(v:val, "affinity", "") ==# "controller"'), f)
-  if root !=# ''
+  let [affinity, root] = self.find_affinity()
+  if affinity ==# 'controller'
     return root
+  elseif affinity ==# 'resource'
+    return rails#pluralize(root)
   endif
   if f =~ '\<app/views/layouts/'
     return s:sub(f,'.*<app/views/layouts/(.{-})\..*','\1')
@@ -369,12 +400,10 @@ function! s:readable_model_name(...) dict abort
   if has_key(self,'getvar') && self.getvar('rails_model') != ''
     return self.getvar('rails_model')
   endif
-  let [root, _] = s:find_projection(filter(values(self.app().projections()), 'get(v:val, "affinity", "") ==# "model"'), f)
-  if root !=# ''
+  let [affinity, root] = self.find_affinity()
+  if affinity ==# 'model'
     return root
-  endif
-  let [root, _] = s:find_projection(filter(values(self.app().projections()), 'get(v:val, "affinity", "") ==# "collection"'), f)
-  if root !=# ''
+  elseif affinity ==# 'collection'
     return rails#singularize(root)
   endif
   if f =~ '\<app/models/.*_observer.rb$'
@@ -403,7 +432,7 @@ function! s:readable_model_name(...) dict abort
   return ""
 endfunction
 
-call s:add_methods('readable',['controller_name','model_name'])
+call s:add_methods('readable', ['find_affinity', 'controller_name', 'model_name'])
 
 function! s:readfile(path,...)
   let nr = bufnr('^'.a:path.'$')
@@ -887,7 +916,7 @@ function! s:app_start_rails_command(cmd, ...) dict abort
   call s:push_chdir(1)
   try
     if exists(':Start')
-      exe 'Start'.(a:0 ? '!' : '').' -title=rails\ '.title.' '.cmd
+      exe 'Start'.(a:0 && a:1 ? '!' : '').' -title=rails\ '.title.' '.cmd
     elseif has("win32")
       exe "!start ".cmd
     else
@@ -1010,20 +1039,16 @@ function! rails#new_app_command(bang,...) abort
 
   let temp = tempname()
   try
-    exe '!rails' join(map(copy(args),'s:rquote(v:val)'),' ') &shellpipe temp
+    if &shellpipe =~# '%s'
+      let pipe = s:sub(&shellpipe, '%s', temp, 'g')
+    else
+      let pipe = &shellpipe . ' ' . temp
+    endif
+    exe '!rails' join(map(copy(args),'s:rquote(v:val)'),' ') pipe
   catch /^Vim:Interrupt/
   endtry
 
-  if filereadable(expand(args[1]))
-    let lines = readfile(temp)
-    if get(lines, 0, '') =~# ' $'
-      let pos = '2cc'
-      let lines[0] .= '.'
-      call writefile(lines, temp)
-    else
-      let pos = 'cfirst'
-    endif
-
+  if isdirectory(expand(args[1]))
     let old_errorformat = &l:errorformat
     let chdir = exists("*haslocaldir") && haslocaldir() ? 'lchdir' : 'chdir'
     let cwd = getcwd()
@@ -1031,7 +1056,7 @@ function! rails#new_app_command(bang,...) abort
       exe chdir s:fnameescape(expand(args[1]))
       let &l:errorformat = s:efm_generate
       exe 'cgetfile' temp
-      exe pos
+      return 'cfirst'
     finally
       let &l:errorformat = old_errorformat
       exe chdir s:fnameescape(cwd)
@@ -1213,27 +1238,31 @@ endfunction
 function! s:readable_test_file_candidates() dict abort
   let f = self.name()
   let projected = self.projected('test')
-  if !empty(projected)
-    return projected
-  endif
   if self.type_name('view')
-    return [fnamemodify(f,':s?\<app/?spec/?')."_spec.rb",
+    let tests = [
+          \ fnamemodify(f,':s?\<app/?spec/?')."_spec.rb",
           \ fnamemodify(f,':r:s?\<app/?spec/?')."_spec.rb",
           \ fnamemodify(f,':r:r:s?\<app/?spec/?')."_spec.rb",
           \ s:sub(s:sub(dest,'<app/views/','test/functional/'),'/[^/]*$','_controller_test.rb')]
     return [spec_format, spec_handler, spec_bare, test]
   elseif self.type_name('controller-api')
-    return [s:sub(s:sub(f,'/controllers/','/apis/'),'_controller\.rb$','_api.rb')]
+    let tests = [
+          \ s:sub(s:sub(f,'/controllers/','/apis/'),'_controller\.rb$','_api.rb')]
   elseif self.type_name('api')
-    return [s:sub(s:sub(f,'/apis/','/controllers/'),'_api\.rb$','_controller.rb')]
+    let tests = [
+          \ s:sub(s:sub(f,'/apis/','/controllers/'),'_api\.rb$','_controller.rb')]
   elseif self.type_name('lib')
-    return [s:sub(f,'<lib/(.*)\.rb$','test/lib/\1_test.rb'),
+    let tests = [
+          \ s:sub(f,'<lib/(.*)\.rb$','test/lib/\1_test.rb'),
           \ s:sub(f,'<lib/(.*)\.rb$','test/unit/\1_test.rb'),
           \ s:sub(f,'<lib/(.*)\.rb$','spec/lib/\1_spec.rb')]
   elseif self.type_name('fixtures') && f =~# '\<spec/'
-    return ['spec/models/' . self.model_name() . '_spec.rb']
+    let tests = [
+          \ 'spec/models/' . self.model_name() . '_spec.rb']
   elseif self.type_name('fixtures')
-    return ['test/models/' . self.model_name() . '_test.rb', 'test/unit/' . self.model_name() . '_test.rb']
+    let tests = [
+          \ 'test/models/' . self.model_name() . '_test.rb',
+          \ 'test/unit/' . self.model_name() . '_test.rb']
   elseif f =~# '\<app/.*\.rb'
     let file = fnamemodify(f,":r")
     let test_file = s:sub(file,'<app/','test/') . '_test.rb'
@@ -1243,13 +1272,24 @@ function! s:readable_test_file_candidates() dict abort
           \ '<test/models/', 'test/unit/'),
           \ '<test/mailers/', 'test/functional/'),
           \ '<test/controllers/', 'test/functional/')
-    return s:uniq([test_file, old_test_file, spec_file])
+    let tests = s:uniq([test_file, old_test_file, spec_file])
   elseif f =~# '\<\(test\|spec\)/\%(\1_helper\.rb$\|support\>\)' || f =~# '\<features/.*\.rb$'
-    return matchstr(f, '.*\<\%(test\|spec\|features\)\>')
+    let tests = [matchstr(f, '.*\<\%(test\|spec\|features\)\>')]
   elseif self.type_name('test', 'spec', 'cucumber')
-    return [f]
+    let tests = [f]
+  else
+    let tests = []
   endif
-  return []
+  if !self.app().has('test')
+    call filter(tests, 'v:val !~# "^test/"')
+  endif
+  if !self.app().has('spec')
+    call filter(tests, 'v:val !~# "^spec/"')
+  endif
+  if !self.app().has('cucumber')
+    call filter(tests, 'v:val !~# "^cucumber/"')
+  endif
+  return projected + tests
 endfunction
 
 function! s:readable_test_file() dict abort
@@ -1284,6 +1324,7 @@ function! s:readable_default_rake_task(...) dict abort
     let last = self.last_method(lnum)
     if !empty(last)
       let placeholders.m = last
+      let placeholders.d = last
     endif
   endif
   let tasks = self.projected('task', placeholders)
@@ -1351,7 +1392,7 @@ function! s:readable_default_rake_task(...) dict abort
       if test =~# '^test/unit\>'
         return 'test:units TEST='.s:rquote(test).opts
       elseif test =~# '^test/functional\>'
-        return 'test:functional TEST='.s:rquote(test).opts
+        return 'test:functionals TEST='.s:rquote(test).opts
       elseif test =~# '^test/integration\>'
         return 'test:integration TEST='.s:rquote(test).opts
       elseif test ==# 'test'
@@ -1361,7 +1402,7 @@ function! s:readable_default_rake_task(...) dict abort
       endif
     elseif test =~# '^spec\>'
       return 'spec SPEC='.s:rquote(with_line)
-    elseif test =~# '^feature\>'
+    elseif test =~# '^features\>'
       return 'cucumber FEATURE='.s:rquote(with_line)
     else
       let task = matchstr(test, '^\w*')
@@ -1543,21 +1584,13 @@ function! s:BufScriptWrappers()
   command! -buffer       -nargs=1 -range=0 -complete=customlist,s:Complete_ruby Rpp           :execute rails#app().output_command(<count>==<line2>?<count>:-1, 'require %{pp}; pp begin '.<q-args>.' end')
 endfunction
 
-function! s:app_gems() dict abort
-  if self.has('bundler') && exists('*bundler#project')
-    return bundler#project(self.path()).gems()
-  else
-    return {}
-  endif
-endfunction
-
 function! s:app_generators() dict abort
   if self.cache.needs('generators')
     let paths = [self.path('vendor/plugins/*'), self.path('lib'), expand("~/.rails")]
     if !empty(self.gems())
       let gems = values(self.gems())
-      let paths += map(values(self.gems()), 'v:val . "/lib/rails"')
-      let paths += map(values(self.gems()), 'v:val . "/lib"')
+      let paths += map(gems, 'v:val . "/lib/rails"')
+      let paths += map(gems, 'v:val . "/lib"')
       let builtin = []
     else
       let builtin = ['assets', 'controller', 'generator', 'helper', 'integration_test', 'jbuilder', 'jbuilder_scaffold_controller', 'mailer', 'migration', 'model', 'resource', 'scaffold', 'scaffold_controller', 'task']
@@ -1584,7 +1617,7 @@ function! s:app_script_command(bang,...) dict
   endif
   let str = join(map(copy(a:000), 's:rquote(v:val)'), ' ')
   if a:bang || str =~# '^\%(c\|console\|db\|dbconsole\|s\|server\)\>'
-    return self.start_rails_command(str)
+    return self.start_rails_command(str, a:bang)
   else
     return self.execute_rails_command(str)
   endif
@@ -1625,7 +1658,7 @@ function! s:readable_runner_command(bang, count, arg) dict abort
       endif
     elseif arg =~# '^spec/.*\%(_spec\.rb\|\.feature\)$'
       let compiler = 'rspec'
-    elseif arg =~# '^features/.*\.features$'
+    elseif arg =~# '^features/.*\.feature$'
       let compiler = 'cucumber'
     else
       let compiler = 'ruby'
@@ -1738,14 +1771,16 @@ function! s:app_server_command(bang,arg) dict
 endfunction
 
 function! s:color_efm(pre, before, after)
-   return a:pre . '%\S%#  %#' . a:before . "\e[0m %#" . a:after . ',' .
-         \ a:pre . '  %#'.a:before.' %#'.a:after . ','
+   return a:pre . '%\S%#  %#' . a:before . "\e[0m  %#" . a:after . ',' .
+         \ a:pre . '   %#'.a:before.' %#'.a:after . ','
 endfunction
 
 let s:efm_generate =
       \ s:color_efm('%-G', 'invoke', '%f') .
       \ s:color_efm('%-G', 'conflict', '%f') .
       \ s:color_efm('%-G', 'run', '%f') .
+      \ s:color_efm('%-G', 'create', ' ') .
+      \ s:color_efm('%-G', 'exist', ' ') .
       \ s:color_efm('Overwrite%.%#', '%m', '%f') .
       \ s:color_efm('', '%m', '%f') .
       \ '%-G%.%#'
@@ -1773,7 +1808,7 @@ function! s:app_generator_command(bang,...) dict
   return ''
 endfunction
 
-call s:add_methods('app', ['gems','generators','script_command','output_command','server_command','generator_command'])
+call s:add_methods('app', ['generators','script_command','output_command','server_command','generator_command'])
 
 function! s:Complete_script(ArgLead,CmdLine,P)
   let cmd = s:sub(a:CmdLine,'^\u\w*\s+','')
@@ -1801,7 +1836,8 @@ function! s:Complete_script(ArgLead,CmdLine,P)
       return s:migrationList(a:ArgLead,"","")
     elseif target ==# 'mailer'
       return s:mailerList(a:ArgLead,"","")
-    elseif target =~# '^\w*\%(model\|resource\)$' || target =~# '\w*scaffold\%(_controller\)\=$' || target ==# 'mailer'
+      return s:completion_filter(rails#app().relglob("app/mailers/","**/*",".rb"),a:ArgLead)
+    elseif target =~# '^\w*\%(model\|resource\)$' || target =~# '\w*scaffold\%(_controller\)\=$'
       return s:completion_filter(rails#app().relglob('app/models/','**/*','.rb'), a:ArgLead)
     else
       return []
@@ -1863,11 +1899,7 @@ function! s:BufNavCommands()
   command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related AV    :call s:Alternate('V<bang>',<line1>,<line2>,<count>,<f-args>)
   command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related AT    :call s:Alternate('T<bang>',<line1>,<line2>,<count>,<f-args>)
   command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related AD    :call s:Alternate('D<bang>',<line1>,<line2>,<count>,<f-args>)
-  command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related E     :call s:Related('E<bang>',<line1>,<line2>,<count>,<f-args>)
-  command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related S     :call s:Related('S<bang>',<line1>,<line2>,<count>,<f-args>)
-  command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related V     :call s:Related('V<bang>',<line1>,<line2>,<count>,<f-args>)
-  command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related T     :call s:Related('T<bang>',<line1>,<line2>,<count>,<f-args>)
-  command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related D     :call s:Related('D<bang>',<line1>,<line2>,<count>,<f-args>)
+  command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related AR    :call s:Alternate('D<bang>',<line1>,<line2>,<count>,<f-args>)
   command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related R     :call s:Related('<bang>' ,<line1>,<line2>,<count>,<f-args>)
   command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related RE    :call s:Related('E<bang>',<line1>,<line2>,<count>,<f-args>)
   command! -buffer -bar -nargs=* -range=0 -complete=customlist,s:Complete_related RS    :call s:Related('S<bang>',<line1>,<line2>,<count>,<f-args>)
@@ -2044,16 +2076,16 @@ function! s:RailsFind()
   let res = s:findamethod('require','\1')
   if res != ""|return res.(fnamemodify(res,':e') == '' ? '.rb' : '')|endif
 
-  let res = s:findamethod('belongs_to\|has_one\|embedded_in\|embeds_one\|composed_of\|validates_associated\|scaffold','app/models/\1.rb')
+  let res = s:findamethod('belongs_to\|has_one\|embedded_in\|embeds_one\|composed_of\|validates_associated\|scaffold','\1.rb')
   if res != ""|return res|endif
 
-  let res = rails#singularize(s:findamethod('has_many\|has_and_belongs_to_many\|embeds_many','app/models/\1'))
+  let res = rails#singularize(s:findamethod('has_many\|has_and_belongs_to_many\|embeds_many','\1'))
   if res != ""|return res.".rb"|endif
 
-  let res = rails#singularize(s:findamethod('create_table\|change_table\|drop_table\|rename_table\|\%(add\|remove\)_\%(column\|index\|timestamps\|reference\|belongs_to\)\|rename_column\|remove_columns\|rename_index','app/models/\1'))
+  let res = rails#singularize(s:findamethod('create_table\|change_table\|drop_table\|rename_table\|\%(add\|remove\)_\%(column\|index\|timestamps\|reference\|belongs_to\)\|rename_column\|remove_columns\|rename_index','\1'))
   if res != ""|return res.".rb"|endif
 
-  let res = rails#singularize(s:findasymbol('through','app/models/\1'))
+  let res = rails#singularize(s:findasymbol('through','\1'))
   if res != ""|return res.".rb"|endif
 
   let res = s:findamethod('fixtures','fixtures/\1')
@@ -2061,19 +2093,19 @@ function! s:RailsFind()
     return RailsFilePath() =~ '\<spec/' ? 'spec/'.res : res
   endif
 
-  let res = s:findamethod('\%(\w\+\.\)\=resources','app/controllers/\1_controller.rb')
+  let res = s:findamethod('\%(\w\+\.\)\=resources','\1_controller.rb')
   if res != ""|return res|endif
 
-  let res = s:findamethod('\%(\w\+\.\)\=resource','app/controllers/\1')
+  let res = s:findamethod('\%(\w\+\.\)\=resource','\1')
   if res != ""|return rails#pluralize(res)."_controller.rb"|endif
 
-  let res = s:findasymbol('to','app/controllers/\1')
+  let res = s:findasymbol('to','\1')
   if res =~ '#'|return s:sub(res,'#','_controller.rb#')|endif
 
-  let res = s:findamethod('root\s*\%(:to\s*=>\|\<to:\)\s*','app/controllers/\1')
+  let res = s:findamethod('root\s*\%(:to\s*=>\|\<to:\)\s*','\1')
   if res =~ '#'|return s:sub(res,'#','_controller.rb#')|endif
 
-  let res = s:findamethod('\%(match\|get\|put\|patch\|post\|delete\|redirect\)\s*(\=\s*[:''"][^''"]*[''"]\=\s*\%(\%(,\s*:to\s*\)\==>\|,\s*to:\)\s*','app/controllers/\1')
+  let res = s:findamethod('\%(match\|get\|put\|patch\|post\|delete\|redirect\)\s*(\=\s*[:''"][^''"]*[''"]\=\s*\%(\%(,\s*:to\s*\)\==>\|,\s*to:\)\s*','\1')
   if res =~ '#'|return s:sub(res,'#','_controller.rb#')|endif
 
   if !buffer.type_name('controller', 'mailer')
@@ -2089,10 +2121,10 @@ function! s:RailsFind()
   let res = s:findasymbol('layout','\=s:findlayout(submatch(1))')
   if res != ""|return res|endif
 
-  let res = s:findamethod('helper','app/helpers/\1_helper.rb')
+  let res = s:findamethod('helper','\1_helper.rb')
   if res != ""|return res|endif
 
-  let res = s:findasymbol('controller','app/controllers/\1_controller.rb')
+  let res = s:findasymbol('controller','\1_controller.rb')
   if res != ""|return res|endif
 
   let res = s:findasymbol('action','\1')
@@ -2162,7 +2194,7 @@ endfunction
 
 function! s:app_route_names() dict
   if self.cache.needs("named_routes")
-    let exec = "ActionController::Routing::Routes.named_routes.each {|n,r| puts %{#{n} app/controllers/#{r.requirements[:controller]}_controller.rb##{r.requirements[:action]}}}"
+    let exec = "ActionController::Routing::Routes.named_routes.each {|n,r| puts %{#{n} #{r.requirements[:controller]}_controller.rb##{r.requirements[:action]}}}"
     let string = self.eval(exec)
     let routes = {}
     for line in split(string,"\n")
@@ -2205,7 +2237,7 @@ function! s:RailsIncludefind(str,...)
   if line =~# '\<\(require\|load\)\s*(\s*$'
     return str
   elseif str =~# '^\l\w*#\w\+$'
-    return 'app/controllers/'.s:sub(str,'#','_controller.rb#')
+    return s:sub(str,'#','_controller.rb#')
   endif
   let str = rails#underscore(str)
   let fpat = '\(\s*\%("\f*"\|:\f*\|'."'\\f*'".'\)\s*,\s*\)*'
@@ -2218,9 +2250,9 @@ function! s:RailsIncludefind(str,...)
   elseif line =~# '\<layout\s*(\=\s*' || line =~# ':layout\s*=>\s*'
     let str = s:findview(s:sub(str,'^/=','layouts/'))
   elseif line =~# ':controller\s*=>\s*'
-    let str = 'app/controllers/'.str.'_controller.rb'
+    let str = str.'_controller.rb'
   elseif line =~# '\<helper\s*(\=\s*'
-    let str = 'app/helpers/'.str.'_helper.rb'
+    let str = str.'_helper.rb'
   elseif line =~# '\<fixtures\s*(\='.fpat
     if RailsFilePath() =~# '\<spec/'
       let str = s:sub(str,'^/@!','spec/fixtures/')
@@ -2241,9 +2273,9 @@ function! s:RailsIncludefind(str,...)
       let str .= '.js'
     endif
   elseif line =~# '\<\(has_one\|belongs_to\)\s*(\=\s*'
-    let str = 'app/models/'.str.'.rb'
+    let str = str.'.rb'
   elseif line =~# '\<has_\(and_belongs_to_\)\=many\s*(\=\s*'
-    let str = 'app/models/'.rails#singularize(str).'.rb'
+    let str = rails#singularize(str).'.rb'
   elseif line =~# '\<def\s\+' && expand("%:t") =~# '_controller\.rb'
     let str = s:findview(str)
   elseif str =~# '_\%(path\|url\)$' || (line =~# ':as\s*=>\s*$' && rails#buffer().type_name('config-routes'))
@@ -2255,14 +2287,14 @@ function! s:RailsIncludefind(str,...)
     if file == ""
       let str = s:sub(str,'^formatted_','')
       if str =~# '^\%(new\|edit\)_'
-        let str = 'app/controllers/'.s:sub(rails#pluralize(str),'^(new|edit)_(.*)','\2_controller.rb#\1')
+        let str = s:sub(rails#pluralize(str),'^(new|edit)_(.*)','\2_controller.rb#\1')
       elseif str ==# rails#singularize(str)
         " If the word can't be singularized, it's probably a link to the show
         " method.  We should verify by checking for an argument, but that's
         " difficult the way things here are currently structured.
-        let str = 'app/controllers/'.rails#pluralize(str).'_controller.rb#show'
+        let str = rails#pluralize(str).'_controller.rb#show'
       else
-        let str = 'app/controllers/'.str.'_controller.rb#index'
+        let str = str.'_controller.rb#index'
       endif
     else
       let str = file
@@ -2284,6 +2316,87 @@ endfunction
 " }}}1
 " Projection Commands {{{1
 
+function! s:app_commands() dict abort
+  let commands = {}
+
+  let commands.environment = [
+        \ {'pattern': 'config/environments/*.rb'},
+        \ {'pattern': 'config/application.rb'},
+        \ {'pattern': 'config/environment.rb'}]
+  let commands.helper = [{
+        \ 'pattern': 'app/helpers/*_helper.rb',
+        \ 'template': "module %SHelper\nend",
+        \ 'affinity': 'controller'}]
+  let commands.initializer = [
+        \ {'pattern': 'config/initializers/*.rb'},
+        \ {'pattern': 'config/routes.rb'}]
+  let commands.lib = [
+        \ {'pattern': 'lib/*.rb'},
+        \ {'pattern': 'Gemfile'}]
+  let commands.mailer = [
+        \ {'pattern': 'app/mailers/*.rb', 'template': "class %S < ActionMailer::Base\nend", 'affinity': 'controller'},
+        \ {'pattern': 'app/models/*.rb', 'template': "class %S < ActionMailer::Base\nend", 'affinity': 'controller', 'complete': 0}]
+  let commands.model = [{
+        \ 'pattern': 'app/models/*.rb',
+        \ 'template': "class %S\nend",
+        \ 'affinity': 'model'}]
+  let commands.task = [
+        \ {'pattern': 'lib/tasks/*.rake'},
+        \ {'pattern': 'Rakefile'}]
+
+  let commands['unit test'] = map(filter([
+        \ ['test', 'test/unit/*_test.rb', "require 'test_helper'\n\nclass %STest < ActiveSupport::TestCase\nend", 'model', 1],
+        \ ['test', 'test/models/*_test.rb', "require 'test_helper'\n\nclass %STest < ActiveSupport::TestCase\nend", 'model', 1],
+        \ ['test', 'test/helpers/*_test.rb', "require 'test_helper'\n\nclass %STest < ActionView::TestCase\nend", '', 1],
+        \ ['test', 'test/helpers/*_helper_test.rb', "require 'test_helper'\n\nclass %SHelperTest < ActionView::TestCase\nend", 'controller', 0],
+        \ ['spec', 'spec/models/*_spec.rb', "require 'spec_helper'\n\ndescribe %S do\nend", 'model', 1],
+        \ ['spec', 'spec/helpers/*_spec.rb', "require 'spec_helper'\n\ndescribe %S do\nend", '', 1],
+        \ ['spec', 'spec/helpers/*_helper_spec.rb', "require 'spec_helper'\n\ndescribe %SHelper do\nend", 'controller', 0]],
+        \ 'rails#app().has(v:val[0])'),
+        \ '{"pattern": v:val[1], "template": v:val[2], "affinity": v:val[3], "complete": v:val[4]}')
+  let commands['functional test'] = map(filter([
+        \ ['test', 'test/functional/*_test.rb', "require 'test_helper'\n\nclass %STest < ActionController::TestCase\nend", '', 1],
+        \ ['test', 'test/functional/*_controller_test.rb', "require 'test_helper'\n\nclass %SControllerTest < ActionController::TestCase\nend", 'controller', 0],
+        \ ['test', 'test/controllers/*_test.rb', "require 'test_helper'\n\nclass %STest < ActionController::TestCase\nend", '', 1],
+        \ ['test', 'test/controllers/*_controller_test.rb', "require 'test_helper'\n\nclass %SControllerTest < ActionController::TestCase\nend", 'controller', 0],
+        \ ['test', 'test/mailers/', "require 'test_helper'\n\nclass %STest < ActionMailer::TestCase\nend", 'model', 1],
+        \ ['spec', 'spec/controllers/*_spec.rb', "require 'spec_helper'\n\ndescribe %S do\nend", '', 1],
+        \ ['spec', 'spec/controllers/*_controller_spec.rb', "require 'spec_helper'\n\ndescribe %SController do\nend", 'controller', 0],
+        \ ['spec', 'spec/mailers/*_spec.rb', "require 'spec_helper'\n\ndescribe %S do\nend", 'controller', 0]],
+        \ 'rails#app().has(v:val[0])'),
+        \ '{"pattern": v:val[1], "template": v:val[2], "affinity": v:val[3], "complete": v:val[4]}')
+  let commands['integration test'] = map(filter([
+        \ ['test', 'test/integration/*_test.rb', "require 'test_helper'\n\nclass %STest < ActionDispatch::IntegrationTest\nend"],
+        \ ['spec', 'spec/features/*_spec.rb', "require 'spec_helper'\n\ndescribe \"%h\" do\nend"],
+        \ ['spec', 'spec/requests/*_spec.rb', "require 'spec_helper'\n\ndescribe \"%h\" do\nend"],
+        \ ['spec', 'spec/integration/*_spec.rb', "require 'spec_helper'\n\ndescribe \"%h\" do\nend"],
+        \ ['cucumber', 'features/*.feature', "Feature: %h"],
+        \ ['turnip', 'spec/acceptance/*.feature', "Feature: %h"],
+        \ ['test', 'test/test_helper.rb', ""],
+        \ ['cucumber', 'features/support/env.rb', ""],
+        \ ['spec', 'spec/spec_helper.rb', ""]],
+        \ 'rails#app().has(v:val[0])'),
+        \ '{"pattern": v:val[1], "template": v:val[2]}')
+
+  let all = self.projections()
+  for pattern in reverse(sort(keys(all), function('rails#lencmp')))
+    let projection = all[pattern]
+    for name in s:split(get(projection, 'command', ''))
+      let command = {
+            \ 'pattern': pattern,
+            \ 'affinity': get(projection, 'affinity', '')}
+      if !has_key(commands, name)
+        let commands[name] = []
+      endif
+      call extend(commands[name], [command])
+    endfor
+  endfor
+  call filter(commands, '!empty(v:val)')
+  return commands
+endfunction
+
+call s:add_methods('app', ['commands'])
+
 function! s:addfilecmds(type)
   let l = s:sub(a:type,'^.','\l&')
   for prefix in ['E', 'S', 'V', 'T', 'D', 'R', 'RE', 'RS', 'RV', 'RT', 'RD']
@@ -2293,79 +2406,8 @@ function! s:addfilecmds(type)
 endfunction
 
 function! s:BufProjectionCommands()
-  call s:define_navcommand('environment', {
-        \ 'format': 'config/environments/%s.rb',
-        \ 'default': ['config/application.rb', 'config/environment.rb']})
-  call s:define_navcommand('helper', {
-        \ 'format': 'app/helpers/%s_helper.rb',
-        \ 'template': "module %SHelper\nend",
-        \ 'affinity': 'controller'})
-  call s:define_navcommand('initializer', {
-        \ 'format': 'config/initializers/%s.rb',
-        \ 'default': ['config/routes.rb']})
-  call s:define_navcommand('lib', {
-        \ 'format': 'lib/%s.rb',
-        \ 'default': ['Gemfile']})
-  call s:define_navcommand('model', {
-        \ 'format': 'app/models/%s.rb',
-        \ 'template': "class %S\nend",
-        \ 'affinity': 'model'})
-  call s:define_navcommand('task', {
-        \ 'format': 'lib/tasks/%s.rake',
-        \ 'default': ['Rakefile']})
-  let tests = filter([
-        \ ['test', 'test/unit/%s_test.rb', 'test/functional/%s_test.rb'],
-        \ ['test', 'test/models/%s_test.rb', 'test/controllers/%s_test.rb'],
-        \ ['test', 'test/helpers/%s_test.rb', 'test/mailers/%s_test.rb'],
-        \ ['spec', 'spec/models/%s_spec.rb', 'spec/controllers/%s_spec.rb'],
-        \ ['spec', 'spec/helpers/%s_spec.rb', 'spec/mailers/%s_spec.rb']],
-        \ 'rails#app().has(v:val[0])')
-  if !empty(tests)
-    call s:define_navcommand('unit test', {
-          \ 'format': map(copy(tests), 'v:val[1]'),
-          \ 'template': {
-          \   'test/unit/': "require 'test_helper'\n\nclass %STest < ActiveSupport::TestCase\nend",
-          \   'test/models/': "require 'test_helper'\n\nclass %STest < ActiveSupport::TestCase\nend",
-          \   'test/helpers/': "require 'test_helper'\n\nclass %STest < ActionView::TestCase\nend",
-          \   'spec/models/': "require 'spec_helper'\n\ndescribe %S do\nend",
-          \   'spec/helpers/': "require 'spec_helper'\n\ndescribe %S do\nend"},
-          \ 'affinity': 'model'})
-    call s:define_navcommand('functional test', {
-          \ 'format': map(copy(tests), 'v:val[2]'),
-          \ 'template': {
-          \   'test/functional/': "require 'test_helper'\n\nclass %STest < ActionController::TestCase\nend",
-          \   'test/controllers/': "require 'test_helper'\n\nclass %STest < ActionController::TestCase\nend",
-          \   'test/mailers/': "require 'test_helper'\n\nclass %STest < ActionMailer::TestCase\nend",
-          \   'spec/models/': "require 'spec_helper'\n\ndescribe %S do\nend",
-          \   'spec/helpers/': "require 'spec_helper'\n\ndescribe %S do\nend"},
-          \ 'affinity': 'controller'})
-  endif
-  let integration_tests = map(filter([
-        \ ['test', 'test/integration/%s_test.rb'],
-        \ ['spec', 'spec/features/%s_spec.rb'],
-        \ ['spec', 'spec/requests/%s_spec.rb'],
-        \ ['spec', 'spec/integration/%s_spec.rb'],
-        \ ['cucumber', 'features/%s.feature'],
-        \ ['turnip', 'spec/acceptance/%s.feature']],
-        \ 'rails#app().has(v:val[0])'), 'v:val[1]')
-  if !empty(integration_tests)
-    call s:define_navcommand('integration test', {
-          \ 'format': integration_tests,
-          \ 'template': {
-          \   'test/integration/': "require 'test_helper'\n\nclass %STest < ActionDispatch::IntegrationTest\nend",
-          \   'spec/requests/': "require 'spec_helper'\n\ndescribe \"%h\" do\nend",
-          \   'spec/features/': "require 'spec_helper'\n\ndescribe \"%h\" do\nend",
-          \   'spec/integration/': "require 'spec_helper'\n\ndescribe \"%h\" do\nend",
-          \   'features/': "Feature: %h",
-          \   'spec/acceptance/': "Feature: %h"},
-          \ 'default': [
-          \   'test/test_helper.rb',
-          \   'features/support/env.rb',
-          \   'spec/spec_helper.rb']})
-  endif
   call s:addfilecmds("view")
   call s:addfilecmds("controller")
-  call s:addfilecmds("mailer")
   call s:addfilecmds("migration")
   call s:addfilecmds("schema")
   call s:addfilecmds("layout")
@@ -2376,7 +2418,7 @@ function! s:BufProjectionCommands()
   endif
   call s:addfilecmds("stylesheet")
   call s:addfilecmds("javascript")
-  for [name, command] in items(rails#app().projections())
+  for [name, command] in items(rails#app().commands())
     call s:define_navcommand(name, command)
   endfor
 endfunction
@@ -2439,10 +2481,6 @@ function! s:controllerList(A,L,P)
   let con = rails#app().relglob("app/controllers/","**/*",".rb")
   call map(con,'s:sub(v:val,"_controller$","")')
   return s:autocamelize(con,a:A)
-endfunction
-
-function! s:mailerList(A,L,P)
-  return s:autocamelize(rails#app().relglob("app/mailers/","**/*",".rb"),a:A)
 endfunction
 
 function! s:viewList(A,L,P)
@@ -2515,63 +2553,45 @@ function! s:specList(A,L,P)
 endfunction
 
 function! s:Navcommand(bang,...)
-  let command = {'prefix': [], 'deprecation': ':Rnavcommand is deprecated.  See :help config/editor.json for replacement.'}
-  let i = 0
-  while i < a:0
-    let i += 1
-    let arg = a:{i}
+  let prefixes = []
+  let suffix = '.rb'
+  let affinity = ''
+  for arg in a:000
     if arg =~# '^-suffix='
       let suffix = matchstr(arg,'-suffix=\zs.*')
-      let command.suffix = suffix
     elseif arg =~# '^-default='
-      let command.default = matchstr(arg,'-default=\zs.*')
-    elseif arg =~# '^-\%(glob\|filter\)='
-      let command.glob = matchstr(arg,'-\w*=\zs.*')
+      let default = matchstr(arg,'-default=\zs.*')
+      if default =~# '()$'
+        let affinity = default[0:-3]
+        unlet default
+      endif
     elseif arg !~# '^-'
       if !exists('name')
         let name = arg
       else
-        let command.prefix += [s:sub(arg, '/=$', '/')]
+        let prefixes += [s:sub(arg, '/=$', '/')]
       endif
     endif
-  endwhile
+  endfor
   if !exists('name') || name !~# '^[a-z]\+$'
     return s:error("E182: Invalid command name")
   endif
-  return s:define_navcommand(name, command)
+  if empty(prefixes)
+    return ''
+  endif
+  let command = map(prefixes, '{"pattern": v:val . "*" . suffix, "affinity": affinity}')
+  if exists('default')
+    let command += [{"pattern": default}]
+  endif
+  let deprecation = ':Rnavcommand is deprecated.  See :help config/projections.json for replacement.'
+  return s:define_navcommand(name, command, 'call s:warn('.string(deprecation).')')
 endfunction
 
-function! s:define_navcommand(name, projection) abort
-  let projection = extend({'default': '', 'glob': '**/*'}, a:projection)
-  if !has_key(projection, 'format')
-    let projection.prefix = s:split(get(projection, 'prefix', []))
-    let projection.suffix = s:split(get(projection, 'suffix', ['.rb']))
-    if empty(projection.prefix)
-      return
-    endif
-  endif
-  if has_key(projection, 'affinity') && empty(projection.default)
-    let projection.default = projection.affinity . '()'
-  endif
-  if get(projection, 'command', 1) =~# '^0\=$'
+function! s:define_navcommand(name, projection, ...) abort
+  if empty(a:projection)
     return
   endif
-  if get(projection, 'check', 0)
-    let keep = 0
-    for [prefix, suffix] in s:projection_pairs(projection)
-      if rails#app().has_path(s:sub(prefix, '/[^/]*$', '/'))
-        let keep = 1
-      endif
-    endfor
-    if !keep
-      return
-    endif
-  endif
-  if type(get(projection, 'command', 1)) ==# type('')
-    let name = projection.command
-  else
-    let name = s:gsub(a:name, '[[:space:][:punct:]]', '')
-  endif
+  let name = s:gsub(a:name, '[[:punct:][:space:]]', '')
   if name !~# '^[a-z]\+$'
     return s:error("E182: Invalid command name ".name)
   endif
@@ -2581,18 +2601,21 @@ function! s:define_navcommand(name, projection) abort
           \ '-complete=customlist,'.s:sid.'CommandList ' .
           \ prefix . name . ' :execute s:CommandEdit(' .
           \ string((prefix =~# 'D' ? '<line1>' : '') . s:sub(prefix, '^R', '') . "<bang>") . ',' .
-          \ string(a:name) . ',' . string(projection) . ',<f-args>)'
+          \ string(a:name) . ',' . string(a:projection) . ',<f-args>)' .
+          \ (a:0 ? '|' . a:1 : '')
   endfor
 endfunction
 
 function! s:CommandList(A,L,P)
   let cmd = matchstr(a:L,'\C[A-Z]\w\+')
-  let g:cmd = cmd
   exe cmd." &"
-  let command = s:last_options
   let matches = []
-  for [prefix, suffix] in s:projection_pairs(command)
-    let results = rails#app().relglob(prefix, command.glob, suffix)
+  for projection in s:last_projections
+    if projection.pattern !~# '\*' || !get(projection, 'complete', 1)
+      continue
+    endif
+    let [prefix, suffix; _] = split(projection.pattern, '\*', 1)
+    let results = rails#app().relglob(prefix, '**/*', suffix)
     if suffix =~# '\.rb$' && a:A =~# '^\u'
       let matches += map(results, 'rails#camelize(v:val)')
     else
@@ -2602,12 +2625,12 @@ function! s:CommandList(A,L,P)
   return s:completion_filter(matches, a:A)
 endfunction
 
-function! s:CommandEdit(cmd, name, options, ...)
+function! s:CommandEdit(cmd, name, projections, ...)
   if a:0 && a:1 == "&"
-    let s:last_options = a:options
+    let s:last_projections = a:projections
     return ''
   else
-    return rails#buffer().open_command(a:cmd, a:0 ? a:1 : '', a:name, a:options)
+    return rails#buffer().open_command(a:cmd, a:0 ? a:1 : '', a:name, a:projections)
   endif
 endfunction
 
@@ -2684,10 +2707,9 @@ function! s:migrationEdit(cmd,...)
     if offset <= -12 * 60 * 60
       let offset += 86400
     endif
-    return rails#buffer().open_command(a:cmd, strftime('%Y%m%d%H%M%S', ts - offset).'_'.arg, 'migration', {
-          \ 'template': 'class ' . rails#camelize(matchstr(arg, '[^!]*')) . " < ActiveRecord::Migration\nend",
-          \ 'prefix': 'db/migrate/',
-          \ 'suffix': '.rb'})
+    let template = 'class ' . rails#camelize(matchstr(arg, '[^!]*')) . " < ActiveRecord::Migration\nend"
+    return rails#buffer().open_command(a:cmd, strftime('%Y%m%d%H%M%S', ts - offset).'_'.arg, 'migration',
+          \ [{'pattern': 'db/migrate/*.rb', 'template': template}])
   endif
   let migr = arg == "." ? "db/migrate" : rails#app().migration(arg)
   if migr != ''
@@ -2732,8 +2754,8 @@ function! s:localeEdit(cmd,...)
   if c =~# '\.'
     return s:edit(a:cmd,rails#app().find_file(c,'config/locales',[],'config/locales/'.c))
   else
-    return rails#buffer().open_command(a:cmd, c, 'locale', {
-          \ 'format': ['config/locales/%s.yml', 'config/locales/%s.rb']})
+    return rails#buffer().open_command(a:cmd, c, 'locale',
+          \ [{'pattern': 'config/locales/*.yml'}, {'pattern': 'config/locales/*.rb'}]})
   endif
 endfunction
 
@@ -2851,18 +2873,8 @@ function! s:controllerEdit(cmd,...)
     let template = "class %SController < ApplicationController\nend"
     let suffix = "_controller".suffix
   endif
-  return rails#buffer().open_command(a:cmd, controller . jump, 'controller', {
-        \ 'template': template,
-        \ 'prefix': 'app/controllers/',
-        \ 'suffix': suffix})
-endfunction
-
-function! s:mailerEdit(cmd,...)
-  return rails#buffer().open_command(a:cmd, a:0 ? a:1 : '', 'mailer', {
-        \ 'prefix': ['app/mailers/', 'app/models/'],
-        \ 'suffix': '.rb',
-        \ 'template': "class %S < ActionMailer::Base\nend",
-        \ 'affinity': 'controller'})
+  return rails#buffer().open_command(a:cmd, controller . jump, 'controller',
+        \ [{'template': template, 'pattern': 'app/controllers/*'.suffix}])
 endfunction
 
 function! s:stylesheetEdit(cmd,...)
@@ -2901,11 +2913,9 @@ endfunction
 
 function! s:specEdit(cmd,...) abort
   let describe = s:sub(s:sub(rails#camelize(a:0 ? a:1 : ''), '^[^:]*::', ''), '!.*', '')
-  return rails#buffer().open_command(a:cmd, a:0 ? a:1 : '', 'spec', {
-        \ 'prefix': 'spec/',
-        \ 'suffix': '_spec.rb',
-        \ 'template': "require 'spec_helper'\n\ndescribe ".describe." do\nend",
-        \ 'default': ['spec/spec_helper.rb']})
+  return rails#buffer().open_command(a:cmd, a:0 ? a:1 : '', 'spec', [
+        \ {'pattern': 'spec/*_spec.rb', 'template': "require 'spec_helper'\n\ndescribe ".describe." do\nend"},
+        \ {'pattern': 'spec/spec_helper.rb'}])
 endfunction
 
 " }}}1
@@ -2965,80 +2975,74 @@ function! s:projection_pairs(options)
   return pairs
 endfunction
 
-let s:seen_projection_deprecations = {}
-
-function! s:readable_open_command(cmd, argument, name, options) dict abort
-  let depr = ''
-  if &verbose && has_key(a:options, 'deprecation') && !has_key(s:seen_projection_deprecations, a:options.deprecation)
-    let s:seen_projection_deprecations[a:options.deprecation] = 1
-    let depr = '|echohl WarningMsg|echon '.string(a:options.deprecation).'|echohl NONE'
-  endif
+function! s:readable_open_command(cmd, argument, name, projections) dict abort
   let cmd = s:editcmdfor(a:cmd)
   let djump = ''
-  let default = get(a:options, 'default', get(a:options, 'affinity', '').'()')
   if a:argument =~ '[#!]\|:\d*\%(:in\)\=$'
     let djump = matchstr(a:argument,'!.*\|#\zs.*\|:\zs\d*\ze\%(:in\)\=$')
-    let root = s:sub(a:argument,'[#!].*|:\d*%(:in)=$','')
-  elseif a:argument ==# '' && type(default) == type('')
-    if default ==# "both()"
-      let root = self.model_name(0) !=# '' ? self.model_name(0) : self.controller_name(0)
-    elseif default ==# "model()"
-      let root = self.model_name(1)
-    elseif default ==# "controller()" || default ==# "collection()"
-      let root = self.controller_name(1)
-    elseif default =~# '()$'
-      let root = ''
-    else
-      let root = default
-    endif
-  elseif a:argument ==# '' && type(default) == type([])
-    for file in default
-      if self.app().has_path(file)
-        return cmd . ' ' . s:fnameescape(self.app().path(file)) . depr
-      endif
-    endfor
-    return cmd . ' ' . s:fnameescape(self.app().path(a:default[0]))
+    let argument = s:sub(a:argument,'[#!].*|:\d*%(:in)=$','')
   else
-    let root = a:argument
+    let argument = a:argument
   endif
-  if root ==# ''
-    return 'echoerr "E471: Argument required"'
-  endif
-  let pairs = s:projection_pairs(a:options)
-  for [prefix, suffix] in pairs
-    if root ==# '.' && self.app().has_path(prefix)
-      return cmd . ' ' . s:fnameescape(rails#app().path(prefix))
+
+  for projection in a:projections
+    if argument ==# '.' && projection.pattern =~# '\*'
+      let file = split(projection.pattern, '\*')[0]
+    elseif projection.pattern =~# '\*'
+      if !empty(argument)
+        let root = argument
+      elseif get(projection, 'affinity', '') =~# '\%(model\|resource\)$'
+        let root = self.model_name(1)
+      elseif get(projection, 'affinity', '') =~# '^\%(controller\|collection\)$'
+        let root = self.controller_name(1)
+      else
+        continue
+      endif
+      let file = s:sub(projection.pattern, '\*', root)
+    elseif empty(argument) && projection.pattern !~# '\*'
+      let file = projection.pattern
+    else
+      let file = ''
     endif
-    let file = self.app().path(prefix . (suffix =~# '\.rb$' ? rails#underscore(root) : root) . suffix)
-    if filereadable(file)
-      return cmd . ' ' . s:fnameescape(simplify(file)) . '|exe ' . s:sid . 'djump('.string(djump) . ')' . depr
+    if !empty(file) && self.app().has_path(file)
+      let file = self.app().path(file)
+      return cmd . ' ' . s:fnameescape(file) . '|exe ' . s:sid . 'djump('.string(djump) . ')'
     endif
   endfor
+  if empty(argument)
+    let defaults = filter(map(copy(a:projections), 'v:val.pattern'), 'v:val !~# "\\*"')
+    if empty(defaults)
+      return 'echoerr "E471: Argument required"'
+    else
+      return cmd . ' ' . s:fnameescape(defaults[0])
+    endif
+  endif
   if djump !~# '^!'
     return 'echoerr '.string('No such '.tr(a:name, '_', ' ').' '.root)
   endif
-  for [prefix, suffix] in pairs
+  for projection in a:projections
+    if projection.pattern !~# '\*'
+      continue
+    endif
+    let [prefix, suffix; _] = split(projection.pattern, '\*', 1)
     if self.app().has_path(prefix)
-      let file = self.app().path(prefix . (suffix =~# '\.rb$' ? rails#underscore(root) : root) . suffix)
+      let relative = prefix . (suffix =~# '\.rb$' ? rails#underscore(root) : root) . suffix
+      let file = self.app().path(relative)
       if !isdirectory(fnamemodify(file, ':h'))
         call mkdir(fnamemodify(file, ':h'), 'p')
       endif
-      if type(get(a:options, 'template', '')) == type({})
-        let template = s:split(get(a:options.template, prefix, ''))
+      if has_key(projection, 'template')
+      let template = s:split(projection.template)
+      let ph = {
+              \ 'S': rails#camelize(root),
+              \ 'h': toupper(root[0]) . tr(rails#underscore(root), '_', ' ')[1:-1]}
+        call map(template, 's:expand_placeholders(v:val, ph)')
       else
-        let template = s:split(get(a:options, 'template', ''))
+        let projected = self.app().file(relative).projected('template')
+        let template = s:split(get(projected, 0, ''))
       endif
-      let placeholders = {
-            \ '%s': rails#underscore(root),
-            \ '%S': rails#camelize(root),
-            \ '%h': toupper(root[0]) . tr(rails#underscore(root), '_', ' ')[1:-1],
-            \ '%%': '%'}
-      if suffix =~# '\.js\>'
-        let placeholders['%S'] = s:gsub(placeholders['%S'], '::', '.')
-      endif
-      call map(template, 'substitute(v:val, "%.", "\\=get(placeholders, submatch(0), submatch(0))", "g")')
       call map(template, 's:gsub(v:val, "\t", "  ")')
-      return cmd . ' ' . s:fnameescape(simplify(file)) . '|call setline(1, '.string(template).')' . '|set nomod' . depr
+      return cmd . ' ' . s:fnameescape(simplify(file)) . '|call setline(1, '.string(template).')' . '|set nomod'
     endif
   endfor
   return 'echoerr '.string("Couldn't find destination directory for ".a:name.' '.a:argument)
@@ -3141,6 +3145,7 @@ function! s:readable_alternate_candidates(...) dict abort
     let lastmethod = self.last_method(a:1)
     if !empty(lastmethod)
       let placeholders.m = lastmethod
+      let placeholders.d = lastmethod
     endif
     let projected = self.projected('related', placeholders)
     if !empty(projected)
@@ -3629,6 +3634,15 @@ function! s:BufSyntax()
     let javascript_functions = "$ jQuery"
     let classes = s:gsub(join(rails#app().user_classes(),' '),'::',' ')
     if &syntax == 'ruby'
+      let keywords = split(join(buffer.projected('keywords'), ' '))
+      let special = filter(copy(keywords), 'v:val =~# ''^\h\k*[?!]$''')
+      let regular = filter(copy(keywords), 'v:val =~# ''^\h\k*$''')
+      if !empty(special)
+        exe 'syn match rubyRailsMethod "\<\%('.join(special, '\|').'\)"'
+      endif
+      if !empty(regular)
+        exe 'syn keyword rubyRailsMethod '.join(regular, ' ')
+      endif
       if classes != ''
         exe "syn keyword rubyRailsUserClass ".classes." containedin=rubyClassDeclaration,rubyModuleDeclaration,rubyClass,rubyModule"
       endif
@@ -4140,8 +4154,15 @@ function! s:BufAbbreviations()
     Rabbrev AS::  ActiveSupport
     Rabbrev AM::  ActionMailer
     Rabbrev AO::  ActiveModel
-    for pairs in items(type(get(g:, 'rails_abbreviations', 0)) == type({}) ? g:rails_abbreviations : {}) + items(rails#app().config('abbreviations'))
+    for pairs in
+          \ items(type(get(g:, 'rails_abbreviations', 0)) == type({}) ? g:rails_abbreviations : {}) +
+          \ items(rails#app().config('abbreviations'))
       call call(function(s:sid.'Abbrev'), [0, pairs[0]] + s:split(pairs[1]))
+    endfor
+    for hash in reverse(rails#buffer().projected('abbreviations'))
+      for pairs in items(hash)
+        call call(function(s:sid.'Abbrev'), [0, pairs[0]] + s:split(pairs[1]))
+      endfor
     endfor
   endif
 endfunction
@@ -4258,6 +4279,14 @@ function! s:app_config(...) dict abort
   endif
 endfunction
 
+function! s:app_gems() dict abort
+  if self.has('bundler') && exists('*bundler#project')
+    return bundler#project(self.path()).gems()
+  else
+    return {}
+  endif
+endfunction
+
 function! s:app_has_gem(gem) dict abort
   if self.has('bundler') && exists('*bundler#project')
     let project = bundler#project(self.path())
@@ -4271,16 +4300,64 @@ function! s:app_has_gem(gem) dict abort
   endif
 endfunction
 
+function! s:app_engines() dict abort
+  let gems = escape(join(values(self.gems()),','), ' ')
+  if empty(gems)
+    return []
+  else
+    return sort(map(finddir('app', gems, -1), 'fnamemodify(v:val, ":h")'))
+  endif
+endfunction
+
+function! s:extend_projection(dest, src)
+  let dest = copy(a:dest)
+  for key in keys(a:src)
+    if !has_key(dest, key) || key ==# 'affinity'
+      let dest[key] = a:src[key]
+    elseif type(a:src[key]) == type({}) && type(dest[key]) == type({})
+      let dest[key] = extend(copy(dest[key]), a:src[key])
+    else
+      let dest[key] = s:uniq(s:getlist(a:src, key) + s:getlist(dest, key))
+    endif
+  endfor
+  return dest
+endfunction
+
 function! s:combine_projections(dest, src, ...) abort
   let extra = a:0 ? a:1 : {}
-  if type(a:src) == type([])
-    for projection in a:src
-      if !empty(get(projection, 'name', ''))
-        let a:dest[projection.name] = extend(copy(projection), extra)
+  if type(a:src) == type({})
+    for [pattern, original] in items(a:src)
+      let projection = extend(copy(original), extra)
+      if has_key(projection, 'prefix') || has_key(projection, 'format')
+        let nested = extend({
+              \ 'command': pattern,
+              \ }, projection)
+        if type(get(nested, 'template', '')) == type([])
+          let nested.template = join(nested.template, "\n")
+        endif
+        for key in ['prefix', 'suffix', 'format', 'default']
+          if has_key(nested, key)
+            call remove(nested, key)
+          endif
+        endfor
+        for [prefix, suffix] in s:projection_pairs(projection)
+          let a:dest[prefix . '*' . suffix] = copy(nested)
+          if type(get(nested, 'template', '')) == type({})
+            let a:dest[prefix . '*' . suffix].template = get(nested.template, prefix)
+          endif
+          if type(get(projection, 'default', [])) ==# type('')
+            let a:dest[prefix . projection.default . suffix] = copy(nested)
+          endif
+        endfor
+        if type(get(projection, 'default', '')) ==# type([])
+          for default in projection.default
+            let a:dest[prefix . default . suffix] = copy(nested)
+          endfor
+        endif
+      else
+        let a:dest[pattern] = s:extend_projection(get(a:dest, pattern, {}), projection)
       endif
     endfor
-  elseif type(a:src) == type({})
-    call extend(a:dest, map(a:src, 'extend(copy(v:val), extra)'))
   endif
   return a:dest
 endfunction
@@ -4320,46 +4397,43 @@ function! s:app_projections() dict abort
   return dict
 endfunction
 
-call s:add_methods('app', ['config', 'has_gem', 'projections'])
-
-function! s:find_projection(projections, filename) abort
-  let f = a:filename
-  for c in a:projections
-    for [prefix, suffix] in s:projection_pairs(c)
-      if s:startswith(f, prefix) && f[-strlen(suffix) : - 1] ==# suffix
-        return [f[strlen(prefix) : -strlen(suffix)-1], c]
-      endif
-    endfor
-  endfor
-  return ['', {}]
-endfunction
+call s:add_methods('app', ['config', 'gems', 'has_gem', 'engines', 'projections'])
 
 function! s:expand_placeholders(string, placeholders)
-  let value = substitute(a:string, '%\([^: ]\)', '\=get(a:placeholders, submatch(1), "\n")', 'g')
-  return value =~# '\n' ? '' : value
+  if type(a:string) !=# type('')
+    return a:string
+  endif
+  let ph = extend({'%': '%'}, a:placeholders)
+  let value = substitute(a:string, '%\([^: ]\)', '\=get(ph, submatch(1), "\001")', 'g')
+  return value =~# "\001" ? '' : value
 endfunction
 
 function! s:readable_projected(key, ...) dict abort
-  let projections = self.app().projections()
-  if has_key(projections, self.name())
-    let projection = projections[self.name()]
-    let placeholders = {}
-  else
-    let [root, projection] = s:find_projection(values(projections), self.name())
-    let projected = {}
-    if empty(projection)
-      return []
-    else
-      let placeholders = {
+  let f = self.name()
+  let all = self.app().projections()
+  let mine = []
+  if has_key(all, f)
+    let mine += map(s:getlist(all[f], a:key), 's:expand_placeholders(v:val, a:0 ? a:1 : 0)')
+  endif
+  for pattern in reverse(sort(filter(keys(all), 'v:val =~# "^[^*]*\\*[^*]*$"'), s:function('rails#lencmp')))
+    let [prefix, suffix; _] = split(pattern, '\*', 1)
+    if s:startswith(f, prefix) && s:endswith(f, suffix)
+      let root = f[strlen(prefix) : -strlen(suffix)-1]
+      let ph = extend({
             \ 's': root,
+            \ 'S': rails#camelize(root),
+            \ 'h': toupper(root[0]) . tr(rails#underscore(root), '_', ' ')[1:-1],
             \ 'p': rails#pluralize(root),
-            \ '%': '%'}
+            \ 'o': rails#singularize(root),
+            \ 'i': rails#singularize(root),
+            \ '%': '%'}, a:0 ? a:1 : {})
+      if suffix =~# '\.js\>'
+        let ph.S = s:gsub(ph.S, '::', '.')
+      endif
+      let mine += map(s:getlist(all[pattern], a:key), 's:expand_placeholders(v:val, ph)')
     endif
-  endif
-  if a:0
-    call extend(placeholders, a:1)
-  endif
-  return filter(map(s:split(get(projection, a:key, '')), 's:expand_placeholders(v:val, placeholders)'), '!empty(v:val)')
+  endfor
+  return filter(mine, '!empty(v:val)')
 endfunction
 
 call s:add_methods('readable', ['projected'])
@@ -4410,26 +4484,16 @@ function! RailsBufInit(path)
   call s:BufSettings()
   call s:BufMappings()
   call s:BufCommands()
-  let t = rails#buffer().type_name()
-  let t = "-".t
-  let f = '/'.RailsFilePath()
-  if f =~ '[ !#$%\,]'
-    let f = ''
+  if !empty(findfile('macros/rails.vim', escape(&runtimepath, ' ')))
+    runtime! macros/rails.vim
   endif
-  runtime! macros/rails.vim
   silent doautocmd User Rails
-  if t != '-'
-    exe "silent doautocmd User Rails".s:gsub(t,'-','.')
-  endif
-  if f != ''
-    exe "silent doautocmd User Rails".f
-  endif
   call s:BufProjectionCommands()
   call s:BufAbbreviations()
   return b:rails_root
 endfunction
 
-function! s:SetBasePath()
+function! s:SetBasePath() abort
   let self = rails#buffer()
   if self.app().path() =~ '://'
     return
@@ -4445,27 +4509,12 @@ function! s:SetBasePath()
   let path += get(g:, 'rails_path', [])
   let path += ['app/models/concerns', 'app/controllers/concerns', 'app/controllers', 'app/helpers', 'app/mailers', 'app/models']
 
-  for projection in values(self.app().projections())
-    let type = type(get(projection, 'path', 0))
-    if (type == type([]) || type == type('')) && !empty(projection.path)
-      for [prefix, suffix] in s:projection_pairs(projection)
-        let dir = matchstr(prefix, '.*/')
-        if !get(projection, 'check', 0) || self.app().has_path(dir)
-          let path += s:split(projection.path)
-          break
-        endif
-      endfor
-    elseif get(projection, 'path', 1) isnot 0 && !empty(get(projection, 'path', 1))
-      for [prefix, suffix] in s:projection_pairs(projection)
-        if prefix =~# '^app/' && suffix =~# '\.rb$'
-          let dir = matchstr(prefix, '.*\ze/')
-          if !get(projection, 'check', 0) || self.app().has_path(dir . '/')
-            let path += [dir]
-          endif
-        endif
-      endfor
+  for [key, projection] in items(self.app().projections())
+    if get(projection, 'path', 0) is 1 || get(projection, 'autoload', 0) is 1
+      let path += split(key, '*')[0]
     endif
   endfor
+  let path += filter(self.projected('path'), 'type(v:val) == type("")')
 
   let path += ['app/*', 'app/views']
   if self.controller_name() != ''
@@ -4477,9 +4526,12 @@ function! s:SetBasePath()
   if self.app().has('spec')
     let path += ['spec', 'spec/controllers', 'spec/helpers', 'spec/mailers', 'spec/models', 'spec/views', 'spec/lib', 'spec/features', 'spec/requests', 'spec/integration']
   endif
+  if self.app().has('cucumber')
+    let path += ['features']
+  endif
   let path += ['vendor/plugins/*/lib', 'vendor/plugins/*/test', 'vendor/rails/*/lib', 'vendor/rails/*/test']
-  call map(path,'self.app().path(v:val)')
-  call self.setvar('&path',(add_dot ? '.,' : '').s:pathjoin(s:uniq(path + [self.app().path()] + old_path)))
+  let engine_paths = map(copy(self.app().engines()), 'v:val . "/app/*"')
+  call self.setvar('&path',(add_dot ? '.,' : '').s:pathjoin(s:uniq(path + [self.app().path()] + old_path + engine_paths)))
 endfunction
 
 function! s:BufSettings()
