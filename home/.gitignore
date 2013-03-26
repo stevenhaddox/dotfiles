@@ -5,7 +5,7 @@ tmp/**/*
 doc/api
 doc/app
 doc/tags
-*/**/doc/tags
+.vim/**/doc/tags
 .bundle
 *.swp
 *.bak
