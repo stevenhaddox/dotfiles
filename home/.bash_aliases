@@ -72,6 +72,8 @@ alias m='mate'
 alias edit='open -a Byword'
 alias vi="vim"
 alias size_dir='du -hs'
+alias subdirs="find -depth -type d |sed 'h; :b; $b; N; /^\(.*\)\/.*\n\1$/ { g; bb }; $ {x; b}; P; D' | sort"
+
 # Apache permissions
 alias chmod_public="find public -type f -print0 | xargs -0 chmod 664; find public -type d -print0 | xargs -0 chmod 755"
 
