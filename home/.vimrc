@@ -15,6 +15,8 @@ call pathogen#helptags()
 let mapleader = ","
 "v to select just pasted text for manipulation
 nnoremap <leader>v V`]
+"jj to <esc>
+:imap jj <Esc>
 "W to remove whitespace from file
 nnoremap <leader>W :%s/\s\+$//<cr>:let @/=''<CR>
 "ft to fold tag (e.g. HTML)
