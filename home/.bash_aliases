@@ -80,4 +80,7 @@ alias chmod_public="find public -type f -print0 | xargs -0 chmod 664; find publi
 ## System Monitoring
 alias cpu='top -F -R -o cpu -n 10'
 
+# GPG
+alias encrypt-self="gpg --recipients steven@haddox.us --armor --encrypt"
+alias decrypt="gpg --decrypt"
 # DB Aliases live in ~/.bash_osx and ~/.bash_linux

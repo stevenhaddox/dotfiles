@@ -14,6 +14,8 @@ export RACK_ENV=development
 # spork DRB ports
 export RSPEC_DRB=3001
 export CUCUMBER_DRB=3002
+# Vagrant
+export VAGRANT_LOG=error
 # tsocks proxy config
 export TSOCKS_CONF_FILE=~/.tsocks
 # vmail conf
