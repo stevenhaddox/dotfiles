@@ -7,109 +7,72 @@ import sys
 
 from datetime import datetime
 import socket
-from multiprocessing import cpu_count
+from multiprocessing import cpu_count as _cpu_count
 
 from powerline.lib import add_divider_highlight_group
 from powerline.lib.url import urllib_read, urllib_urlencode
-from powerline.lib.vcs import guess
+from powerline.lib.vcs import guess, tree_status
 from powerline.lib.threaded import ThreadedSegment, KwThreadedSegment, with_docstring
-from powerline.lib.time import monotonic
+from powerline.lib.monotonic import monotonic
 from powerline.lib.humanize_bytes import humanize_bytes
+from powerline.theme import requires_segment_info
 from collections import namedtuple
 
 
-def hostname(pl, only_if_ssh=False):
+cpu_count = None
+
+
+@requires_segment_info
+def environment(pl, segment_info, variable=None):
+	'''Return the value of any defined environment variable
+
+	:param string variable:
+		The environment variable to return if found
+	'''
+	return segment_info['environ'].get(variable, None)
+
+
+@requires_segment_info
+def hostname(pl, segment_info, only_if_ssh=False, exclude_domain=False):
 	'''Return the current hostname.
 
 	:param bool only_if_ssh:
 		only return the hostname if currently in an SSH session
+	:param bool exclude_domain:
+		return the hostname without domain if there is one
 	'''
-	if only_if_ssh and not pl.environ.get('SSH_CLIENT'):
+	if only_if_ssh and not segment_info['environ'].get('SSH_CLIENT'):
 		return None
+	if exclude_domain:
+		return socket.gethostname().split('.')[0]
 	return socket.gethostname()
 
 
-class RepositorySegment(KwThreadedSegment):
-	def __init__(self):
-		super(RepositorySegment, self).__init__()
-		self.directories = {}
+@requires_segment_info
+def branch(pl, segment_info, status_colors=False):
+	'''Return the current VCS branch.
 
-	@staticmethod
-	def key(pl, **kwargs):
-		return os.path.abspath(pl.getcwd())
+	:param bool status_colors:
+		determines whether repository status will be used to determine highlighting. Default: False.
 
-	def update(self):
-		# .compute_state() is running only in this method, and only in one 
-		# thread, thus operations with .directories do not need write locks 
-		# (.render() method is not using .directories). If this is changed 
-		# .directories needs redesigning
-		self.directories.clear()
-		super(RepositorySegment, self).update()
-
-	def compute_state(self, path):
-		repo = guess(path=path)
-		if repo:
-			if repo.directory in self.directories:
-				return self.directories[repo.directory]
-			else:
-				r = self.process_repo(repo)
-				self.directories[repo.directory] = r
-				return r
-
-
-class RepositoryStatusSegment(RepositorySegment):
-	interval = 2
-
-	@staticmethod
-	def process_repo(repo):
-		return repo.status()
-
-
-repository_status = with_docstring(RepositoryStatusSegment(),
-'''Return the status for the current VCS repository.''')
-
-
-class BranchSegment(RepositorySegment):
-	interval = 0.2
-	started_repository_status = False
-
-	@staticmethod
-	def process_repo(repo):
-		return repo.branch()
-
-	@staticmethod
-	def render_one(branch, status_colors=False, **kwargs):
-		if branch and status_colors:
-			return [{
-				'contents': branch,
-				'highlight_group': ['branch_dirty' if repository_status(**kwargs) else 'branch_clean', 'branch'],
-				}]
-		else:
-			return branch
-
-	def startup(self, status_colors=False, **kwargs):
-		super(BranchSegment, self).startup(**kwargs)
+	Highlight groups used: ``branch_clean``, ``branch_dirty``, ``branch``.
+	'''
+	name = segment_info['getcwd']()
+	repo = guess(path=name)
+	if repo is not None:
+		branch = repo.branch()
+		scol = ['branch']
 		if status_colors:
-			self.started_repository_status = True
-			repository_status.startup(**kwargs)
-
-	def shutdown(self):
-		if self.started_repository_status:
-			repository_status.shutdown()
-		super(BranchSegment, self).shutdown()
-
-
-branch = with_docstring(BranchSegment(),
-'''Return the current VCS branch.
-
-:param bool status_colors:
-	determines whether repository status will be used to determine highlighting. Default: True.
-
-Highlight groups used: ``branch_clean``, ``branch_dirty``, ``branch``.
-''')
+			status = tree_status(repo, pl)
+			scol.insert(0, 'branch_dirty' if status and status.strip() else 'branch_clean')
+		return [{
+			'contents': branch,
+			'highlight_group': scol,
+		}]
 
 
-def cwd(pl, dir_shorten_len=None, dir_limit_depth=None):
+@requires_segment_info
+def cwd(pl, segment_info, dir_shorten_len=None, dir_limit_depth=None, use_path_separator=False):
 	'''Return the current working directory.
 
 	Returns a segment list to create a breadcrumb-like effect.
@@ -118,7 +81,8 @@ def cwd(pl, dir_shorten_len=None, dir_limit_depth=None):
 		shorten parent directory names to this length (e.g. :file:`/long/path/to/powerline` → :file:`/l/p/t/powerline`)
 	:param int dir_limit_depth:
 		limit directory depth to this number (e.g. :file:`/long/path/to/powerline` → :file:`⋯/to/powerline`)
-
+	:param bool use_path_separator:
+		Use path separator in place of soft divider.
 
 	Divider highlight group used: ``cwd:divider``.
 
@@ -126,7 +90,7 @@ def cwd(pl, dir_shorten_len=None, dir_limit_depth=None):
 	'''
 	import re
 	try:
-		cwd = pl.getcwd()
+		cwd = segment_info['getcwd']()
 	except OSError as e:
 		if e.errno == 2:
 			# user most probably deleted the directory
@@ -135,26 +99,32 @@ def cwd(pl, dir_shorten_len=None, dir_limit_depth=None):
 			cwd = "[not found]"
 		else:
 			raise
-	home = pl.home
+	home = segment_info['home']
 	if home:
 		cwd = re.sub('^' + re.escape(home), '~', cwd, 1)
 	cwd_split = cwd.split(os.sep)
 	cwd_split_len = len(cwd_split)
-	if dir_limit_depth and cwd_split_len > dir_limit_depth + 1:
-		del(cwd_split[0:-dir_limit_depth])
-		cwd_split.insert(0, '⋯')
 	cwd = [i[0:dir_shorten_len] if dir_shorten_len and i else i for i in cwd_split[:-1]] + [cwd_split[-1]]
+	if dir_limit_depth and cwd_split_len > dir_limit_depth + 1:
+		del(cwd[0:-dir_limit_depth])
+		cwd.insert(0, '⋯')
 	ret = []
 	if not cwd[0]:
 		cwd[0] = '/'
+	draw_inner_divider = not use_path_separator
 	for part in cwd:
 		if not part:
 			continue
+		if use_path_separator:
+			part += os.sep
 		ret.append({
 			'contents': part,
 			'divider_highlight_group': 'cwd:divider',
-			})
+			'draw_inner_divider': draw_inner_divider,
+		})
 	ret[-1]['highlight_group'] = ['cwd:current_folder', 'cwd']
+	if use_path_separator:
+		ret[-1]['contents'] = ret[-1]['contents'][:-1]
 	return ret
 
 
@@ -190,7 +160,7 @@ def fuzzy_time(pl):
 		45: 'quarter to',
 		50: 'ten to',
 		55: 'five to',
-		}
+	}
 	special_case_str = {
 		(23, 58): 'round about midnight',
 		(23, 59): 'round about midnight',
@@ -198,7 +168,7 @@ def fuzzy_time(pl):
 		(0, 1): 'round about midnight',
 		(0, 2): 'round about midnight',
 		(12, 0): 'noon',
-		}
+	}
 
 	now = datetime.now()
 
@@ -230,19 +200,19 @@ def _external_ip(query_url='http://ipv4.icanhazip.com/'):
 
 
 class ExternalIpSegment(ThreadedSegment):
+	interval = 300
+
 	def set_state(self, query_url='http://ipv4.icanhazip.com/', **kwargs):
 		self.query_url = query_url
 		super(ExternalIpSegment, self).set_state(**kwargs)
 
-	def update(self):
-		ip = _external_ip(query_url=self.query_url)
-		with self.write_lock:
-			self.ip = ip
+	def update(self, old_ip):
+		return _external_ip(query_url=self.query_url)
 
-	def render(self, **kwargs):
-		if not hasattr(self, 'ip'):
+	def render(self, ip, **kwargs):
+		if not ip:
 			return None
-		return [{'contents': self.ip, 'divider_highlight_group': 'background:divider'}]
+		return [{'contents': ip, 'divider_highlight_group': 'background:divider'}]
 
 
 external_ip = with_docstring(ExternalIpSegment(),
@@ -337,17 +307,17 @@ weather_conditions_icons = {
 }
 
 temp_conversions = {
-		'C': lambda temp: temp,
-		'F': lambda temp: (temp * 9 / 5) + 32,
-		'K': lambda temp: temp + 273.15,
-		}
+	'C': lambda temp: temp,
+	'F': lambda temp: (temp * 9 / 5) + 32,
+	'K': lambda temp: temp + 273.15,
+}
 
 # Note: there are also unicode characters for units: ℃, ℉ and  K
 temp_units = {
-		'C': '°C',
-		'F': '°F',
-		'K': 'K',
-		}
+	'C': '°C',
+	'F': '°F',
+	'K': 'K',
+}
 
 
 class WeatherSegment(ThreadedSegment):
@@ -356,10 +326,9 @@ class WeatherSegment(ThreadedSegment):
 	def set_state(self, location_query=None, **kwargs):
 		self.location = location_query
 		self.url = None
-		self.condition = {}
 		super(WeatherSegment, self).set_state(**kwargs)
 
-	def update(self):
+	def update(self, old_weather):
 		import json
 
 		if not self.url:
@@ -371,11 +340,11 @@ class WeatherSegment(ThreadedSegment):
 											location_data['region_name'],
 											location_data['country_name']])
 			query_data = {
-					'q':
-						'use "http://github.com/yql/yql-tables/raw/master/weather/weather.bylocation.xml" as we;'
-						'select * from we where location="{0}" and unit="c"'.format(self.location).encode('utf-8'),
-					'format': 'json',
-					}
+				'q':
+				'use "http://github.com/yql/yql-tables/raw/master/weather/weather.bylocation.xml" as we;'
+				'select * from we where location="{0}" and unit="c"'.format(self.location).encode('utf-8'),
+				'format': 'json',
+			}
 			self.url = 'http://query.yahooapis.com/v1/public/yql?' + urllib_urlencode(query_data)
 
 		raw_response = urllib_read(self.url)
@@ -397,45 +366,44 @@ class WeatherSegment(ThreadedSegment):
 				icon_names = ('unknown',)
 				self.error('Unknown condition code: {0}', condition_code)
 
-		with self.write_lock:
-			self.temp = temp
-			self.icon_names = icon_names
+		return (temp, icon_names)
 
-	def render(self, icons=None, unit='C', temp_format=None, temp_coldest=-30, temp_hottest=40, **kwargs):
-		if not hasattr(self, 'icon_names'):
+	def render(self, weather, icons=None, unit='C', temp_format=None, temp_coldest=-30, temp_hottest=40, **kwargs):
+		if not weather:
 			return None
 
-		for icon_name in self.icon_names:
+		temp, icon_names = weather
+
+		for icon_name in icon_names:
 			if icons:
 				if icon_name in icons:
 					icon = icons[icon_name]
 					break
 		else:
-			icon = weather_conditions_icons[self.icon_names[-1]]
+			icon = weather_conditions_icons[icon_names[-1]]
 
 		temp_format = temp_format or ('{temp:.0f}' + temp_units[unit])
-		temp = temp_conversions[unit](self.temp)
-		if self.temp <= temp_coldest:
+		converted_temp = temp_conversions[unit](temp)
+		if temp <= temp_coldest:
 			gradient_level = 0
-		elif self.temp >= temp_hottest:
+		elif temp >= temp_hottest:
 			gradient_level = 100
 		else:
-			gradient_level = (self.temp - temp_coldest) * 100.0 / (temp_hottest - temp_coldest)
-		groups = ['weather_condition_' + icon_name for icon_name in self.icon_names] + ['weather_conditions', 'weather']
+			gradient_level = (temp - temp_coldest) * 100.0 / (temp_hottest - temp_coldest)
+		groups = ['weather_condition_' + icon_name for icon_name in icon_names] + ['weather_conditions', 'weather']
 		return [
-				{
+			{
 				'contents': icon + ' ',
 				'highlight_group': groups,
 				'divider_highlight_group': 'background:divider',
-				},
-				{
-				'contents': temp_format.format(temp=temp),
+			},
+			{
+				'contents': temp_format.format(temp=converted_temp),
 				'highlight_group': ['weather_temp_gradient', 'weather_temp', 'weather'],
-				'draw_divider': False,
 				'divider_highlight_group': 'background:divider',
 				'gradient_level': gradient_level,
-				},
-			]
+			},
+		]
 
 
 weather = with_docstring(WeatherSegment(),
@@ -472,7 +440,7 @@ Also uses ``weather_conditions_{condition}`` for all weather conditions supporte
 ''')
 
 
-def system_load(pl, format='{avg:.1f}', threshold_good=1, threshold_bad=2):
+def system_load(pl, format='{avg:.1f}', threshold_good=1, threshold_bad=2, track_cpu_count=False):
 	'''Return system load average.
 
 	Highlights using ``system_load_good``, ``system_load_bad`` and
@@ -491,6 +459,9 @@ def system_load(pl, format='{avg:.1f}', threshold_good=1, threshold_bad=2):
 		indicates relative position in this interval:
 		(``100 * (cur-good) / (bad-good)``).
 		Note: both parameters are checked against normalized load averages.
+	:param bool track_cpu_count:
+		if True powerline will continuously poll the system to detect changes 
+		in the number of CPUs.
 
 	Divider highlight group used: ``background:divider``.
 
@@ -498,7 +469,7 @@ def system_load(pl, format='{avg:.1f}', threshold_good=1, threshold_bad=2):
 	'''
 	global cpu_count
 	try:
-		cpu_num = cpu_count()
+		cpu_num = cpu_count = _cpu_count() if cpu_count is None or track_cpu_count else cpu_count
 	except NotImplementedError:
 		pl.warn('Unable to get CPU count: method is not implemented')
 		return None
@@ -514,11 +485,9 @@ def system_load(pl, format='{avg:.1f}', threshold_good=1, threshold_bad=2):
 		ret.append({
 			'contents': format.format(avg=avg),
 			'highlight_group': ['system_load_gradient', 'system_load'],
-			'draw_divider': False,
 			'divider_highlight_group': 'background:divider',
 			'gradient_level': gradient_level,
-			})
-	ret[0]['draw_divider'] = True
+		})
 	ret[0]['contents'] += ' '
 	ret[1]['contents'] += ' '
 	return ret
@@ -528,7 +497,10 @@ try:
 	import psutil
 
 	def _get_bytes(interface):
-		io_counters = psutil.network_io_counters(pernic=True)
+		try:
+			io_counters = psutil.net_io_counters(pernic=True)
+		except AttributeError:
+			io_counters = psutil.network_io_counters(pernic=True)
 		if_io = io_counters.get(interface)
 		if not if_io:
 			return None
@@ -540,19 +512,30 @@ try:
 			if data:
 				yield interface, data.bytes_recv, data.bytes_sent
 
-	def _get_user(pl):
+	def _get_user(segment_info):
 		return psutil.Process(os.getpid()).username
 
-	def cpu_load_percent(pl, measure_interval=.5):
-		'''Return the average CPU load as a percentage.
+	class CPULoadPercentSegment(ThreadedSegment):
+		interval = 1
 
-		Requires the ``psutil`` module.
+		def update(self, old_cpu):
+			return psutil.cpu_percent(interval=None)
 
-		:param float measure_interval:
-			interval used to measure CPU load (in seconds)
-		'''
-		cpu_percent = int(psutil.cpu_percent(interval=measure_interval))
-		return '{0}%'.format(cpu_percent)
+		def run(self):
+			while not self.shutdown_event.is_set():
+				try:
+					self.update_value = psutil.cpu_percent(interval=self.interval)
+				except Exception as e:
+					self.exception('Exception while calculating cpu_percent: {0}', str(e))
+
+		def render(self, cpu_percent, format='{0:.0f}%', **kwargs):
+			if not cpu_percent:
+				return None
+			return [{
+				'contents': format.format(cpu_percent),
+				'gradient_level': cpu_percent,
+				'highlight_group': ['cpu_load_percent_gradient', 'cpu_load_percent'],
+			}]
 except ImportError:
 	def _get_bytes(interface):  # NOQA
 		with open('/sys/class/net/{interface}/statistics/rx_bytes'.format(interface=interface), 'rb') as file_obj:
@@ -567,19 +550,40 @@ except ImportError:
 			if x is not None:
 				yield interface, x[0], x[1]
 
-	def _get_user(pl):  # NOQA
-		return pl.environ.get('USER', None)
+	def _get_user(segment_info):  # NOQA
+		return segment_info['environ'].get('USER', None)
 
-	def cpu_load_percent(pl, measure_interval=.5):  # NOQA
-		'''Return the average CPU load as a percentage.
+	class CPULoadPercentSegment(ThreadedSegment):  # NOQA
+		interval = 1
 
-		Requires the ``psutil`` module.
+		@staticmethod
+		def startup(**kwargs):
+			pass
 
-		:param float measure_interval:
-			interval used to measure CPU load (in seconds)
-		'''
-		pl.warn('psutil package is not installed, thus CPU load is not available')
-		return None
+		@staticmethod
+		def start():
+			pass
+
+		@staticmethod
+		def shutdown():
+			pass
+
+		@staticmethod
+		def render(cpu_percent, pl, format='{0:.0f}%', **kwargs):
+			pl.warn('psutil package is not installed, thus CPU load is not available')
+			return None
+
+
+cpu_load_percent = with_docstring(CPULoadPercentSegment(),
+'''Return the average CPU load as a percentage.
+
+Requires the ``psutil`` module.
+
+:param str format:
+	Output format. Accepts measured CPU load as the first argument.
+
+Highlight groups used: ``cpu_load_percent_gradient`` (gradient) or ``cpu_load_percent``.
+''')
 
 
 username = False
@@ -587,7 +591,7 @@ username = False
 _geteuid = getattr(os, 'geteuid', lambda: 1)
 
 
-def user(pl):
+def user(pl, segment_info=None):
 	'''Return the current user.
 
 	Highlights the user with the ``superuser`` if the effective user ID is 0.
@@ -596,15 +600,17 @@ def user(pl):
 	'''
 	global username
 	if username is False:
-		username = _get_user(pl)
+		username = _get_user(segment_info)
 	if username is None:
 		pl.warn('Failed to get username')
 		return None
 	euid = _geteuid()
 	return [{
-			'contents': username,
-			'highlight_group': 'user' if euid != 0 else ['superuser', 'user'],
-		}]
+		'contents': username,
+		'highlight_group': 'user' if euid != 0 else ['superuser', 'user'],
+	}]
+if 'psutil' not in globals():
+	user = requires_segment_info(user)
 
 
 if os.path.exists('/proc/uptime'):
@@ -624,12 +630,19 @@ else:
 
 
 @add_divider_highlight_group('background:divider')
-def uptime(pl, format='{days}d {hours:02d}h {minutes:02d}m'):
+def uptime(pl, days_format='{days:d}d', hours_format=' {hours:d}h', minutes_format=' {minutes:d}m', seconds_format=' {seconds:d}s', shorten_len=3):
 	'''Return system uptime.
 
-	:param str format:
-		format string, will be passed ``days``, ``hours``, ``minutes`` and 
-		seconds as arguments
+	:param str days_format:
+		day format string, will be passed ``days`` as the argument
+	:param str hours_format:
+		hour format string, will be passed ``hours`` as the argument
+	:param str minutes_format:
+		minute format string, will be passed ``minutes`` as the argument
+	:param str seconds_format:
+		second format string, will be passed ``seconds`` as the argument
+	:param int shorten_len:
+		shorten the amount of units (days, hours, etc.) displayed
 
 	Divider highlight group used: ``background:divider``.
 	'''
@@ -641,7 +654,13 @@ def uptime(pl, format='{days}d {hours:02d}h {minutes:02d}m'):
 	minutes, seconds = divmod(seconds, 60)
 	hours, minutes = divmod(minutes, 60)
 	days, hours = divmod(hours, 24)
-	return format.format(days=int(days), hours=hours, minutes=minutes, seconds=seconds)
+	time_formatted = list(filter(None, [
+		days_format.format(days=days) if days and days_format else None,
+		hours_format.format(hours=hours) if hours and hours_format else None,
+		minutes_format.format(minutes=minutes) if minutes and minutes_format else None,
+		seconds_format.format(seconds=seconds) if seconds and seconds_format else None,
+		]))[0:shorten_len]
+	return ''.join(time_formatted).strip()
 
 
 class NetworkLoadSegment(KwThreadedSegment):
@@ -691,11 +710,11 @@ class NetworkLoadSegment(KwThreadedSegment):
 			idata = {}
 			if self.run_once:
 				idata['prev'] = (monotonic(), _get_bytes(interface))
-				self.sleep(0)
+				self.shutdown_event.wait(self.interval)
 			self.interfaces[interface] = idata
 
 		idata['last'] = (monotonic(), _get_bytes(interface))
-		return idata
+		return idata.copy()
 
 	def render_one(self, idata, recv_format='⬇ {value:>8}', sent_format='⬆ {value:>8}', suffix='B/s', si_prefix=False, **kwargs):
 		if not idata or 'prev' not in idata:
@@ -707,14 +726,15 @@ class NetworkLoadSegment(KwThreadedSegment):
 
 		if None in (b1, b2):
 			return None
-		if measure_interval == 0:
-			self.error('Measure interval is zero. This should not happen')
-			return None
 
 		r = []
 		for i, key in zip((0, 1), ('recv', 'sent')):
 			format = locals()[key + '_format']
-			value = (b2[i] - b1[i]) / measure_interval
+			try:
+				value = (b2[i] - b1[i]) / measure_interval
+			except ZeroDivisionError:
+				self.warn('Measure interval zero.')
+				value = 0
 			max_key = key + '_max'
 			is_gradient = max_key in kwargs
 			hl_groups = ['network_load_' + key, 'network_load']
@@ -724,7 +744,7 @@ class NetworkLoadSegment(KwThreadedSegment):
 				'contents': format.format(value=humanize_bytes(value, suffix, si_prefix)),
 				'divider_highlight_group': 'background:divider',
 				'highlight_group': hl_groups,
-				})
+			})
 			if is_gradient:
 				max = kwargs[max_key]
 				if value >= max:
@@ -765,9 +785,10 @@ Highlight groups used: ``network_load_sent_gradient`` (gradient) or ``network_lo
 ''')
 
 
-def virtualenv(pl):
+@requires_segment_info
+def virtualenv(pl, segment_info):
 	'''Return the name of the current Python virtualenv.'''
-	return os.path.basename(pl.environ.get('VIRTUAL_ENV', '')) or None
+	return os.path.basename(segment_info['environ'].get('VIRTUAL_ENV', '')) or None
 
 
 _IMAPKey = namedtuple('Key', 'username password server port folder')
@@ -804,13 +825,13 @@ class EmailIMAPSegment(KwThreadedSegment):
 			return [{
 				'contents': str(unread_count),
 				'highlight_group': 'email_alert',
-				}]
+			}]
 		else:
 			return [{
 				'contents': str(unread_count),
 				'highlight_group': ['email_alert_gradient', 'email_alert'],
-				'gradient_level': unread_count * 100.0 / max_msgs,
-				}]
+				'gradient_level': min(unread_count * 100.0 / max_msgs, 100),
+			}]
 
 
 email_imap_alert = with_docstring(EmailIMAPSegment(),
@@ -841,7 +862,7 @@ class NowPlayingSegment(object):
 		'play': '▶',
 		'pause': '▮▮',
 		'stop': '■',
-		}
+	}
 
 	def __call__(self, player='mpd', format='{state_symbol} {artist} - {title} ({total})', **kwargs):
 		player_func = getattr(self, 'player_{0}'.format(player))
@@ -853,7 +874,7 @@ class NowPlayingSegment(object):
 			'title': None,
 			'elapsed': None,
 			'total': None,
-			}
+		}
 		func_stats = player_func(**kwargs)
 		if not func_stats:
 			return None
@@ -921,7 +942,7 @@ class NowPlayingSegment(object):
 			'title': now_playing.get('title'),
 			'elapsed': self._convert_seconds(now_playing.get('position', 0)),
 			'total': self._convert_seconds(now_playing.get('duration', 0)),
-			}
+		}
 
 	def player_mpd(self, pl, host='localhost', port=6600):
 		try:
@@ -942,7 +963,7 @@ class NowPlayingSegment(object):
 				'title': now_playing.get('title'),
 				'elapsed': self._convert_seconds(now_playing.get('elapsed', 0)),
 				'total': self._convert_seconds(now_playing.get('time', 0)),
-				}
+			}
 		except ImportError:
 			now_playing = self._run_cmd(['mpc', 'current', '-f', '%album%\n%artist%\n%title%\n%time%', '-h', str(host), '-p', str(port)])
 			if not now_playing:
@@ -953,7 +974,7 @@ class NowPlayingSegment(object):
 				'artist': now_playing[1],
 				'title': now_playing[2],
 				'total': now_playing[3],
-				}
+			}
 
 	def player_spotify(self, pl):
 		try:
@@ -981,7 +1002,7 @@ class NowPlayingSegment(object):
 			'artist': info.get('xesam:artist')[0],
 			'title': info.get('xesam:title'),
 			'total': self._convert_seconds(info.get('mpris:length') / 1e6),
-			}
+		}
 
 	def player_rhythmbox(self, pl):
 		now_playing = self._run_cmd(['rhythmbox-client', '--no-start', '--no-present', '--print-playing-format', '%at\n%aa\n%tt\n%te\n%td'])
@@ -994,5 +1015,56 @@ class NowPlayingSegment(object):
 			'title': now_playing[2],
 			'elapsed': now_playing[3],
 			'total': now_playing[4],
-			}
+		}
 now_playing = NowPlayingSegment()
+
+
+if os.path.exists('/sys/class/power_supply/BAT0/capacity'):
+	def _get_capacity():
+		with open('/sys/class/power_supply/BAT0/capacity', 'r') as f:
+			return int(float(f.readline().split()[0]))
+else:
+	def _get_capacity():
+		raise NotImplementedError
+
+
+def battery(pl, format='{batt:3.0%}', steps=5, gamify=False):
+	'''Return battery charge status.
+
+	:param int steps:
+		number of discrete steps to show between 0% and 100% capacity
+	:param bool gamify:
+		measure in hearts (♥) instead of percentages
+
+	Highlight groups used: ``battery_gradient`` (gradient), ``battery``.
+	'''
+	try:
+		capacity = _get_capacity()
+	except NotImplementedError:
+		pl.warn('Unable to get battery capacity.')
+		return None
+	ret = []
+	denom = int(steps)
+	numer = int(denom * capacity / 100)
+	full_heart = '♥'
+	if gamify:
+		ret.append({
+			'contents': full_heart * numer,
+			'draw_soft_divider': False,
+			'highlight_group': ['battery_gradient', 'battery'],
+			'gradient_level': 99
+		})
+		ret.append({
+			'contents': full_heart * (denom - numer),
+			'draw_soft_divider': False,
+			'highlight_group': ['battery_gradient', 'battery'],
+			'gradient_level': 1
+		})
+	else:
+		batt = numer / float(denom)
+		ret.append({
+			'contents': format.format(batt=batt),
+			'highlight_group': ['battery_gradient', 'battery'],
+			'gradient_level': batt * 100
+		})
+	return ret

@@ -2,75 +2,96 @@
 
 from __future__ import absolute_import
 
-from powerline.lib.time import monotonic
+from powerline.lib.monotonic import monotonic
 
 from threading import Thread, Lock, Event
 
 
-class ThreadedSegment(object):
+class MultiRunnedThread(object):
+	daemon = True
+
+	def __init__(self):
+		self.thread = None
+
+	def is_alive(self):
+		return self.thread and self.thread.is_alive()
+
+	def start(self):
+		self.shutdown_event.clear()
+		self.thread = Thread(target=self.run)
+		self.thread.daemon = self.daemon
+		self.thread.start()
+
+	def join(self, *args, **kwargs):
+		if self.thread:
+			return self.thread.join(*args, **kwargs)
+		return None
+
+
+class ThreadedSegment(MultiRunnedThread):
 	min_sleep_time = 0.1
 	update_first = True
 	interval = 1
+	daemon = False
 
 	def __init__(self):
 		super(ThreadedSegment, self).__init__()
-		self.shutdown_event = Event()
-		self.write_lock = Lock()
 		self.run_once = True
-		self.did_set_interval = False
-		self.thread = None
 		self.skip = False
 		self.crashed_value = None
+		self.update_value = None
+		self.updated = False
 
 	def __call__(self, pl, update_first=True, **kwargs):
 		if self.run_once:
 			self.pl = pl
 			self.set_state(**kwargs)
-			self.update()
+			update_value = self.get_update_value(True)
 		elif not self.is_alive():
 			# Without this we will not have to wait long until receiving bug “I 
 			# opened vim, but branch information is only shown after I move 
 			# cursor”.
 			#
 			# If running once .update() is called in __call__.
-			if update_first and self.update_first:
-				self.update()
+			update_value = self.get_update_value(update_first and self.update_first)
 			self.start()
 		elif not self.updated:
-			self.update()
+			update_value = self.get_update_value(True)
+			self.updated = True
+		else:
+			update_value = self.update_value
 
 		if self.skip:
 			return self.crashed_value
-		with self.write_lock:
-			return self.render(update_first=update_first, pl=pl, **kwargs)
 
-	def is_alive(self):
-		return self.thread and self.thread.is_alive()
+		return self.render(update_value, update_first=update_first, pl=pl, **kwargs)
 
-	def start(self):
-		self.keep_going = True
-		self.thread = Thread(target=self.run)
-		self.thread.start()
-
-	def sleep(self, adjust_time):
-		self.shutdown_event.wait(max(self.interval - adjust_time, self.min_sleep_time))
-		if self.shutdown_event.is_set():
-			self.keep_going = False
+	def get_update_value(self, update=False):
+		if update:
+			self.update_value = self.update(self.update_value)
+		return self.update_value
 
 	def run(self):
-		while self.keep_going:
+		while not self.shutdown_event.is_set():
 			start_time = monotonic()
 			try:
-				self.update()
+				self.update_value = self.update(self.update_value)
 			except Exception as e:
-				self.error('Exception while updating: {0}', str(e))
+				self.exception('Exception while updating: {0}', str(e))
+				self.skip = True
+			except KeyboardInterrupt:
+				self.warn('Caught keyboard interrupt while updating')
 				self.skip = True
 			else:
 				self.skip = False
-			self.sleep(monotonic() - start_time)
+			self.shutdown_event.wait(max(self.interval - (monotonic() - start_time), self.min_sleep_time))
 
 	def shutdown(self):
 		self.shutdown_event.set()
+		if self.daemon and self.is_alive():
+			# Give the worker thread a chance to shutdown, but don't block for 
+			# too long
+			self.join(0.01)
 
 	def set_interval(self, interval=None):
 		# Allowing “interval” keyword in configuration.
@@ -79,20 +100,30 @@ class ThreadedSegment(object):
 		# .set_interval().
 		interval = interval or getattr(self, 'interval')
 		self.interval = interval
-		self.has_set_interval = True
 
-	def set_state(self, interval=None, update_first=True, **kwargs):
-		if not self.did_set_interval or interval:
-			self.set_interval(interval)
-			self.updated = not (update_first and self.update_first)
+	def set_state(self, interval=None, update_first=True, shutdown_event=None, **kwargs):
+		self.set_interval(interval)
+		self.shutdown_event = shutdown_event or Event()
+		self.updated = self.updated or (not (update_first and self.update_first))
 
 	def startup(self, pl, **kwargs):
 		self.run_once = False
 		self.pl = pl
+		self.daemon = pl.use_daemon_threads
+
+		self.set_state(**kwargs)
 
 		if not self.is_alive():
-			self.set_state(**kwargs)
 			self.start()
+
+	def critical(self, *args, **kwargs):
+		self.pl.critical(prefix=self.__class__.__name__, *args, **kwargs)
+
+	def exception(self, *args, **kwargs):
+		self.pl.exception(prefix=self.__class__.__name__, *args, **kwargs)
+
+	def info(self, *args, **kwargs):
+		self.pl.info(prefix=self.__class__.__name__, *args, **kwargs)
 
 	def error(self, *args, **kwargs):
 		self.pl.error(prefix=self.__class__.__name__, *args, **kwargs)
@@ -104,68 +135,64 @@ class ThreadedSegment(object):
 		self.pl.debug(prefix=self.__class__.__name__, *args, **kwargs)
 
 
-def printed(func):
-	def f(*args, **kwargs):
-		print(func.__name__)
-		return func(*args, **kwargs)
-	return f
-
-
 class KwThreadedSegment(ThreadedSegment):
 	drop_interval = 10 * 60
 	update_first = True
 
 	def __init__(self):
 		super(KwThreadedSegment, self).__init__()
-		self.queries = {}
-		self.crashed = set()
 		self.updated = True
+		self.update_value = ({}, set())
+		self.write_lock = Lock()
+		self.new_queries = {}
 
 	@staticmethod
 	def key(**kwargs):
 		return frozenset(kwargs.items())
 
-	def render(self, update_first, **kwargs):
+	def render(self, update_value, update_first, **kwargs):
+		queries, crashed = update_value
 		key = self.key(**kwargs)
-		if key in self.crashed:
+		if key in crashed:
 			return self.crashed_value
 
 		try:
-			update_state = self.queries[key][1]
+			update_state = queries[key][1]
 		except KeyError:
 			# Allow only to forbid to compute missing values: in either user 
 			# configuration or in subclasses.
-			update_state = self.compute_state(key) if update_first and self.update_first or self.run_once else None
+			update_state = self.compute_state(key) if ((update_first and self.update_first) or self.run_once) else None
 
-		# No locks: render method is already running with write_lock acquired.
-		self.queries[key] = (monotonic(), update_state)
+		with self.write_lock:
+			self.new_queries[key] = (monotonic(), update_state)
 		return self.render_one(update_state, **kwargs)
 
-	def update(self):
+	def update(self, old_update_value):
 		updates = {}
-		removes = []
-		for key, (last_query_time, state) in list(self.queries.items()):
+		crashed = set()
+		update_value = (updates, crashed)
+		queries = old_update_value[0]
+		with self.write_lock:
+			if self.new_queries:
+				queries.update(self.new_queries)
+				self.new_queries.clear()
+
+		for key, (last_query_time, state) in queries.items():
 			if last_query_time < monotonic() < last_query_time + self.drop_interval:
 				try:
 					updates[key] = (last_query_time, self.compute_state(key))
 				except Exception as e:
-					self.exception('Exception while computing state for {0}: {1}', repr(key), str(e))
-					with self.write_lock:
-						self.crashed.add(key)
-			else:
-				removes.append(key)
-		with self.write_lock:
-			self.queries.update(updates)
-			self.crashed -= set(updates)
-			for key in removes:
-				self.queries.pop(key)
+					self.exception('Exception while computing state for {0!r}: {1}', key, str(e))
+					crashed.add(key)
+				except KeyboardInterrupt:
+					self.warn('Interrupt while computing state for {0!r}', key)
+					crashed.add(key)
 
-	def set_state(self, interval=None, update_first=True, **kwargs):
-		if not self.did_set_interval or (interval < self.interval):
-			self.set_interval(interval)
+		return update_value
 
-		if self.update_first:
-			self.update_first = update_first
+	def set_state(self, interval=None, shutdown_event=None, **kwargs):
+		self.set_interval(interval)
+		self.shutdown_event = shutdown_event or Event()
 
 	@staticmethod
 	def render_one(update_state, **kwargs):

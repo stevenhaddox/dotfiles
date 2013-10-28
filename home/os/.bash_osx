@@ -22,10 +22,8 @@ fi
 
 # Setup Powerline
 export POWERLINE="/usr/local/lib/python2.7/site-packages/powerline"
-if [ -f /usr/local/share/python/powerline ]; then
-  if [ -d $POWERLINE ]; then
-    . $POWERLINE/bindings/bash/powerline.sh
-  fi
+if [ -d $POWERLINE ]; then
+  source "$POWERLINE/bindings/bash/powerline.sh"
 fi
 
 if [ -f `brew --prefix`/etc/grc.bashrc ]; then

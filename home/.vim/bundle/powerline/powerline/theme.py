@@ -1,7 +1,5 @@
 # vim:fileencoding=utf-8:noet
 
-from copy import copy
-
 from .segment import gen_segment_getter
 
 
@@ -24,29 +22,36 @@ def requires_segment_info(func):
 
 
 class Theme(object):
-	def __init__(self, ext, theme_config, common_config, pl, top_theme_config=None, run_once=False):
+	def __init__(self,
+				ext,
+				theme_config,
+				common_config,
+				pl,
+				top_theme_config=None,
+				run_once=False,
+				shutdown_event=None):
 		self.dividers = theme_config.get('dividers', common_config['dividers'])
 		self.spaces = theme_config.get('spaces', common_config['spaces'])
 		self.segments = {
 			'left': [],
 			'right': [],
-			}
+		}
 		self.EMPTY_SEGMENT = {
 			'contents': None,
 			'highlight': {'fg': False, 'bg': False, 'attr': 0}
-			}
+		}
 		self.pl = pl
 		theme_configs = [theme_config]
 		if top_theme_config:
 			theme_configs.append(top_theme_config)
-		get_segment = gen_segment_getter(ext, common_config['paths'], theme_configs, theme_config.get('default_module'))
+		get_segment = gen_segment_getter(pl, ext, common_config['paths'], theme_configs, theme_config.get('default_module'))
 		for side in ['left', 'right']:
 			for segment in theme_config['segments'].get(side, []):
 				segment = get_segment(segment, side)
 				if not run_once:
 					if segment['startup']:
 						try:
-							segment['startup'](pl=pl, **segment['args'])
+							segment['startup'](pl=pl, shutdown_event=shutdown_event, **segment['args'])
 						except Exception as e:
 							pl.error('Exception during {0} startup: {1}', segment['name'], str(e))
 							continue
@@ -91,19 +96,35 @@ class Theme(object):
 					if contents is None:
 						continue
 					if isinstance(contents, list):
-						segment_base = copy(segment)
+						segment_base = segment.copy()
 						if contents:
-							for key in ('before', 'after'):
+							draw_divider_position = -1 if side == 'left' else 0
+							for key, i, newval in (
+								('before', 0, ''),
+								('after', -1, ''),
+								('draw_soft_divider', draw_divider_position, True),
+								('draw_hard_divider', draw_divider_position, True),
+							):
 								try:
-									contents[0][key] = segment_base.pop(key)
-									segment_base[key] = ''
+									contents[i][key] = segment_base.pop(key)
+									segment_base[key] = newval
 								except KeyError:
 									pass
 
-						for subsegment in contents:
-							segment_copy = copy(segment_base)
+						draw_inner_divider = None
+						if side == 'right':
+							append = parsed_segments.append
+						else:
+							pslen = len(parsed_segments)
+							append = lambda item: parsed_segments.insert(pslen, item)
+
+						for subsegment in (contents if side == 'right' else reversed(contents)):
+							segment_copy = segment_base.copy()
 							segment_copy.update(subsegment)
-							parsed_segments.append(segment_copy)
+							if draw_inner_divider is not None:
+								segment_copy['draw_soft_divider'] = draw_inner_divider
+							draw_inner_divider = segment_copy.pop('draw_inner_divider', None)
+							append(segment_copy)
 					else:
 						segment['contents'] = contents
 						parsed_segments.append(segment)
@@ -124,4 +145,4 @@ class Theme(object):
 				# We need to yield a copy of the segment, or else mode-dependent
 				# segment contents can't be cached correctly e.g. when caching
 				# non-current window contents for vim statuslines
-				yield copy(segment)
+				yield segment.copy()
