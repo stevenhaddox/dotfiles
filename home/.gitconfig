@@ -22,3 +22,5 @@
   rebase = true
 [config "branch"]
   autosetuprebase = always
+[push]
+  default = simple
