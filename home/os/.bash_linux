@@ -12,13 +12,18 @@ if [ -f /etc/bash_completion ]; then
   source ~/.bash_completion
 fi
 
-# Configure Powerline
-export POWERLINE="$HOME/.local/lib/python2.7/site-packages/powerline"
-if [ -f ${HOME}/.local/bin/powerline ]; then
-  export PATH=${PATH}:${HOME}/.local/bin
-  if [ -d $POWERLINE ]; then
-    export POWERLINE=$POWERLINE #placeholder
-    . $POWERLINE/bindings/bash/powerline.sh
+if [ -n "$TMUX" ]; then
+  echo ""
+  # nothing, PS1 is good
+else
+  # Configure Powerline
+  export POWERLINE="$HOME/.local/lib/python2.7/site-packages/powerline"
+  if [ -f ${HOME}/.local/bin/powerline ]; then
+    export PATH=${PATH}:${HOME}/.local/bin
+    if [ -d $POWERLINE ]; then
+      export POWERLINE=$POWERLINE #placeholder
+      . $POWERLINE/bindings/bash/powerline.sh
+    fi
   fi
 fi
 
