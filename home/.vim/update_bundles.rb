@@ -7,6 +7,7 @@ git_bundles = %w{
   git://github.com/cespare/vim-toml.git
   git://github.com/chriskempson/base16-vim.git
   git://github.com/chriskempson/tomorrow-theme.git
+  git://github.com/christoomey/vim-tmux-navigator.git
   git://github.com/godlygeek/tabular.git
   git://github.com/Lokaltog/powerline.git
   git://github.com/pangloss/vim-javascript.git
