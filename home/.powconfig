@@ -1,1 +1,2 @@
 export POW_DOMAINS=dev,pow
+export POW_DST_PORT=88

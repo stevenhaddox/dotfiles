@@ -62,6 +62,7 @@ alias ll='ls -la'
 alias lt='ls -ltra'
 alias la='ls -alF'
 alias l='ls -CFa'
+alias cl='clear'
 alias ag='ack'
 
 alias b="bundle exec"
