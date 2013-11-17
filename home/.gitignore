@@ -1,3 +1,4 @@
+.bash_local
 database.yml
 config/*.yml
 log/*.log
