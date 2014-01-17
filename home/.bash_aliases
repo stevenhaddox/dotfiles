@@ -10,6 +10,9 @@ alias vm443="ssh -f strands@strands.vm -L 13443:strands.vm:443 -N"
 alias sandbox="ssh 174.143.173.240"
 alias vhosts="cd /etc/apache2/vhosts/"
 
+# scripts
+alias scripts="cd ~/.scripts"
+
 # project aliases
 alias sites="cd ~/Sites"
 alias projects="cd ~/Sites/_projects"
@@ -69,8 +72,8 @@ alias b="bundle exec"
 alias bc="bundle console"
 alias dns.flush='sudo dscacheutil -flushcache'
 alias o='open ./'
-alias m='mate'
 alias edit='open -a Byword'
+alias marked='open -a Marked.app'
 alias vi="vim"
 alias size_dir='du -hs'
 alias subdirs="find -depth -type d |sed 'h; :b; $b; N; /^\(.*\)\/.*\n\1$/ { g; bb }; $ {x; b}; P; D' | sort"
