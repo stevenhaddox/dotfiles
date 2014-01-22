@@ -22,7 +22,14 @@ def requires_segment_info(func):
 
 
 class Theme(object):
-	def __init__(self, ext, theme_config, common_config, pl, top_theme_config=None, run_once=False):
+	def __init__(self,
+				ext,
+				theme_config,
+				common_config,
+				pl,
+				top_theme_config=None,
+				run_once=False,
+				shutdown_event=None):
 		self.dividers = theme_config.get('dividers', common_config['dividers'])
 		self.spaces = theme_config.get('spaces', common_config['spaces'])
 		self.segments = {
@@ -37,14 +44,14 @@ class Theme(object):
 		theme_configs = [theme_config]
 		if top_theme_config:
 			theme_configs.append(top_theme_config)
-		get_segment = gen_segment_getter(ext, common_config['paths'], theme_configs, theme_config.get('default_module'))
+		get_segment = gen_segment_getter(pl, ext, common_config['paths'], theme_configs, theme_config.get('default_module'))
 		for side in ['left', 'right']:
 			for segment in theme_config['segments'].get(side, []):
 				segment = get_segment(segment, side)
 				if not run_once:
 					if segment['startup']:
 						try:
-							segment['startup'](pl=pl, **segment['args'])
+							segment['startup'](pl=pl, shutdown_event=shutdown_event, **segment['args'])
 						except Exception as e:
 							pl.error('Exception during {0} startup: {1}', segment['name'], str(e))
 							continue

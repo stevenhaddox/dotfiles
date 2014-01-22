@@ -1,20 +1,22 @@
 # vim:fileencoding=utf-8:noet
 from threading import Lock
 from powerline.renderer import Renderer
+from powerline.lib.config import ConfigLoader
 from powerline import Powerline
 from copy import deepcopy
+from functools import wraps
 
 
 access_log = []
 access_lock = Lock()
 
 
-def load_json_config(config, config_file_path, *args, **kwargs):
+def load_json_config(config_file_path, *args, **kwargs):
 	global access_log
 	with access_lock:
 		access_log.append(config_file_path)
 	try:
-		return deepcopy(config[config_file_path])
+		return deepcopy(config_container['config'][config_file_path])
 	except KeyError:
 		raise IOError(config_file_path)
 
@@ -33,18 +35,31 @@ def pop_events():
 	return r
 
 
+def log_call(func):
+	@wraps(func)
+	def ret(self, *args, **kwargs):
+		self._calls.append((func.__name__, args, kwargs))
+		return func(self, *args, **kwargs)
+	return ret
+
+
 class Watcher(object):
 	events = set()
 	lock = Lock()
 
+	def __init__(self):
+		self._calls = []
+
+	@log_call
 	def watch(self, file):
 		pass
 
+	@log_call
 	def __call__(self, file):
-		if file in self.events:
-			with self.lock:
+		with self.lock:
+			if file in self.events:
 				self.events.remove(file)
-			return True
+				return True
 		return False
 
 	def _reset(self, files):
@@ -52,6 +67,7 @@ class Watcher(object):
 			self.events.clear()
 			self.events.update(files)
 
+	@log_call
 	def unsubscribe(self):
 		pass
 
@@ -95,21 +111,26 @@ renderer = SimpleRenderer
 
 
 def get_powerline(**kwargs):
-	return TestPowerline(
+	watcher = Watcher()
+	pl = TestPowerline(
 		ext='test',
 		renderer_module='tests.lib.config_mock',
-		interval=0,
 		logger=Logger(),
-		watcher=Watcher(),
+		config_loader=ConfigLoader(load=load_json_config, watcher=watcher, run_once=kwargs.get('run_once')),
 		**kwargs
 	)
+	pl._watcher = watcher
+	return pl
 
 
-def swap_attributes(config_container, powerline_module, replaces):
+config_container = None
+
+
+def swap_attributes(cfg_container, powerline_module, replaces):
+	global config_container
+	config_container = cfg_container
 	if not replaces:
 		replaces = {
-			'watcher': Watcher(),
-			'load_json_config': lambda *args: load_json_config(config_container['config'], *args),
 			'find_config_file': lambda *args: find_config_file(config_container['config'], *args),
 		}
 	for attr, val in replaces.items():

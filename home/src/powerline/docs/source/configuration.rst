@@ -91,7 +91,7 @@ segments that you may want to customize right away:
            "name": "weather",
            "priority": 50,
            "args": {
-               "unit": "f",
+               "unit": "F",
                "location_query": "oslo, norway"
            }
        },
@@ -165,6 +165,16 @@ Common configuration is a subdictionary that is a value of ``common`` key in
 ``log_format``
     String, determines format of the log messages. Defaults to 
     ``'%(asctime)s:%(level)s:%(message)s'``.
+
+``interval``
+    Number, determines time (in seconds) between checks for changed 
+    configuration. Checks are done in a seprate thread. Use ``null`` to check 
+    for configuration changes on ``.render()`` call in main thread.
+    Defaults to ``None``.
+
+``reload_config``
+    Boolean, determines whether configuration should be reloaded at all. 
+    Defaults to ``True``.
 
 Extension-specific configuration
 --------------------------------
@@ -367,14 +377,13 @@ Themes
         can be aligned with the ``align`` property.
 
     ``priority``
-        Optional segment priority. Segments with priority ``-1`` (the 
-        default priority) will always be included, regardless of the width 
-        of the prompt/statusline.
+        Optional segment priority. Segments with priority ``None`` (the default 
+        priority, represented by ``null`` in json) will always be included, 
+        regardless of the width of the prompt/statusline.
 
-        If the priority is ``0`` or more, the segment may be removed if the 
+        If the priority is any number, the segment may be removed if the 
         prompt/statusline width is too small for all the segments to be 
-        rendered. A lower number means that the segment has a higher 
-        priority.
+        rendered. A lower number means that the segment has a higher priority.
 
         Segments are removed according to their priority, with low priority 
         segments being removed first.
@@ -445,6 +454,10 @@ Vim configuration can be overridden using the following options:
     Path (must be expanded, ``~`` shortcut is not supported). Points to the 
     directory which will be searched for configuration. When this option is 
     present, none of the other locations are searched.
+
+``g:powerline_no_python_error``
+    If this variable is set to a true value it will prevent Powerline from reporting 
+    an error when loaded in a copy of vim without the necessary Python support.
 
 Powerline script overrides
 --------------------------
@@ -517,3 +530,18 @@ use ``c.Powerline.KEY``. Supported ``KEY`` strings or keyword argument names:
     Sets directory where configuration should be read from. If present, no 
     default locations are searched for configuration. No expansions are 
     performed thus you cannot use paths starting with ``~/``.
+
+Prompt command
+--------------
+
+In addition to the above configuration options you can use 
+``$POWERLINE_COMMAND`` environment variable to tell shell or tmux to use 
+specific powerline implementation. This is mostly useful for putting powerline 
+into different directory or replacing ``powerline`` script with 
+``powerline-client`` for performance reasons.
+
+Note: ``$POWERLINE_COMMAND`` appears in shell scripts without quotes thus you 
+can specify additional parameters in bash. In zsh you will have to make 
+``$POWERLINE_COMMAND`` an array parameter to achieve the same result. In tmux it 
+is passed to ``eval`` and depends on the shell used. POSIX-compatible shells, 
+zsh, bash and fish will split this variable in this case.

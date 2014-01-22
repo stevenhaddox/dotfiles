@@ -1,34 +1,123 @@
 # vim:fileencoding=utf-8:noet
 _log = []
-_g = {}
+vars = {}
+vvars = {'version': 703}
 _window = 0
 _mode = 'n'
 _buf_purge_events = set()
-_options = {
+options = {
 	'paste': 0,
 	'ambiwidth': 'single',
 }
 _last_bufnr = 0
 _highlights = {}
 
-buffers = {}
 
-windows = []
-
-
-def _buffer():
-	return windows[_window - 1].buffer.number
+_thread_id = None
 
 
-def _logged(func):
+def _set_thread_id():
+	global _thread_id
+	from threading import current_thread
+	_thread_id = current_thread().ident
+
+
+# Assuming import is done from the main thread
+_set_thread_id()
+
+
+def _vim(func):
 	from functools import wraps
+	from threading import current_thread
 
 	@wraps(func)
 	def f(*args, **kwargs):
+		global _thread_id
+		if _thread_id != current_thread().ident:
+			raise RuntimeError('Accessing vim from separate threads is not allowed')
 		_log.append((func.__name__, args))
 		return func(*args, **kwargs)
 
 	return f
+
+
+class _Buffers(object):
+	@_vim
+	def __init__(self):
+		self.d = {}
+
+	@_vim
+	def __getitem__(self, item):
+		return self.d[item]
+
+	@_vim
+	def __setitem__(self, item, value):
+		self.d[item] = value
+
+	@_vim
+	def __contains__(self, item):
+		return item in self.d
+
+	@_vim
+	def __nonzero__(self):
+		return not not self.d
+
+	@_vim
+	def keys(self):
+		return self.d.keys()
+
+	@_vim
+	def pop(self, *args, **kwargs):
+		return self.d.pop(*args, **kwargs)
+
+
+buffers = _Buffers()
+
+
+class _Windows(object):
+	@_vim
+	def __init__(self):
+		self.l = []
+
+	@_vim
+	def __getitem__(self, item):
+		return self.l[item]
+
+	@_vim
+	def __setitem__(self, item, value):
+		self.l[item] = value
+
+	@_vim
+	def __len__(self):
+		return len(self.l)
+
+	@_vim
+	def __iter__(self):
+		return iter(self.l)
+
+	@_vim
+	def __nonzero__(self):
+		return not not self.l
+
+	@_vim
+	def pop(self, *args, **kwargs):
+		return self.l.pop(*args, **kwargs)
+
+	@_vim
+	def append(self, *args, **kwargs):
+		return self.l.append(*args, **kwargs)
+
+	@_vim
+	def index(self, *args, **kwargs):
+		return self.l.index(*args, **kwargs)
+
+
+windows = _Windows()
+
+
+@_vim
+def _buffer():
+	return windows[_window - 1].buffer.number
 
 
 def _construct_result(r):
@@ -58,35 +147,48 @@ def _log_print():
 		sys.stdout.write(repr(entry) + '\n')
 
 
-@_logged
+@_vim
 def command(cmd):
 	if cmd.startswith('let g:'):
 		import re
 		varname, value = re.compile(r'^let g:(\w+)\s*=\s*(.*)').match(cmd).groups()
-		_g[varname] = value
+		vars[varname] = value
 	elif cmd.startswith('hi '):
 		sp = cmd.split()
 		_highlights[sp[1]] = sp[2:]
+	elif cmd.startswith('function! Powerline_plugin_ctrlp'):
+		# Ignore CtrlP updating functions
+		pass
 	else:
 		raise NotImplementedError
 
 
-@_logged
+@_vim
 def eval(expr):
 	if expr.startswith('g:'):
-		return _g[expr[2:]]
+		return vars[expr[2:]]
 	elif expr.startswith('&'):
-		return _options[expr[1:]]
+		return options[expr[1:]]
 	elif expr.startswith('PowerlineRegisterCachePurgerEvent'):
 		_buf_purge_events.add(expr[expr.find('"') + 1:expr.rfind('"') - 1])
-		return "0"
+		return '0'
+	elif expr.startswith('exists('):
+		return '0'
+	elif expr == 'getbufvar("%", "NERDTreeRoot").path.str()':
+		import os
+		assert os.path.basename(buffers[_buffer()].name).startswith('NERD_tree_')
+		return '/usr/include'
 	raise NotImplementedError
 
 
-@_logged
+@_vim
 def bindeval(expr):
 	if expr == 'g:':
-		return _g
+		return vars
+	elif expr == '{}':
+		return {}
+	elif expr == '[]':
+		return []
 	import re
 	match = re.compile(r'^function\("([^"\\]+)"\)$').match(expr)
 	if match:
@@ -95,7 +197,7 @@ def bindeval(expr):
 		raise NotImplementedError
 
 
-@_logged
+@_vim
 @_str_func
 def _emul_mode(*args):
 	if args and args[0]:
@@ -104,41 +206,57 @@ def _emul_mode(*args):
 		return _mode[0]
 
 
-@_logged
+@_vim
 @_str_func
 def _emul_getbufvar(bufnr, varname):
+	import re
 	if varname[0] == '&':
-		if bufnr not in _buf_options:
+		if bufnr == '%':
+			bufnr = buffers[_buffer()].number
+		if bufnr not in buffers:
 			return ''
 		try:
-			return _buf_options[bufnr][varname[1:]]
+			return buffers[bufnr].options[varname[1:]]
 		except KeyError:
 			try:
-				return _options[varname[1:]]
+				return options[varname[1:]]
 			except KeyError:
 				return ''
+	elif re.match('^[a-zA-Z_]+$', varname):
+		if bufnr == '%':
+			bufnr = buffers[_buffer()].number
+		if bufnr not in buffers:
+			return ''
+		return buffers[bufnr].vars[varname]
 	raise NotImplementedError
 
 
-@_logged
+@_vim
 @_str_func
 def _emul_getwinvar(winnr, varname):
-	return _win_scopes[winnr][varname]
+	return windows[winnr].vars[varname]
 
 
-@_logged
+@_vim
 def _emul_setwinvar(winnr, varname, value):
-	_win_scopes[winnr][varname] = value
+	windows[winnr].vars[varname] = value
 
 
-@_logged
+@_vim
 def _emul_virtcol(expr):
-	if expr == '.':
+	if expr == '.' or isinstance(expr, list):
 		return windows[_window - 1].cursor[1] + 1
 	raise NotImplementedError
 
 
-@_logged
+@_vim
+def _emul_getpos(expr):
+	if expr == '.' or expr == 'v':
+		return [0, windows[_window - 1].cursor[0] + 1, windows[_window - 1].cursor[1] + 1, 0]
+	raise NotImplementedError
+
+
+@_vim
 @_str_func
 def _emul_fnamemodify(path, modstring):
 	import os
@@ -154,7 +272,7 @@ def _emul_fnamemodify(path, modstring):
 	return path
 
 
-@_logged
+@_vim
 @_str_func
 def _emul_expand(expr):
 	if expr == '<abuf>':
@@ -162,31 +280,30 @@ def _emul_expand(expr):
 	raise NotImplementedError
 
 
-@_logged
+@_vim
 def _emul_bufnr(expr):
 	if expr == '$':
 		return _last_bufnr
 	raise NotImplementedError
 
 
-@_logged
+@_vim
 def _emul_exists(varname):
 	if varname.startswith('g:'):
-		return varname[2:] in _g
+		return varname[2:] in vars
 	raise NotImplementedError
 
 
-@_logged
+@_vim
 def _emul_line2byte(line):
 	buflines = _buf_lines[_buffer()]
 	if line == len(buflines) + 1:
 		return sum((len(s) for s in buflines)) + 1
 	raise NotImplementedError
 
+
 _window_ids = [None]
 _window_id = 0
-_win_scopes = [None]
-_win_options = [None]
 
 
 class _Window(object):
@@ -194,6 +311,7 @@ class _Window(object):
 		global _window_id
 		self.cursor = cursor
 		self.width = width
+		self.number = len(windows) + 1
 		if buffer:
 			if type(buffer) is _Buffer:
 				self.buffer = buffer
@@ -204,15 +322,13 @@ class _Window(object):
 		windows.append(self)
 		_window_id += 1
 		_window_ids.append(_window_id)
-		_win_scopes.append({})
-		_win_options.append({})
+		self.options = {}
+		self.vars = {}
 
 	def __repr__(self):
 		return '<window ' + str(windows.index(self)) + '>'
 
 
-_buf_scopes = {}
-_buf_options = {}
 _buf_lines = {}
 _undostate = {}
 _undo_written = {}
@@ -226,15 +342,16 @@ class _Buffer(object):
 		bufnr = _last_bufnr
 		self.number = bufnr
 		self.name = os.path.abspath(name) if name else None
-		_buf_scopes[bufnr] = {}
-		_buf_options[bufnr] = {
-				'modified': 0,
-				'readonly': 0,
-				'fileformat': 'unix',
-				'filetype': '',
-				'buftype': '',
-				'fileencoding': 'utf-8',
-				}
+		self.vars = {}
+		self.options = {
+			'modified': 0,
+			'readonly': 0,
+			'fileformat': 'unix',
+			'filetype': '',
+			'buftype': '',
+			'fileencoding': 'utf-8',
+			'textwidth': 80,
+		}
 		_buf_lines[bufnr] = ['']
 		from copy import copy
 		_undostate[bufnr] = [copy(_buf_lines[bufnr])]
@@ -245,13 +362,13 @@ class _Buffer(object):
 		return _buf_lines[self.number][line]
 
 	def __setitem__(self, line, value):
-		_buf_options[self.number]['modified'] = 1
+		self.options['modified'] = 1
 		_buf_lines[self.number][line] = value
 		from copy import copy
 		_undostate[self.number].append(copy(_buf_lines[self.number]))
 
 	def __setslice__(self, *args):
-		_buf_options[self.number]['modified'] = 1
+		self.options['modified'] = 1
 		_buf_lines[self.number].__setslice__(*args)
 		from copy import copy
 		_undostate[self.number].append(copy(_buf_lines[self.number]))
@@ -267,18 +384,22 @@ class _Buffer(object):
 
 	def __del__(self):
 		bufnr = self.number
-		if _buf_options:
-			_buf_options.pop(bufnr)
+		if _buf_lines:
 			_buf_lines.pop(bufnr)
+		if _undostate:
 			_undostate.pop(bufnr)
+		if _undo_written:
 			_undo_written.pop(bufnr)
-			_buf_scopes.pop(bufnr)
 
 
 class _Current(object):
 	@property
 	def buffer(self):
 		return buffers[_buffer()]
+
+	@property
+	def window(self):
+		return windows[_window - 1]
 
 
 current = _Current()
@@ -287,7 +408,7 @@ current = _Current()
 _dict = None
 
 
-@_logged
+@_vim
 def _init():
 	global _dict
 
@@ -302,12 +423,12 @@ def _init():
 	return _dict
 
 
-@_logged
+@_vim
 def _get_segment_info():
 	mode_translations = {
-			chr(ord('V') - 0x40): '^V',
-			chr(ord('S') - 0x40): '^S',
-			}
+		chr(ord('V') - 0x40): '^V',
+		chr(ord('S') - 0x40): '^S',
+	}
 	mode = _mode
 	mode = mode_translations.get(mode, mode)
 	return {
@@ -319,12 +440,12 @@ def _get_segment_info():
 	}
 
 
-@_logged
+@_vim
 def _launch_event(event):
 	pass
 
 
-@_logged
+@_vim
 def _start_mode(mode):
 	global _mode
 	if mode == 'i':
@@ -334,17 +455,18 @@ def _start_mode(mode):
 	_mode = mode
 
 
-@_logged
+@_vim
 def _undo():
 	if len(_undostate[_buffer()]) == 1:
 		return
 	_undostate[_buffer()].pop(-1)
 	_buf_lines[_buffer()] = _undostate[_buffer()][-1]
+	buf = current.buffer
 	if _undo_written[_buffer()] == len(_undostate[_buffer()]):
-		_buf_options[_buffer()]['modified'] = 0
+		buf.options['modified'] = 0
 
 
-@_logged
+@_vim
 def _edit(name=None):
 	global _last_bufnr
 	if _buffer() and buffers[_buffer()].name is None:
@@ -355,23 +477,28 @@ def _edit(name=None):
 		windows[_window - 1].buffer = buf
 
 
-@_logged
+@_vim
 def _new(name=None):
 	global _window
 	_Window(buffer={'name': name})
 	_window = len(windows)
 
 
-@_logged
+@_vim
+def _split():
+	global _window
+	_Window(buffer=buffers[_buffer()])
+	_window = len(windows)
+
+
+@_vim
 def _del_window(winnr):
 	win = windows.pop(winnr - 1)
-	_win_scopes.pop(winnr)
-	_win_options.pop(winnr)
 	_window_ids.pop(winnr)
 	return win
 
 
-@_logged
+@_vim
 def _close(winnr, wipe=True):
 	global _window
 	win = _del_window(winnr)
@@ -387,7 +514,7 @@ def _close(winnr, wipe=True):
 		_Window()
 
 
-@_logged
+@_vim
 def _bw(bufnr=None):
 	bufnr = bufnr or _buffer()
 	winnr = 1
@@ -401,12 +528,12 @@ def _bw(bufnr=None):
 	_b(max(buffers.keys()))
 
 
-@_logged
+@_vim
 def _b(bufnr):
 	windows[_window - 1].buffer = buffers[bufnr]
 
 
-@_logged
+@_vim
 def _set_cursor(line, col):
 	windows[_window - 1].cursor = (line, col)
 	if _mode == 'n':
@@ -415,14 +542,14 @@ def _set_cursor(line, col):
 		_launch_event('CursorMovedI')
 
 
-@_logged
+@_vim
 def _get_buffer():
 	return buffers[_buffer()]
 
 
-@_logged
+@_vim
 def _set_bufoption(option, value, bufnr=None):
-	_buf_options[bufnr or _buffer()][option] = value
+	buffers[bufnr or _buffer()].options[option] = value
 	if option == 'filetype':
 		_launch_event('FileType')
 
@@ -440,7 +567,7 @@ class _WithNewBuffer(object):
 		_bw(self.bufnr)
 
 
-@_logged
+@_vim
 def _set_dict(d, new, setfunc=None):
 	if not setfunc:
 		def setfunc(k, v):
@@ -462,11 +589,11 @@ class _WithBufOption(object):
 		self.new = new
 
 	def __enter__(self):
-		self.bufnr = _buffer()
-		self.old = _set_dict(_buf_options[self.bufnr], self.new, _set_bufoption)[0]
+		self.buffer = buffers[_buffer()]
+		self.old = _set_dict(self.buffer.options, self.new, _set_bufoption)[0]
 
 	def __exit__(self, *args):
-		_buf_options[self.bufnr].update(self.old)
+		self.buffer.options.update(self.old)
 
 
 class _WithMode(object):
@@ -496,15 +623,45 @@ class _WithDict(object):
 			self.d.pop(k)
 
 
-@_logged
+class _WithSplit(object):
+	def __enter__(self):
+		_split()
+
+	def __exit__(self, *args):
+		_close(2, wipe=False)
+
+
+class _WithBufName(object):
+	def __init__(self, new):
+		self.new = new
+
+	def __enter__(self):
+		import os
+		buffer = buffers[_buffer()]
+		self.buffer = buffer
+		self.old = buffer.name
+		buffer.name = self.new
+		if buffer.name and os.path.basename(buffer.name) == 'ControlP':
+			buffer.vars['powerline_ctrlp_type'] = 'main'
+			buffer.vars['powerline_ctrlp_args'] = ['focus', 'byfname', '0', 'prev', 'item', 'next', 'marked']
+
+	def __exit__(self, *args):
+		self.buffer.name = self.old
+
+
+@_vim
 def _with(key, *args, **kwargs):
 	if key == 'buffer':
 		return _WithNewBuffer(_edit, *args, **kwargs)
+	elif key == 'bufname':
+		return _WithBufName(*args, **kwargs)
 	elif key == 'mode':
 		return _WithMode(*args, **kwargs)
 	elif key == 'bufoptions':
 		return _WithBufOption(**kwargs)
 	elif key == 'options':
-		return _WithDict(_options, **kwargs)
+		return _WithDict(options, **kwargs)
 	elif key == 'globals':
-		return _WithDict(_g, **kwargs)
+		return _WithDict(vars, **kwargs)
+	elif key == 'split':
+		return _WithSplit()

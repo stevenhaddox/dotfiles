@@ -1,6 +1,7 @@
 {
 	"name": "Solarized Dark",
 	"groups": {
+		"jobnum":             { "fg": "oldlace", "bg": "darkgreencopper" },
 		"user":               { "fg": "oldlace", "bg": "blue", "attr": ["bold"] },
 		"superuser":          { "fg": "oldlace", "bg": "red", "attr": ["bold"] },
 		"virtualenv":         { "fg": "oldlace", "bg": "green" },
@@ -12,6 +13,7 @@
 		"cwd:divider":        { "fg": "gray61", "bg": "darkgreencopper" },
 		"hostname":           { "fg": "oldlace", "bg": "darkgreencopper" },
 		"exit_fail":          { "fg": "oldlace", "bg": "red" },
-		"exit_success":       { "fg": "oldlace", "bg": "green" }
+		"exit_success":       { "fg": "oldlace", "bg": "green" },
+		"environment":        { "fg": "oldlace", "bg": "green" }
 	}
 }

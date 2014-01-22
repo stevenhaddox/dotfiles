@@ -53,10 +53,15 @@ class Args(object):
 		except IndexError:
 			return None
 
+	@property
+	def jobnum(self):
+		zsh.eval('integer POWERLINE_JOBNUM=${(%):-%j}')
+		return zsh.getvalue('POWERLINE_JOBNUM')
+
 
 def string(s):
 	if type(s) is bytes:
-		return s.decode('utf-8', errors='replace')
+		return s.decode('utf-8', 'replace')
 	else:
 		return str(s)
 
@@ -75,6 +80,14 @@ class Environment(object):
 			return string(zsh.getvalue(key))
 		except IndexError:
 			return default
+
+	@staticmethod
+	def __contains__(key):
+		try:
+			zsh.getvalue(key)
+			return True
+		except IndexError:
+			return False
 
 
 environ = Environment()

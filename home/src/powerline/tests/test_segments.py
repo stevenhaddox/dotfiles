@@ -35,6 +35,17 @@ class TestShell(TestCase):
 			{'contents': '0', 'highlight_group': 'exit_success', 'draw_inner_divider': True}
 		])
 
+	def test_jobnum(self):
+		pl = Pl()
+		segment_info = {'args': Args(jobnum=0)}
+		self.assertEqual(shell.jobnum(pl=pl, segment_info=segment_info), None)
+		self.assertEqual(shell.jobnum(pl=pl, segment_info=segment_info, show_zero=False), None)
+		self.assertEqual(shell.jobnum(pl=pl, segment_info=segment_info, show_zero=True), '0')
+		segment_info = {'args': Args(jobnum=1)}
+		self.assertEqual(shell.jobnum(pl=pl, segment_info=segment_info), '1')
+		self.assertEqual(shell.jobnum(pl=pl, segment_info=segment_info, show_zero=False), '1')
+		self.assertEqual(shell.jobnum(pl=pl, segment_info=segment_info, show_zero=True), '1')
+
 
 class TestCommon(TestCase):
 	def test_hostname(self):
@@ -62,12 +73,17 @@ class TestCommon(TestCase):
 		new_psutil = new_module('psutil', Process=lambda pid: Args(username='def'))
 		pl = Pl()
 		with replace_env('USER', 'def') as segment_info:
+			common.username = False
 			with replace_attr(common, 'os', new_os):
 				with replace_attr(common, 'psutil', new_psutil):
 					with replace_attr(common, '_geteuid', lambda: 5):
 						self.assertEqual(common.user(pl=pl, segment_info=segment_info), [
 							{'contents': 'def', 'highlight_group': 'user'}
 						])
+						self.assertEqual(common.user(pl=pl, segment_info=segment_info, hide_user='abc'), [
+							{'contents': 'def', 'highlight_group': 'user'}
+						])
+						self.assertEqual(common.user(pl=pl, segment_info=segment_info, hide_user='def'), None)
 					with replace_attr(common, '_geteuid', lambda: 0):
 						self.assertEqual(common.user(pl=pl, segment_info=segment_info), [
 							{'contents': 'def', 'highlight_group': ['superuser', 'user']}
@@ -77,16 +93,21 @@ class TestCommon(TestCase):
 		pl = Pl()
 		segment_info = {'getcwd': os.getcwd}
 		with replace_attr(common, 'guess', lambda path: Args(branch=lambda: os.path.basename(path), status=lambda: None, directory='/tmp/tests')):
-			self.assertEqual(common.branch(pl=pl, segment_info=segment_info, status_colors=False), 'tests')
-			self.assertEqual(common.branch(pl=pl, segment_info=segment_info, status_colors=True),
-					[{'contents': 'tests', 'highlight_group': ['branch_clean', 'branch']}])
+			with replace_attr(common, 'tree_status', lambda repo, pl: None):
+				self.assertEqual(common.branch(pl=pl, segment_info=segment_info, status_colors=False),
+						[{'highlight_group': ['branch'], 'contents': 'tests'}])
+				self.assertEqual(common.branch(pl=pl, segment_info=segment_info, status_colors=True),
+						[{'contents': 'tests', 'highlight_group': ['branch_clean', 'branch']}])
 		with replace_attr(common, 'guess', lambda path: Args(branch=lambda: os.path.basename(path), status=lambda: 'D  ', directory='/tmp/tests')):
-			self.assertEqual(common.branch(pl=pl, segment_info=segment_info, status_colors=False), 'tests')
-			self.assertEqual(common.branch(pl=pl, segment_info=segment_info, status_colors=True),
-					[{'contents': 'tests', 'highlight_group': ['branch_dirty', 'branch']}])
-			self.assertEqual(common.branch(pl=pl, segment_info=segment_info), 'tests')
+			with replace_attr(common, 'tree_status', lambda repo, pl: 'D '):
+				self.assertEqual(common.branch(pl=pl, segment_info=segment_info, status_colors=False),
+						[{'highlight_group': ['branch'], 'contents': 'tests'}])
+				self.assertEqual(common.branch(pl=pl, segment_info=segment_info, status_colors=True),
+						[{'contents': 'tests', 'highlight_group': ['branch_dirty', 'branch']}])
+				self.assertEqual(common.branch(pl=pl, segment_info=segment_info, status_colors=False),
+						[{'highlight_group': ['branch'], 'contents': 'tests'}])
 		with replace_attr(common, 'guess', lambda path: None):
-			self.assertEqual(common.branch(pl=pl, segment_info=segment_info), None)
+			self.assertEqual(common.branch(pl=pl, segment_info=segment_info, status_colors=False), None)
 
 	def test_cwd(self):
 		new_os = new_module('os', path=os.path, sep='/')
@@ -176,8 +197,15 @@ class TestCommon(TestCase):
 
 	def test_uptime(self):
 		pl = Pl()
+		with replace_attr(common, '_get_uptime', lambda: 259200):
+			self.assertEqual(common.uptime(pl=pl), [{'contents': '3d', 'divider_highlight_group': 'background:divider'}])
+		with replace_attr(common, '_get_uptime', lambda: 93784):
+			self.assertEqual(common.uptime(pl=pl), [{'contents': '1d 2h 3m', 'divider_highlight_group': 'background:divider'}])
+			self.assertEqual(common.uptime(pl=pl, shorten_len=4), [{'contents': '1d 2h 3m 4s', 'divider_highlight_group': 'background:divider'}])
 		with replace_attr(common, '_get_uptime', lambda: 65536):
-			self.assertEqual(common.uptime(pl=pl), [{'contents': '0d 18h 12m', 'divider_highlight_group': 'background:divider'}])
+			self.assertEqual(common.uptime(pl=pl), [{'contents': '18h 12m 16s', 'divider_highlight_group': 'background:divider'}])
+			self.assertEqual(common.uptime(pl=pl, shorten_len=2), [{'contents': '18h 12m', 'divider_highlight_group': 'background:divider'}])
+			self.assertEqual(common.uptime(pl=pl, shorten_len=1), [{'contents': '18h', 'divider_highlight_group': 'background:divider'}])
 
 		def _get_uptime():
 			raise NotImplementedError
@@ -224,7 +252,7 @@ class TestCommon(TestCase):
 	def test_system_load(self):
 		pl = Pl()
 		with replace_module_module(common, 'os', getloadavg=lambda: (7.5, 3.5, 1.5)):
-			with replace_attr(common, 'cpu_count', lambda: 2):
+			with replace_attr(common, '_cpu_count', lambda: 2):
 				self.assertEqual(common.system_load(pl=pl),
 						[{'contents': '7.5 ', 'highlight_group': ['system_load_gradient', 'system_load'], 'divider_highlight_group': 'background:divider', 'gradient_level': 100},
 						{'contents': '3.5 ', 'highlight_group': ['system_load_gradient', 'system_load'], 'divider_highlight_group': 'background:divider', 'gradient_level': 75.0},
@@ -237,7 +265,16 @@ class TestCommon(TestCase):
 	def test_cpu_load_percent(self):
 		pl = Pl()
 		with replace_module_module(common, 'psutil', cpu_percent=lambda **kwargs: 52.3):
-			self.assertEqual(common.cpu_load_percent(pl=pl), '52%')
+			self.assertEqual(common.cpu_load_percent(pl=pl), [{
+				'contents': '52%',
+				'gradient_level': 52.3,
+				'highlight_group': ['cpu_load_percent_gradient', 'cpu_load_percent'],
+			}])
+			self.assertEqual(common.cpu_load_percent(pl=pl, format='{0:.1f}%'), [{
+				'contents': '52.3%',
+				'gradient_level': 52.3,
+				'highlight_group': ['cpu_load_percent_gradient', 'cpu_load_percent'],
+			}])
 
 	def test_network_load(self):
 		from time import sleep
@@ -311,6 +348,15 @@ class TestCommon(TestCase):
 			segment_info['environ'].pop('VIRTUAL_ENV')
 			self.assertEqual(common.virtualenv(pl=pl, segment_info=segment_info), None)
 
+	def test_environment(self):
+		pl = Pl()
+		variable = 'FOO';
+		value = 'bar';
+		with replace_env(variable, value) as segment_info:
+			self.assertEqual(common.environment(pl=pl, segment_info=segment_info, variable=variable), value)
+			segment_info['environ'].pop(variable)
+			self.assertEqual(common.environment(pl=pl, segment_info=segment_info, variable=variable), None)
+
 	def test_email_imap_alert(self):
 		# TODO
 		pass
@@ -319,6 +365,42 @@ class TestCommon(TestCase):
 		# TODO
 		pass
 
+	def test_battery(self):
+		pl = Pl()
+
+		def _get_capacity():
+			return 86
+
+		with replace_attr(common, '_get_capacity', _get_capacity):
+			self.assertEqual(common.battery(pl=pl), [{
+				'contents': '80%',
+				'highlight_group': ['battery_gradient', 'battery'],
+				'gradient_level': 80.0
+			}])
+			self.assertEqual(common.battery(pl=pl, format='{batt:.2f}'), [{
+				'contents': '0.80',
+				'highlight_group': ['battery_gradient', 'battery'],
+				'gradient_level': 80.0
+			}])
+			self.assertEqual(common.battery(pl=pl, steps=7), [{
+				'contents': '86%',
+				'highlight_group': ['battery_gradient', 'battery'],
+				'gradient_level': 85.71428571428571
+			}])
+			self.assertEqual(common.battery(pl=pl, gamify=True), [
+				{
+					'contents': '♥♥♥♥',
+					'draw_soft_divider': False,
+					'highlight_group': ['battery_gradient', 'battery'],
+					'gradient_level': 99
+				},
+				{
+					'contents': '♥',
+					'draw_soft_divider': False,
+					'highlight_group': ['battery_gradient', 'battery'],
+					'gradient_level': 1
+				}
+			])
 
 class TestVim(TestCase):
 	def test_mode(self):
@@ -332,6 +414,10 @@ class TestVim(TestCase):
 		with vim_module._with('mode', chr(ord('V') - 0x40)) as segment_info:
 			self.assertEqual(vim.mode(pl=pl, segment_info=segment_info), 'V·BLCK')
 			self.assertEqual(vim.mode(pl=pl, segment_info=segment_info, override={'^V': 'VBLK'}), 'VBLK')
+
+	def test_visual_range(self):
+		# TODO
+		pass
 
 	def test_modified_indicator(self):
 		pl = Pl()
@@ -420,8 +506,12 @@ class TestVim(TestCase):
 		segment_info = vim_module._get_segment_info()
 		self.assertEqual(vim.line_current(pl=pl, segment_info=segment_info), '1')
 		self.assertEqual(vim.col_current(pl=pl, segment_info=segment_info), '1')
-		self.assertEqual(vim.virtcol_current(pl=pl, segment_info=segment_info),
-				[{'highlight_group': ['virtcol_current', 'col_current'], 'contents': '1'}])
+		self.assertEqual(vim.virtcol_current(pl=pl, segment_info=segment_info), [{
+			'highlight_group': ['virtcol_current_gradient', 'virtcol_current', 'col_current'], 'contents': '1', 'gradient_level': 100.0 / 80,
+		}])
+		self.assertEqual(vim.virtcol_current(pl=pl, segment_info=segment_info, gradient=False), [{
+			'highlight_group': ['virtcol_current', 'col_current'], 'contents': '1',
+		}])
 
 	def test_modified_buffers(self):
 		pl = Pl()
@@ -431,15 +521,17 @@ class TestVim(TestCase):
 		pl = Pl()
 		with vim_module._with('buffer', '/foo') as segment_info:
 			with replace_attr(vim, 'guess', lambda path: Args(branch=lambda: os.path.basename(path), status=lambda: None, directory=path)):
-				self.assertEqual(vim.branch(pl=pl, segment_info=segment_info),
-						[{'divider_highlight_group': 'branch:divider', 'highlight_group': ['branch'], 'contents': 'foo'}])
-				self.assertEqual(vim.branch(pl=pl, segment_info=segment_info, status_colors=True),
-						[{'divider_highlight_group': 'branch:divider', 'highlight_group': ['branch_clean', 'branch'], 'contents': 'foo'}])
+				with replace_attr(vim, 'tree_status', lambda repo, pl: None):
+					self.assertEqual(vim.branch(pl=pl, segment_info=segment_info, status_colors=False),
+							[{'divider_highlight_group': 'branch:divider', 'highlight_group': ['branch'], 'contents': 'foo'}])
+					self.assertEqual(vim.branch(pl=pl, segment_info=segment_info, status_colors=True),
+							[{'divider_highlight_group': 'branch:divider', 'highlight_group': ['branch_clean', 'branch'], 'contents': 'foo'}])
 			with replace_attr(vim, 'guess', lambda path: Args(branch=lambda: os.path.basename(path), status=lambda: 'DU', directory=path)):
-				self.assertEqual(vim.branch(pl=pl, segment_info=segment_info),
-						[{'divider_highlight_group': 'branch:divider', 'highlight_group': ['branch'], 'contents': 'foo'}])
-				self.assertEqual(vim.branch(pl=pl, segment_info=segment_info, status_colors=True),
-						[{'divider_highlight_group': 'branch:divider', 'highlight_group': ['branch_dirty', 'branch'], 'contents': 'foo'}])
+				with replace_attr(vim, 'tree_status', lambda repo, pl: 'DU'):
+					self.assertEqual(vim.branch(pl=pl, segment_info=segment_info, status_colors=False),
+							[{'divider_highlight_group': 'branch:divider', 'highlight_group': ['branch'], 'contents': 'foo'}])
+					self.assertEqual(vim.branch(pl=pl, segment_info=segment_info, status_colors=True),
+							[{'divider_highlight_group': 'branch:divider', 'highlight_group': ['branch_dirty', 'branch'], 'contents': 'foo'}])
 
 	def test_file_vcs_status(self):
 		pl = Pl()
@@ -453,15 +545,6 @@ class TestVim(TestCase):
 			with vim_module._with('bufoptions', buftype='nofile'):
 				with replace_attr(vim, 'guess', lambda path: Args(branch=lambda: os.path.basename(path), status=lambda file: 'M', directory=path)):
 					self.assertEqual(vim.file_vcs_status(pl=pl, segment_info=segment_info), None)
-
-	def test_repository_status(self):
-		pl = Pl()
-		segment_info = vim_module._get_segment_info()
-		with replace_attr(vim, 'guess', lambda path: Args(branch=lambda: os.path.basename(path), status=lambda: None, directory=path)):
-			self.assertEqual(vim.repository_status(pl=pl, segment_info=segment_info), None)
-		with replace_attr(vim, 'guess', lambda path: Args(branch=lambda: os.path.basename(path), status=lambda: 'DU', directory=path)):
-			self.assertEqual(vim.repository_status(pl=pl, segment_info=segment_info), 'DU')
-
 
 old_cwd = None
 

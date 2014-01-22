@@ -1,6 +1,7 @@
 {
 	"name": "Default color scheme for shell prompts",
 	"groups": {
+		"jobnum": { "fg": "brightyellow", "bg": "mediumorange" },
 		"user": { "fg": "white", "bg": "darkblue", "attr": ["bold"] },
 		"superuser": { "fg": "white", "bg": "brightred", "attr": ["bold"] },
 		"virtualenv": { "fg": "white", "bg": "darkcyan" },
@@ -12,6 +13,7 @@
 		"cwd:divider": { "fg": "gray7", "bg": "gray4" },
 		"hostname": { "fg": "brightyellow", "bg": "mediumorange" },
 		"exit_fail": { "fg": "white", "bg": "darkestred" },
-		"exit_success": { "fg": "white", "bg": "darkestgreen" }
+		"exit_success": { "fg": "white", "bg": "darkestgreen" },
+		"environment": { "fg": "white", "bg": "darkestgreen" }
 	}
 }
