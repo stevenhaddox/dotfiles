@@ -8,6 +8,7 @@ alias vm443='ssh -f strands@strands.vm -L 13443:strands.vm:443 -N'
 
 # scripts
 alias scripts='cd ~/.scripts'
+alias crontab='VIM_CRONTAB=true crontab'
 
 # project aliases
 alias sites='cd ~/Sites'

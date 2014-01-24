@@ -160,3 +160,9 @@ if exists("+undofile")
   set undofile
 endif
 " }}}
+
+" Crontab OS X Fix
+if $VIM_CRONTAB == 'true'
+  set nobackup
+  set nowritebackup
+endif
