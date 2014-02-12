@@ -10,6 +10,9 @@ alias vm443='ssh -f strands@strands.vm -L 13443:strands.vm:443 -N'
 alias scripts='cd ~/.scripts'
 alias crontab='VIM_CRONTAB=true crontab'
 
+# Render the current folder via webrick!, pass port number after command
+alias rserve='ruby -run -e httpd . -p'
+
 # project aliases
 alias sites='cd ~/Sites'
 alias projects='cd ~/Sites/_projects'
