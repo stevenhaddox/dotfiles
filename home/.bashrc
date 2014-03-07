@@ -1,3 +1,8 @@
+if [ -f ${HOME}/.bash_support ]; then
+  #SUPPORT Generated .bashrc
+  source ${HOME}/.bash_support
+fi
+
 # Get aliases and functions
 PATH="${HOME}/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
 export PATH

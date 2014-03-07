@@ -10,6 +10,8 @@ export PATH
 if [ -f /etc/bash_completion ]; then
   source /etc/bash_completion
   source ~/.bash_completion
+else
+  source ${HOME}/.bash_completion.d/git_completion.sh
 fi
 
 if [ -n "$TMUX" ]; then
