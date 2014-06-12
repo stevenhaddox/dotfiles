@@ -14,12 +14,17 @@ else
   source ${HOME}/.bash_completion.d/git_completion.sh
 fi
 
+# Base 16 Theme for PuTTY (and remote connections?)
+if [ -f ${HOME}/.colors/base16.sh ]; then
+  . ~/.colors/base16.sh
+fi
+
 if [ -n "$TMUX" ]; then
   echo ""
   # nothing, PS1 is good
 else
   # Configure Powerline
-  export POWERLINE="$HOME/.local/lib/python2.7/site-packages/powerline"
+  export POWERLINE="$HOME/.local/lib/python2.7/site-packages/Powerline-beta-py2.7.egg/powerline"
   if [ -f ${HOME}/.local/bin/powerline ]; then
     export PATH=${PATH}:${HOME}/.local/bin
     if [ -d $POWERLINE ]; then
