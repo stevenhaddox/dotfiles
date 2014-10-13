@@ -1,25 +1,36 @@
 # vim:fileencoding=utf-8:noet
+from __future__ import (unicode_literals, division, absolute_import, print_function)
 
-from __future__ import absolute_import
+import sys
 
-from powerline.bindings.vim import vim_get_func, environ
+import vim
+
+from powerline.bindings.vim import vim_get_func, vim_getoption, environ, current_tabpage
 from powerline.renderer import Renderer
 from powerline.colorscheme import ATTR_BOLD, ATTR_ITALIC, ATTR_UNDERLINE
 from powerline.theme import Theme
-
-import vim
-import sys
+from powerline.lib.unicode import unichr, register_strwidth_error
 
 
-vim_mode = vim_get_func('mode', rettype=str)
+vim_mode = vim_get_func('mode', rettype='unicode')
+if int(vim.eval('v:version')) >= 702:
+	_vim_mode = vim_mode
+	vim_mode = lambda: _vim_mode(1)
+
 mode_translations = {
-	chr(ord('V') - 0x40): '^V',
-	chr(ord('S') - 0x40): '^S',
+	unichr(ord('V') - 0x40): '^V',
+	unichr(ord('S') - 0x40): '^S',
 }
 
 
 class VimRenderer(Renderer):
 	'''Powerline vim segment renderer.'''
+
+	character_translations = Renderer.character_translations.copy()
+	character_translations[ord('%')] = '%%'
+
+	segment_info = Renderer.segment_info.copy()
+	segment_info.update(environ=environ)
 
 	def __init__(self, *args, **kwargs):
 		if not hasattr(vim, 'strwidth'):
@@ -29,6 +40,9 @@ class VimRenderer(Renderer):
 				kwargs['ambigious'] = 2
 		super(VimRenderer, self).__init__(*args, **kwargs)
 		self.hl_groups = {}
+		self.prev_highlight = None
+		self.strwidth_error_name = register_strwidth_error(self.strwidth)
+		self.encoding = vim.eval('&encoding')
 
 	def shutdown(self):
 		self.theme.shutdown()
@@ -41,74 +55,90 @@ class VimRenderer(Renderer):
 			raise KeyError('There is already a local theme with given matcher')
 		self.local_themes[matcher] = theme
 
+	def get_matched_theme(self, match):
+		try:
+			return match['theme']
+		except KeyError:
+			match['theme'] = Theme(theme_config=match['config'], main_theme_config=self.theme_config, **self.theme_kwargs)
+			return match['theme']
+
 	def get_theme(self, matcher_info):
+		if matcher_info is None:
+			return self.get_matched_theme(self.local_themes[None])
 		for matcher in self.local_themes.keys():
-			if matcher(matcher_info):
-				match = self.local_themes[matcher]
-				try:
-					return match['theme']
-				except KeyError:
-					match['theme'] = Theme(theme_config=match['config'], top_theme_config=self.theme_config, **self.theme_kwargs)
-					return match['theme']
+			if matcher and matcher(matcher_info):
+				return self.get_matched_theme(self.local_themes[matcher])
 		else:
 			return self.theme
 
 	if hasattr(vim, 'strwidth'):
 		if sys.version_info < (3,):
-			@staticmethod
-			def strwidth(string):
+			def strwidth(self, string):
 				# Does not work with tabs, but neither is strwidth from default 
 				# renderer
-				return vim.strwidth(string.encode('utf-8'))
+				return vim.strwidth(string.encode(self.encoding, 'replace'))
 		else:
-			@staticmethod  # NOQA
+			@staticmethod
 			def strwidth(string):
 				return vim.strwidth(string)
 
-	def get_segment_info(self, segment_info):
+	def get_segment_info(self, segment_info, mode):
 		return segment_info or self.segment_info
 
-	def render(self, window, window_id, winnr):
+	def render(self, window=None, window_id=None, winnr=None, is_tabline=False):
 		'''Render all segments.'''
+		segment_info = self.segment_info.copy()
+
 		if window is vim.current.window:
-			mode = vim_mode(1)
+			mode = vim_mode()
 			mode = mode_translations.get(mode, mode)
 		else:
 			mode = 'nc'
-		segment_info = {
-			'window': window,
-			'mode': mode,
-			'window_id': window_id,
-			'winnr': winnr,
-			'environ': environ,
-		}
-		segment_info['buffer'] = segment_info['window'].buffer
+
+		segment_info.update(
+			window=window,
+			mode=mode,
+			window_id=window_id,
+			winnr=winnr,
+			buffer=window.buffer,
+			tabpage=current_tabpage(),
+			encoding=self.encoding,
+		)
+		segment_info['tabnr'] = segment_info['tabpage'].number
 		segment_info['bufnr'] = segment_info['buffer'].number
-		segment_info.update(self.segment_info)
-		winwidth = segment_info['window'].width
+		if is_tabline:
+			winwidth = int(vim_getoption('columns'))
+		else:
+			winwidth = segment_info['window'].width
+
 		statusline = super(VimRenderer, self).render(
 			mode=mode,
 			width=winwidth,
 			segment_info=segment_info,
-			matcher_info=segment_info,
+			matcher_info=(None if is_tabline else segment_info),
 		)
+		statusline = statusline.encode(self.encoding, self.strwidth_error_name)
 		return statusline
 
 	def reset_highlight(self):
 		self.hl_groups.clear()
-
-	@staticmethod
-	def escape(string):
-		return string.replace('%', '%%')
 
 	def hlstyle(self, fg=None, bg=None, attr=None):
 		'''Highlight a segment.
 
 		If an argument is None, the argument is ignored. If an argument is
 		False, the argument is reset to the terminal defaults. If an argument
-		is a valid color or attribute, it's added to the vim highlight group.
+		is a valid color or attribute, it’s added to the vim highlight group.
 		'''
-		# We don't need to explicitly reset attributes in vim, so skip those calls
+		# In order not to hit E541 two consequent identical highlighting 
+		# specifiers may be squashed into one.
+		attr = attr or 0  # Normalize `attr`
+		if (fg, bg, attr) == self.prev_highlight:
+			return ''
+		self.prev_highlight = (fg, bg, attr)
+
+		# We don’t need to explicitly reset attributes in vim, so skip those 
+		# calls
 		if not attr and not bg and not fg:
 			return ''
 
@@ -135,12 +165,14 @@ class VimRenderer(Renderer):
 					hl_group['attr'].append('italic')
 				if attr & ATTR_UNDERLINE:
 					hl_group['attr'].append('underline')
-			hl_group['name'] = 'Pl_' + \
-				str(hl_group['ctermfg']) + '_' + \
-				str(hl_group['guifg']) + '_' + \
-				str(hl_group['ctermbg']) + '_' + \
-				str(hl_group['guibg']) + '_' + \
-				''.join(hl_group['attr'])
+			hl_group['name'] = (
+				'Pl_'
+				+ str(hl_group['ctermfg']) + '_'
+				+ str(hl_group['guifg']) + '_'
+				+ str(hl_group['ctermbg']) + '_'
+				+ str(hl_group['guibg']) + '_'
+				+ ''.join(hl_group['attr'])
+			)
 			self.hl_groups[(fg, bg, attr)] = hl_group
 			vim.command('hi {group} ctermfg={ctermfg} guifg={guifg} guibg={guibg} ctermbg={ctermbg} cterm={attr} gui={attr}'.format(
 				group=hl_group['name'],

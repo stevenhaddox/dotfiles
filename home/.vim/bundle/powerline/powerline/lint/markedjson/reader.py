@@ -1,16 +1,14 @@
-# This module contains abstractions for the input stream. You don't have to
-# looks further, there are no pretty code.
-
-__all__ = ['Reader', 'ReaderError']
-
-from .error import MarkedError, Mark, NON_PRINTABLE
+# vim:fileencoding=utf-8:noet
+from __future__ import (unicode_literals, division, absolute_import, print_function)
 
 import codecs
 
-try:
-	from __builtin__ import unicode
-except ImportError:
-	unicode = str  # NOQA
+from powerline.lint.markedjson.error import MarkedError, Mark, NON_PRINTABLE
+from powerline.lib.unicode import unicode
+
+
+# This module contains abstractions for the input stream. You don’t have to
+# looks further, there are no pretty code.
 
 
 class ReaderError(MarkedError):
@@ -26,7 +24,7 @@ class Reader(object):
 	# Reader accepts
 	#  - a file-like object with its `read` method returning `str`,
 
-	# Yeah, it's ugly and slow.
+	# Yeah, it’s ugly and slow.
 	def __init__(self, stream):
 		self.name = None
 		self.stream = None
@@ -44,7 +42,7 @@ class Reader(object):
 		self.column = 0
 
 		self.stream = stream
-		self.name = getattr(stream, 'name', "<file>")
+		self.name = getattr(stream, 'name', '<file>')
 		self.eof = False
 		self.raw_buffer = None
 
@@ -89,9 +87,11 @@ class Reader(object):
 		match = NON_PRINTABLE.search(data)
 		if match:
 			self.update_pointer(match.start())
-			raise ReaderError('while reading from stream', None,
-					'found special characters which are not allowed',
-					Mark(self.name, self.line, self.column, self.full_buffer, self.full_pointer))
+			raise ReaderError(
+				'while reading from stream', None,
+				'found special characters which are not allowed',
+				Mark(self.name, self.line, self.column, self.full_buffer, self.full_pointer)
+			)
 
 	def update(self, length):
 		if self.raw_buffer is None:
@@ -102,8 +102,7 @@ class Reader(object):
 			if not self.eof:
 				self.update_raw()
 			try:
-				data, converted = self.raw_decode(self.raw_buffer,
-						'strict', self.eof)
+				data, converted = self.raw_decode(self.raw_buffer, 'strict', self.eof)
 			except UnicodeDecodeError as exc:
 				character = self.raw_buffer[exc.start]
 				position = self.stream_pointer - len(self.raw_buffer) + exc.start
@@ -112,9 +111,11 @@ class Reader(object):
 				self.full_buffer += data + '<' + str(ord(character)) + '>'
 				self.raw_buffer = self.raw_buffer[converted:]
 				self.update_pointer(exc.start - 1)
-				raise ReaderError('while reading from stream', None,
-						'found character #x%04x that cannot be decoded by UTF-8 codec' % ord(character),
-						Mark(self.name, self.line, self.column, self.full_buffer, position))
+				raise ReaderError(
+					'while reading from stream', None,
+					'found character #x%04x that cannot be decoded by UTF-8 codec' % ord(character),
+					Mark(self.name, self.line, self.column, self.full_buffer, position)
+				)
 			self.buffer += data
 			self.full_buffer += data
 			self.raw_buffer = self.raw_buffer[converted:]

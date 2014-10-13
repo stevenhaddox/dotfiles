@@ -23,6 +23,10 @@
 				<string>#2A2A2A</string>
 				<key>selection</key>
 				<string>#424242</string>
+				<key>gutter</key>
+				<string>#191919</string>
+				<key>gutterForeground</key>
+				<string>#404040</string>
 			</dict>
 		</dict>
 		<dict>
@@ -90,7 +94,7 @@
 			<key>name</key>
 			<string>String, Symbols, Inherited Class, Markup Heading, GitGutter inserted</string>
 			<key>scope</key>
-			<string>string, constant.other.symbol, entity.other.inherited-class, markup.heading, markup.inserted.git_gutter</string>
+			<string>string, constant.other.symbol, entity.other.inherited-class, entity.name.filename, markup.heading, markup.inserted.git_gutter</string>
 			<key>settings</key>
 			<dict>
 				<key>fontStyle</key>
@@ -241,5 +245,7 @@
 	</array>
 	<key>uuid</key>
 	<string>33D8C715-AD3A-455B-8DF2-56F708909FFE</string>
+  <key>colorSpaceName</key>
+  <string>sRGB</string>
 </dict>
 </plist>

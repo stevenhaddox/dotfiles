@@ -17,16 +17,22 @@ To use the dark theme ensure `set background=dark` is present in your `~/.vimrc`
 Add `colorscheme base16-default` to your `~/.vimrc`.
 
 ### Vundle
-Add the following to your `~/.vimrc` file.
+Add the following to your `~/.vimrc` file and run `PluginInstall` in Vim.
 
-    Bundle 'chriskempson/base16-vim'
+    Plugin 'chriskempson/base16-vim'
+    
+### Pathogen
+
+    cd ~/.vim/bundle
+    git clone https://github.com/chriskempson/base16-vim.git
 
 ### Manual
+
     cd ~/.vim/colors
     git clone git://github.com/chriskempson/base16-vim.git base16
     cp base16/colors/*.vim .
     
-## 265 colorspace 
+## 256 colorspace 
 If using a Base16 terminal theme designed to keep the 16 ANSI colors intact (a "256" variation) **and** have sucessfully modified your 256 colorspace with [base16-shell](https://github.com/chriskempson/base16-shell) you'll need to add the following to your `~/.vimrc` **before** the colorsheme declaration.
 
     let base16colorspace=256  " Access colors present in 256 colorspace

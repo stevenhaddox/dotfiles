@@ -10,6 +10,11 @@ if get(g:, 'fugitive_git_executable', 'git') ==# 'git' && executable('hub')
   let g:fugitive_git_executable = 'hub'
 endif
 
+if !exists('g:dispatch_compilers')
+  let g:dispatch_compilers = {}
+endif
+let g:dispatch_compilers['hub'] = 'git'
+
 " Utility {{{1
 
 function! s:throw(string) abort
@@ -94,6 +99,7 @@ function! s:curl_arguments(path, ...) abort
   let args = ['-q', '--silent']
   call extend(args, ['-H', 'Accept: application/json'])
   call extend(args, ['-H', 'Content-Type: application/json'])
+  call extend(args, ['-A', 'rhubarb.vim'])
   if get(options, 'auth', '') =~# ':'
     call extend(args, ['-u', options.auth])
   elseif has_key(options, 'auth')
@@ -140,11 +146,15 @@ endfunction
 
 function! rhubarb#omnifunc(findstart,base)
   if a:findstart
-    let existing = matchstr(getline('.')[0:col('.')-1],'#\d*$')
+    let existing = matchstr(getline('.')[0:col('.')-1],'#\d*$\|@[[:alnum:]-]*$')
     return col('.')-1-strlen(existing)
   endif
   try
-    return map(rhubarb#repo_request('issues'), '{"word": "#".v:val.number, "menu": v:val.title, "info": substitute(v:val.body,"\\r","","g")}')
+    if a:base =~# '^@'
+      return map(rhubarb#repo_request('collaborators'), '"@".v:val.login')
+    else
+      return map(rhubarb#repo_request('issues'), '{"word": "#".v:val.number, "menu": v:val.title, "info": substitute(v:val.body,"\\r","","g")}')
+    endif
   catch /^\%(fugitive\|rhubarb\):/
     return v:errmsg
   endtry
@@ -153,7 +163,7 @@ endfunction
 augroup rhubarb
   autocmd!
   autocmd User Fugitive
-        \ if &filetype ==# 'gitcommit' && expand('%:t') ==# 'COMMIT_EDITMSG' &&
+        \ if expand('%:p') =~# '\.git[\/].*MSG$' &&
         \   exists('+omnifunc') &&
         \   &omnifunc =~# '^\%(syntaxcomplete#Complete\)\=$' &&
         \   join(readfile(fugitive#buffer().repo().dir('config')),"\n")

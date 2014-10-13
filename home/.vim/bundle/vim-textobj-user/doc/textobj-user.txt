@@ -1,8 +1,8 @@
 *textobj-user.txt*	Create your own text objects
 
-Version 0.4.1
+Version 0.6.3
 Script ID: 2100
-Copyright (C) 2007-2013 Kana Natsuno <http://whileimautomaton.net/>
+Copyright (C) 2007-2014 Kana Natsuno <http://whileimautomaton.net/>
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
     a copy of this software and associated documentation files (the
@@ -115,7 +115,7 @@ https://github.com/kana/vim-textobj-user/wiki
 
 
 Requirements:
-- Vim 7.0 or later
+- Vim 7.4 or later
 
 Latest version:
 https://github.com/kana/vim-textobj-user
@@ -185,7 +185,7 @@ textobj#user#plugin({plugin-name}, {specs})
 	character such as <C-d>)
 
 			       *<Plug>(textobj-{plugin}-{object}-{operation})*
-	(b) Interface key mappings such as <Plug>(textobj-datetime-date-a) are
+	(b) Interface key mappings such as <Plug>(textobj-datetime-date) are
 	defined in Operator-pending mode, Visual mode and Select mode.  These
 	key mappings are defined for extra customization for users.
 
@@ -194,10 +194,10 @@ textobj#user#plugin({plugin-name}, {specs})
 	default, and it is usually a bad idea to override them.  In this case,
 	interface key mappings are used as follows:
 >
-		xmap aT  <Plug>(textobj-datetime-time-a)
-		omap aT  <Plug>(textobj-datetime-time-a)
-		xmap iT  <Plug>(textobj-datetime-time-i)
-		omap iT  <Plug>(textobj-datetime-time-i)
+		xmap aT  <Plug>(textobj-datetime-time)
+		omap aT  <Plug>(textobj-datetime-time)
+		xmap iT  <Plug>(textobj-datetime-time)
+		omap iT  <Plug>(textobj-datetime-time)
 <
 				*g:textobj_{plugin}_no_default_key_mappings*
 	(c) Finally :TextobjDatetimeDefaultKeyMappings is executed by default
@@ -275,6 +275,17 @@ The following properties are available:
 		where the 1st part is matched to the 1st regular expression
 		and the 2nd part is matched to the 2nd regular expression.
 
+						    *textobj-user-region-type*
+"region-type"			{char}  (default: "v")
+	A single character string that specifies the type of a region defined
+	by the "pattern" property.  Possible values are as follows:
+
+		Value           Meaning         ~
+		------------------------------- ~
+		"v"             Characterwise
+		"V"             Linewise
+		"\<C-v>"        Blockwise
+
 "{property}-function"		{fname}
 	If this property is defined, the function named {fname} instead of the
 	"pattern" property is used to determine a target text object for
@@ -289,12 +300,8 @@ The following properties are available:
 
 		[region_type, start_position, end_position]
 
-	- "region_type" is a string to denote the type of a region.
-		Valid value     Meaning     ~
-		--------------------------- ~
-		"v"             Characterwise
-		"V"             Linewise
-		"\<C-v>"        Blockwise
+	- "region_type" is a single-character string to specify the type of
+	  a region.  See |textobj-user-region-type| for valid values.
 	- "start_position" denotes the start position of a region.
 	  The detail of this value is the same as |getpos()|.
 	- "end_position" is like "start_position", but it denotes the
@@ -326,6 +333,59 @@ Note that "*no-default-key-mappings*" is still available, but it will no
 longer be supported.  Because it seems not to be used by anyone, and its
 interface is confusing and not useful.
 Use |g:textobj_{plugin}_no_default_key_mappings| instead.
+
+						*textobj#user#map()*
+textobj#user#map({plugin-name}, {specs})
+	Define key mappings to use custom text objects.
+
+	Most text object plugins provide default key mappings to use custom
+	text objects.  But sometimes you want to use other key mappings
+	instead.  It is possible to define such key mappings without
+	textobj#user#map() like:
+>
+		xmap aT  <Plug>(textobj-datetime-time)
+		omap aT  <Plug>(textobj-datetime-time)
+		xmap iT  <Plug>(textobj-datetime-time)
+		omap iT  <Plug>(textobj-datetime-time)
+<
+	But it is a tedious task.  You can define these key mappings in
+	a declarative way with textobj#user#map().  For example:
+>
+		call textobj#user#map('datetime', {
+		\   'time': {
+		\     'select': ['aT', 'iT'],
+		\   }
+		\ })
+<
+	{plugin-name} is the name of a text object plugin.
+
+	{specs} is a |Dictionary| which contains definitions of custom text
+	object.  Unlike |textobj#user#plugin()|, only the following properties
+	are allowed:
+
+		move-n      move-p      move-N      move-P
+		select      select-a    select-i
+
+	See also |textobj-user-specs| for the details.
+
+	For ease of customization, a text object plugin specified by
+	{plugin-name} may be undefined when textobj#user#map() is called.
+	Because:
+
+	- textobj#user#map() is mostly used in |vimrc|.  Text object plugins
+	  are usually located in plugin/*.vim.  And vimrc is loaded before all
+	  of plugin/*.vim.
+	- textobj#user#map() is sometimes used in |filetype-plugin|.
+	  Filetype-specific text object plugins are located in ftplugin/*.vim.
+	  And generally it is not predictable the loading order of these
+	  filetype plugins.
+
+	As a result, textobj#user#map() cannot detect whether {plugin-name} is
+	right or not.  To notice something wrong, an error message will be
+	shown when
+
+	- A key mapping defined by textobj#user#map() is actually used, and
+	- The corresponding text object does not exist at that moment.
 
 
 
@@ -367,10 +427,14 @@ textobj#user#select({pattern}, {flags}, {prevous-mode})
 	object after the cursor.
 
 	{flags} is a string, which can contain the following character flags:
-		char	meaning ~
-		----	------- ~
-		'b'     select the nearest object BEFORE the cursor if the
-		        cursor is not in the range of an object.
+
+		Character       Meaning ~
+		---------       -------------------------------------------- ~
+		"b"             select the nearest object BEFORE the cursor if
+		                the cursor is not in the range of an object.
+		"v"             select an object characterwise.  (default)
+		"V"             select an object linewise.
+		"\<C-v>"        select an object blockwise.
 
 	For the detail of {previous-mode}, see |textobj#user#move()|.
 
@@ -384,15 +448,20 @@ textobj#user#select_pair({pattern1}, {pattern2}, {flags}, {previous-mode})
 	with {pattern2}.
 
 	{flags} is a string, which can contain the following character flags:
-		char	meaning ~
-		----	------- ~
-		'a'     select the range including {pattern1} and {pattern2},
-			like |at|.
-		'i'     select the range excluding {pattern1} and {pattern2},
-			like |it|.  This is the default behavior unless 'a' is
-			explicitly specified.  If the cursor is not in a text
-			between {pattern1} and {pattern2}, this function does
-			nothing.
+
+		Character       Meaning ~
+		---------       -------------------------------------------- ~
+		"a"             select the range including {pattern1} and
+		                {pattern2}, like |at|.
+		"i"             select the range excluding {pattern1} and
+				{pattern2}, like |it|.  This is the default
+				behavior unless 'a' is explicitly specified.
+				If the cursor is not in a text between
+				{pattern1} and {pattern2}, this function does
+				nothing.
+		"v"             select an object characterwise.  (default)
+		"V"             select an object linewise.
+		"\<C-v>"        select an object blockwise.
 
 	For the detail of {previous-mode}, see |textobj#user#move()|.
 
@@ -440,10 +509,17 @@ textobj#user#define({pattern}, {pattern1}, {pattern2}, {guideline})
 ==============================================================================
 KNOWN ISSUES					*textobj-user-known-issues*
 
-- Count is not supported to select a text object.
+- Count is not supported by vim-textobj-user.  Because the meaning of a count
+  depends on each custom text object.  If you want to support count for your
+  custom text object, define it with "{property}-function" and use |v:count|
+  and/or |v:count1| to get an actual count.
 
-- Unlike built-in text objects such as |aw|, |ip| and others,
-  visually selected region is not extended by repeating custom text objects.
+- For built-in text objects such as |aw|, |ip| and others, visually selected
+  region is extended by repeating a text object like "vawawaw...".  Such
+  extending is not supported by vim-textobj-user.  Because it's not trivial
+  to support for all of custom text objects.  While some text objects like
+  |aw| simply extends the current selection, other text objects like |ab|
+  might override the current selection depending on a context.
 
 - Custom text objects with |o_CTRL-V| may not work properly.
 
@@ -457,6 +533,36 @@ KNOWN ISSUES					*textobj-user-known-issues*
 
 ==============================================================================
 CHANGELOG					*textobj-user-changelog*
+
+0.6.3	2014-06-22T17:40:07+09:00		*textobj-user-changelog-0.6.3*
+	- Fix a bug that using script-local functions as "{property}-function"
+	  causes errors if 'verbose' is set to 15 or bigger value when
+	  |textobj#user#plugin()| is being executed.  See also:
+	  https://github.com/kana/vim-textobj-user/pull/33
+
+0.6.2	2014-04-14T23:16:56+09:00		*textobj-user-changelog-0.6.2*
+	- Fix a bug that "select-function", "select-a-function" and
+	  "select-i-function" cannot get a count typed in Visual mode via
+	  |v:count| and |v:count1|.  This fix requires recent versions of Vim.
+	  In Vim version X or older (where X is 7.3.002 <= X < 7.3.353), these
+	  functions still cannot get an actual count.
+
+0.6.1	2014-04-07T21:55:39+09:00		*textobj-user-changelog-0.6.1*
+	- Fix a bug that "move-n", "move-N", "move-p" and "move-P" for text
+	  objects defined by "pattern" do not work since 0.6.0.
+
+0.6.0	2014-04-06T20:42:29+09:00		*textobj-user-changelog-0.6.0*
+	- Support "region-type" to specify region types for simple text
+	  objects defined by "pattern".  See |textobj-user-region-type| for
+	  the details.
+
+0.5.0	2014-02-15T00:43:05+09:00		*textobj-user-changelog-0.5.0*
+	- Add |textobj#user#map()| for ease of customization.
+
+0.4.2	2014-02-08T22:57:19+09:00		*textobj-user-changelog-0.4.2*
+	- Fix to support "move-n-function", "move-p-function", and so on.
+	  The document states that these functions are available, but they
+	  were not actually implemented.
 
 0.4.1	2013-07-09T21:23:56+09:00		*textobj-user-changelog-0.4.1*
 	- Fix custom text objects to correctly work even if 'selection' is set

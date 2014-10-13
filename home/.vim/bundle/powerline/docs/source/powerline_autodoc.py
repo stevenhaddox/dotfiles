@@ -1,13 +1,13 @@
 # vim:fileencoding=utf-8:noet
-from sphinx.ext import autodoc
-from inspect import formatargspec
-from powerline.lint.inspect import getconfigargspec
-from powerline.lib.threaded import ThreadedSegment
+from __future__ import (unicode_literals, division, absolute_import, print_function)
 
-try:
-	from __builtin__ import unicode
-except ImportError:
-	unicode = lambda s, enc: s  # NOQA
+from inspect import formatargspec
+
+from sphinx.ext import autodoc
+
+from powerline.lint.inspect import getconfigargspec
+from powerline.segments import Segment
+from powerline.lib.unicode import unicode
 
 
 def formatvalue(val):
@@ -21,7 +21,7 @@ class ThreadedDocumenter(autodoc.FunctionDocumenter):
 	'''Specialized documenter subclass for ThreadedSegment subclasses.'''
 	@classmethod
 	def can_document_member(cls, member, membername, isattr, parent):
-		return (isinstance(member, ThreadedSegment) or
+		return (isinstance(member, Segment) or
 			super(ThreadedDocumenter, cls).can_document_member(member, membername, isattr, parent))
 
 	def format_args(self):

@@ -1,0 +1,2 @@
+# Rails with postgresql by default, no test-unit directory
+-d postgresql -T

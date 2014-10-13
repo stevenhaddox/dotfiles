@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # vim:fileencoding=utf-8:noet
+from __future__ import (unicode_literals, division, absolute_import, print_function)
+
+import sys
+
+from time import sleep
+from subprocess import Popen, PIPE
 
 from powerline import Powerline
-import sys
-from time import sleep
 from powerline.lib.monotonic import monotonic
-from subprocess import Popen, PIPE
 
 powerline = Powerline('wm', renderer_module='pango_markup')
 powerline.update_renderer()
@@ -30,7 +33,7 @@ def read_to_log(pl, client):
 while True:
 	start_time = monotonic()
 	s = powerline.render(side='right')
-	request = "powerline_widget:set_markup('" + s.replace('\\', '\\\\').replace("'", "\\'") + "')\n"
+	request = 'powerline_widget:set_markup(\'' + s.replace('\\', '\\\\').replace('\'', '\\\'') + '\')\n'
 	client = Popen(['awesome-client'], shell=False, stdout=PIPE, stderr=PIPE, stdin=PIPE)
 	client.stdin.write(request.encode('utf-8'))
 	client.stdin.close()

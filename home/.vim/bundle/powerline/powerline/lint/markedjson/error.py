@@ -1,13 +1,10 @@
-__all__ = ['Mark', 'MarkedError', 'echoerr', 'NON_PRINTABLE']
-
+# vim:fileencoding=utf-8:noet
+from __future__ import (unicode_literals, division, absolute_import, print_function)
 
 import sys
 import re
 
-try:
-	from __builtin__ import unichr
-except ImportError:
-	unichr = chr  # NOQA
+from powerline.lib.unicode import unichr
 
 
 NON_PRINTABLE = re.compile('[^\t\n\x20-\x7E' + unichr(0x85) + (unichr(0xA0) + '-' + unichr(0xD7FF)) + (unichr(0xE000) + '-' + unichr(0xFFFD)) + ']')
@@ -53,15 +50,17 @@ class Mark:
 				break
 		snippet = [self.buffer[start:self.pointer], self.buffer[self.pointer], self.buffer[self.pointer + 1:end]]
 		snippet = [strtrans(s) for s in snippet]
-		return ' ' * indent + head + ''.join(snippet) + tail + '\n'  \
-				+ ' ' * (indent + len(head) + len(snippet[0])) + '^'
+		return (
+			' ' * indent + head + ''.join(snippet) + tail + '\n'
+			+ ' ' * (indent + len(head) + len(snippet[0])) + '^'
+		)
 
 	def __str__(self):
 		snippet = self.get_snippet()
-		where = "  in \"%s\", line %d, column %d"	\
-				% (self.name, self.line + 1, self.column + 1)
+		where = ('  in "%s", line %d, column %d' % (
+			self.name, self.line + 1, self.column + 1))
 		if snippet is not None:
-			where += ":\n" + snippet
+			where += ':\n' + snippet
 		if type(where) is str:
 			return where
 		else:
@@ -69,19 +68,24 @@ class Mark:
 
 
 def echoerr(*args, **kwargs):
-	sys.stderr.write('\n')
-	sys.stderr.write(format_error(*args, **kwargs) + '\n')
+	stream = kwargs.pop('stream', sys.stderr)
+	stream.write('\n')
+	stream.write(format_error(*args, **kwargs) + '\n')
 
 
 def format_error(context=None, context_mark=None, problem=None, problem_mark=None, note=None):
 	lines = []
 	if context is not None:
 		lines.append(context)
-	if context_mark is not None  \
-		and (problem is None or problem_mark is None
-				or context_mark.name != problem_mark.name
-				or context_mark.line != problem_mark.line
-				or context_mark.column != problem_mark.column):
+	if (
+		context_mark is not None
+		and (
+			problem is None or problem_mark is None
+			or context_mark.name != problem_mark.name
+			or context_mark.line != problem_mark.line
+			or context_mark.column != problem_mark.column
+		)
+	):
 		lines.append(str(context_mark))
 	if problem is not None:
 		lines.append(problem)
@@ -93,7 +97,36 @@ def format_error(context=None, context_mark=None, problem=None, problem_mark=Non
 
 
 class MarkedError(Exception):
-	def __init__(self, context=None, context_mark=None,
-			problem=None, problem_mark=None, note=None):
-		Exception.__init__(self, format_error(context, context_mark, problem,
-										problem_mark, note))
+	def __init__(self, context=None, context_mark=None, problem=None, problem_mark=None, note=None):
+		Exception.__init__(self, format_error(context, context_mark, problem, problem_mark, note))
+
+
+class EchoErr(object):
+	__slots__ = ('echoerr', 'logger',)
+
+	def __init__(self, echoerr, logger):
+		self.echoerr = echoerr
+		self.logger = logger
+
+	def __call__(self, *args, **kwargs):
+		self.echoerr(*args, **kwargs)
+
+
+class DelayedEchoErr(EchoErr):
+	__slots__ = ('echoerr', 'logger', 'errs')
+
+	def __init__(self, echoerr):
+		super(DelayedEchoErr, self).__init__(echoerr, echoerr.logger)
+		self.errs = []
+
+	def __call__(self, *args, **kwargs):
+		self.errs.append((args, kwargs))
+
+	def echo_all(self):
+		for args, kwargs in self.errs:
+			self.echoerr(*args, **kwargs)
+
+	def __nonzero__(self):
+		return not not self.errs
+
+	__bool__ = __nonzero__

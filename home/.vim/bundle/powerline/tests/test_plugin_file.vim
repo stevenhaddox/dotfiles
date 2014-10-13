@@ -1,5 +1,8 @@
 #!/usr/bin/vim -S
-set nocompatible
+set encoding=utf-8
+let g:powerline_config_paths = [expand('<sfile>:p:h:h') . '/powerline/config_files']
+tabedit abc
+tabedit def
 try
 	source powerline/bindings/vim/plugin/powerline.vim
 catch
@@ -16,4 +19,4 @@ if len(mess)>1
 	call writefile(mess, 'message.fail')
 	cquit
 endif
-quit!
+qall!

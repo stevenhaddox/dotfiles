@@ -1,15 +1,24 @@
 # vim:fileencoding=utf-8:noet
-import zsh
+from __future__ import (unicode_literals, division, absolute_import, print_function)
+
 import atexit
+
+from weakref import WeakValueDictionary, ref
+
+import zsh
+
 from powerline.shell import ShellPowerline
 from powerline.lib import parsedotval
+from powerline.lib.unicode import unicode
+from powerline.lib.encoding import (get_preferred_output_encoding,
+                                    get_preferred_environment_encoding)
 
 
-used_powerlines = []
+used_powerlines = WeakValueDictionary()
 
 
 def shutdown():
-	for powerline in used_powerlines:
+	for powerline in tuple(used_powerlines.values()):
 		powerline.shutdown()
 
 
@@ -21,16 +30,9 @@ def get_var_config(var):
 
 
 class Args(object):
+	__slots__ = ('last_pipe_status', 'last_exit_code')
 	ext = ['shell']
-	renderer_module = 'zsh_prompt'
-
-	@property
-	def last_exit_code(self):
-		return zsh.last_exit_code()
-
-	@property
-	def last_pipe_status(self):
-		return zsh.pipestatus()
+	renderer_module = '.zsh'
 
 	@property
 	def config(self):
@@ -49,14 +51,23 @@ class Args(object):
 	@property
 	def config_path(self):
 		try:
-			return zsh.getvalue('POWERLINE_CONFIG_PATH')
+			ret = zsh.getvalue('POWERLINE_CONFIG_PATHS')
 		except IndexError:
 			return None
+		else:
+			if isinstance(ret, (unicode, str, bytes)):
+				return ret.split(type(ret)(':'))
+			else:
+				return ret
+
+	@property
+	def jobnum(self):
+		return zsh.getvalue('_POWERLINE_JOBNUM')
 
 
 def string(s):
 	if type(s) is bytes:
-		return s.decode('utf-8', 'replace')
+		return s.decode(get_preferred_environment_encoding(), 'replace')
 	else:
 		return str(s)
 
@@ -88,49 +99,93 @@ class Environment(object):
 environ = Environment()
 
 
-class Prompt(object):
-	__slots__ = ('powerline', 'side', 'savedpsvar', 'savedps', 'args')
+class ZshPowerline(ShellPowerline):
+	def init(self, **kwargs):
+		super(ZshPowerline, self).init(Args(), **kwargs)
 
-	def __init__(self, powerline, side, savedpsvar=None, savedps=None):
+	def precmd(self):
+		self.args.last_pipe_status = zsh.pipestatus()
+		self.args.last_exit_code = zsh.last_exit_code()
+
+	def do_setup(self, zsh_globals):
+		set_prompt(self, 'PS1', 'left', None, above=True)
+		set_prompt(self, 'RPS1', 'right', None)
+		set_prompt(self, 'PS2', 'left', 'continuation')
+		set_prompt(self, 'RPS2', 'right', 'continuation')
+		set_prompt(self, 'PS3', 'left', 'select')
+		used_powerlines[id(self)] = self
+		zsh_globals['_powerline'] = self
+
+
+class Prompt(object):
+	__slots__ = ('powerline', 'side', 'savedpsvar', 'savedps', 'args', 'theme', 'above', '__weakref__')
+
+	def __init__(self, powerline, side, theme, savedpsvar=None, savedps=None, above=False):
 		self.powerline = powerline
 		self.side = side
+		self.above = above
 		self.savedpsvar = savedpsvar
 		self.savedps = savedps
 		self.args = powerline.args
+		self.theme = theme
 
 	def __str__(self):
-		r = self.powerline.render(
+		zsh.eval('_POWERLINE_PARSER_STATE="${(%):-%_}"')
+		zsh.eval('_POWERLINE_SHORTENED_PATH="${(%):-%~}"')
+		segment_info = {
+			'args': self.args,
+			'environ': environ,
+			'client_id': 1,
+			'local_theme': self.theme,
+			'parser_state': zsh.getvalue('_POWERLINE_PARSER_STATE'),
+			'shortened_path': zsh.getvalue('_POWERLINE_SHORTENED_PATH'),
+		}
+		zsh.setvalue('_POWERLINE_PARSER_STATE', None)
+		zsh.setvalue('_POWERLINE_SHORTENED_PATH', None)
+		r = ''
+		if self.above:
+			for line in self.powerline.render_above_lines(
+				width=zsh.columns() - 1,
+				segment_info=segment_info,
+			):
+				r += line + '\n'
+		r += self.powerline.render(
 			width=zsh.columns(),
 			side=self.side,
-			segment_info={'args': self.args, 'environ': environ}
+			segment_info=segment_info,
 		)
 		if type(r) is not str:
 			if type(r) is bytes:
-				return r.decode('utf-8')
+				return r.decode(get_preferred_output_encoding(), 'replace')
 			else:
-				return r.encode('utf-8')
+				return r.encode(get_preferred_output_encoding(), 'replace')
 		return r
 
 	def __del__(self):
 		if self.savedps:
 			zsh.setvalue(self.savedpsvar, self.savedps)
-		used_powerlines.remove(self.powerline)
-		if self.powerline not in used_powerlines:
-			self.powerline.shutdown()
+		self.powerline.shutdown()
 
 
-def set_prompt(powerline, psvar, side):
-	savedps = zsh.getvalue(psvar)
+def set_prompt(powerline, psvar, side, theme, above=False):
+	try:
+		savedps = zsh.getvalue(psvar)
+	except IndexError:
+		savedps = None
 	zpyvar = 'ZPYTHON_POWERLINE_' + psvar
-	prompt = Prompt(powerline, side, psvar, savedps)
+	prompt = Prompt(powerline, side, theme, psvar, savedps, above)
+	zsh.eval('unset ' + zpyvar)
 	zsh.set_special_string(zpyvar, prompt)
 	zsh.setvalue(psvar, '${' + zpyvar + '}')
+	return ref(prompt)
 
 
-def setup():
-	powerline = ShellPowerline(Args())
-	used_powerlines.append(powerline)
-	used_powerlines.append(powerline)
-	set_prompt(powerline, 'PS1', 'left')
-	set_prompt(powerline, 'RPS1', 'right')
+def reload():
+	for powerline in tuple(used_powerlines.values()):
+		powerline.reload()
+
+
+def setup(zsh_globals):
+	powerline = ZshPowerline()
+	powerline.setup(zsh_globals)
 	atexit.register(shutdown)

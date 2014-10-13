@@ -1,6 +1,9 @@
 # vim:fileencoding=utf-8:noet
+from __future__ import (unicode_literals, division, absolute_import, print_function)
 
 from math import log
+
+
 unit_list = tuple(zip(['', 'k', 'M', 'G', 'T', 'P'], [0, 0, 1, 2, 2, 2]))
 
 
@@ -17,6 +20,6 @@ def humanize_bytes(num, suffix='B', si_prefix=False):
 	unit, decimals = unit_list[exponent]
 	if unit and not si_prefix:
 		unit = unit.upper() + 'i'
-	return '{{quotient:.{decimals}f}} {{unit}}{{suffix}}'\
-		.format(decimals=decimals)\
-		.format(quotient=quotient, unit=unit, suffix=suffix)
+	return ('{{quotient:.{decimals}f}} {{unit}}{{suffix}}'
+		.format(decimals=decimals)
+		.format(quotient=quotient, unit=unit, suffix=suffix))
