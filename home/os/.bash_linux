@@ -15,9 +15,10 @@ else
 fi
 
 # Base 16 Theme for PuTTY (and remote connections?)
-if [ -f ${HOME}/.colors/base16.sh ]; then
-  . ~/.colors/base16.sh
-fi
+# Put the below into .bash_local if needed
+#if [ -f ${HOME}/.colors/base16.sh ]; then
+#  . ~/.colors/base16.sh
+#fi
 
 if [ -n "$TMUX" ]; then
   echo ""
