@@ -72,7 +72,7 @@ set relativenumber
 set wrap
 set textwidth=79
 set formatoptions=qrn1
-" set colorcolumn=85 " Column highlights at 85th character
+set colorcolumn=+1 " Column highlights 1 char beyond texwidth
 " }}}
 
 " Folding {{{

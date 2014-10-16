@@ -10,6 +10,7 @@ git_bundles = %w{
   git://github.com/christoomey/vim-tmux-navigator.git
   git://github.com/godlygeek/tabular.git
   git://github.com/Lokaltog/powerline.git
+  git://github.com/maksimr/vim-jsbeautify.git
   git://github.com/pangloss/vim-javascript.git
   git://github.com/scrooloose/nerdtree.git
   git://github.com/timcharper/textile.vim.git
@@ -36,7 +37,6 @@ git_bundles = %w{
   git://github.com/tpope/vim-surround.git
   git://github.com/tpope/vim-unimpaired.git
   git://github.com/tpope/vim-vividchalk.git
-  git://github.com/tsaleh/vim-matchit.git
   git://github.com/tsaleh/vim-shoulda.git
   git://github.com/tsaleh/vim-tmux.git
   git://github.com/vim-ruby/vim-ruby.git
