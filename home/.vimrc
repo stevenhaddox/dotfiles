@@ -11,6 +11,7 @@ call pathogen#infect()
 call pathogen#helptags()
 " }}}
 
+" http://stevelosh.com/blog/2010/09/coming-home-to-vim/#using-the-leader
 " Leader mappings {{{
 let mapleader = ","
 "v to select just pasted text for manipulation
@@ -171,3 +172,4 @@ if $VIM_CRONTAB == 'true'
   set nobackup
   set nowritebackup
 endif
+

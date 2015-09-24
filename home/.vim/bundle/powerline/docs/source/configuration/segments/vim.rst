@@ -15,10 +15,10 @@ Syntastic segments
 .. automodule:: powerline.segments.vim.plugin.syntastic
    :members:
 
-Ctrl-P segments
----------------
+Command-T segments
+------------------
 
-.. automodule:: powerline.segments.vim.plugin.ctrlp
+.. automodule:: powerline.segments.vim.plugin.commandt
    :members:
 
 Tagbar segments
@@ -31,4 +31,10 @@ NERDTree segments
 -----------------
 
 .. automodule:: powerline.segments.vim.plugin.nerdtree
+   :members:
+
+Capslock segments
+-----------------
+
+.. automodule:: powerline.segments.vim.plugin.capslock
    :members:

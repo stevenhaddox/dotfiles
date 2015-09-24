@@ -14,14 +14,17 @@ from time import sleep
 from functools import partial
 from io import BytesIO
 
-from powerline.shell import get_argparser, finish_args, ShellPowerline, write_output
+from powerline.shell import ShellPowerline
+from powerline.commands.main import finish_args, write_output
 from powerline.lib.monotonic import monotonic
-from powerline.lib.encoding import get_preferred_output_encoding
+from powerline.lib.encoding import get_preferred_output_encoding, get_preferred_arguments_encoding, get_unicode_writer
+
+from powerline.commands.main import get_argparser as get_main_argparser
+from powerline.commands.daemon import get_argparser as get_daemon_argparser
 
 
 is_daemon = False
-platform = sys.platform.lower()
-use_filesystem = 'darwin' in platform
+use_filesystem = not sys.platform.lower().startswith('linux')
 
 address = None
 pidfile = None
@@ -41,7 +44,7 @@ class NonInteractiveArgParser(ArgumentParser):
 		raise Exception(self.format_usage())
 
 
-parser = get_argparser(parser=NonInteractiveArgParser, description='powerline daemon')
+parser = get_main_argparser(NonInteractiveArgParser)
 
 EOF = b'EOF\0\0'
 
@@ -72,11 +75,14 @@ def render(args, environ, cwd):
 	key = (
 		args.ext[0],
 		args.renderer_module,
-		tuple(args.config) if args.config else None,
-		tuple(args.theme_option) if args.theme_option else None,
+		tuple(args.config_override) if args.config_override else None,
+		tuple(args.theme_override) if args.theme_override else None,
 		tuple(args.config_path) if args.config_path else None,
+		environ.get('POWERLINE_THEME_OVERRIDES', ''),
+		environ.get('POWERLINE_CONFIG_OVERRIDES', ''),
+		environ.get('POWERLINE_CONFIG_PATHS', ''),
 	)
-	finish_args(args)
+	finish_args(environ, args)
 	powerline = None
 	try:
 		powerline = powerlines[key]
@@ -101,7 +107,7 @@ def render(args, environ, cwd):
 			else:
 				return 'Failed to render {0}: {1}'.format(str(key), str(e))
 	s = BytesIO()
-	write_output(args, powerline, segment_info, s.write, encoding)
+	write_output(args, powerline, segment_info, get_unicode_writer(stream=s))
 	s.seek(0)
 	return s.read()
 
@@ -144,10 +150,7 @@ def do_write(conn, result):
 		pass
 
 
-encoding = get_preferred_output_encoding()
-
-
-def safe_bytes(o, encoding=encoding):
+def safe_bytes(o, encoding=get_preferred_output_encoding()):
 	'''Return bytes instance without ever throwing an exception.'''
 	try:
 		try:
@@ -165,7 +168,7 @@ def safe_bytes(o, encoding=encoding):
 		return safe_bytes(str(e), encoding)
 
 
-def parse_args(req):
+def parse_args(req, encoding=get_preferred_arguments_encoding()):
 	args = [x.decode(encoding) for x in req.split(b'\0') if x]
 	numargs = int(args[0], 16)
 	shell_args = parser.parse_args(args[1:numargs + 1])
@@ -350,14 +353,8 @@ def lockpidfile():
 def main():
 	global address
 	global pidfile
-	p = ArgumentParser(description='Daemon to improve the performance of powerline')
-	p.add_argument('--quiet', '-q', action='store_true', help='Without other options: do not complain about already running powerline-daemon instance. Will still exit with 1. With `--kill\' and `--replace\': do not show any messages. With `--foreground\': ignored. Does not silence exceptions in any case.')
-	p.add_argument('--socket', '-s', help='Specify socket which will be used for connecting to daemon.')
-	a = p.add_mutually_exclusive_group().add_argument
-	a('--kill', '-k', action='store_true', help='Kill an already running instance')
-	a('--foreground', '-f', action='store_true', help='Run in the foreground (dont daemonize)')
-	a('--replace', '-r', action='store_true', help='Replace an already running instance')
-	args = p.parse_args()
+	parser = get_daemon_argparser()
+	args = parser.parse_args()
 
 	if args.socket:
 		address = args.socket
@@ -377,6 +374,8 @@ def main():
 		pidfile = address + '.pid'
 
 	if args.kill:
+		if args.foreground or args.replace:
+			parser.error('--kill and --foreground/--replace cannot be used together')
 		if kill_daemon():
 			if not args.quiet:
 				print ('Kill command sent to daemon, if it does not die in a couple of seconds use kill to kill it')

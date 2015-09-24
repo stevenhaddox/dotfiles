@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 
+# git://git.wincent.com/command-t.git
+
 git_bundles = %w{
-  git://github.com/altercation/vim-colors-solarized.git
   git://github.com/astashov/vim-ruby-debugger.git
   git://github.com/bronson/vim-trailing-whitespace.git
   git://github.com/cespare/vim-toml.git
@@ -24,6 +25,7 @@ git_bundles = %w{
   git://github.com/tpope/vim-flatfoot.git
   git://github.com/tpope/vim-fugitive.git
   git://github.com/tpope/vim-git.git
+  git://github.com/airblade/vim-gitgutter.git
   git://github.com/tpope/vim-haml.git
   git://github.com/tpope/vim-liquid.git
   git://github.com/tpope/vim-markdown.git
@@ -37,6 +39,7 @@ git_bundles = %w{
   git://github.com/tpope/vim-surround.git
   git://github.com/tpope/vim-unimpaired.git
   git://github.com/tpope/vim-vividchalk.git
+  git://github.com/tristen/vim-sparkup.git
   git://github.com/tsaleh/vim-shoulda.git
   git://github.com/tsaleh/vim-tmux.git
   git://github.com/vim-ruby/vim-ruby.git
@@ -67,4 +70,3 @@ git_bundles.each do |url|
 end
 
 Dir["*/.git"].each {|f| FileUtils.rm_rf(f) }
-

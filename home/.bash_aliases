@@ -11,6 +11,9 @@ alias crontab='VIM_CRONTAB=true crontab'
 # Render the current folder via webrick! ($ rserve 3000)
 alias rserve='ruby -run -e httpd . -p'
 
+# Development aliases
+alias chefdev='rbenv shell chefdk; rbenv rehash; chef shell-init bash'
+
 # project aliases
 alias sites='cd ~/Sites'
 alias projects='cd ~/Sites/_projects'
@@ -67,6 +70,52 @@ alias cpu='top -F -R -o cpu -n 10'
 
 # GPG
 alias encrypt-self='gpg --recipients steven@haddox.us --armor --encrypt'
+alias encrypt='gpg -e -r steven'
 alias decrypt='gpg --decrypt'
+
+# Certificates
+function certinfo {
+  if openssl req -text -noout -verify -in $1 > /dev/null 2>&1
+  then
+    echo "Cert Request File:"
+    openssl req -subject -noout -verify -in $1
+  elif openssl rsa -in $1 -check > /dev/null 2>&1
+  then
+    echo "RSA Private Key File, password once more please:"
+    openssl rsa -in $1 -check
+  elif openssl pkcs12 -info -in $1 -nodes > /dev/null 2>&1
+  then
+    echo "PKCS12, .p12 file, password once more please:"
+    openssl pkcs12 -info -in $1 -nodes | openssl x509 -noout -subject -issuer
+  elif openssl x509 -in $1 -text -noout > /dev/null 2>&1
+  then
+    echo "X509 Certificate:"
+    openssl x509 -in $1 -subject -issuer -noout
+  else
+    echo "Unknown filetype."
+  fi
+}
+
+extract () {
+  if [ -f $1 ] ; then
+    case $1 in
+      *.tar.bz2)  tar xvjf $1 && cd $(basename "$1" .tar.bz2) ;;
+      *.tar.gz)   tar xvzf $1 && cd $(basename "$1" .tar.gz) ;;
+      *.tar.xz)   tar Jxvf $1 && cd $(basename "$1" .tar.xz) ;;
+      *.bz2)      bunzip2 $1 && cd $(basename "$1" /bz2) ;;
+      *.rar)      unrar x $1 && cd $(basename "$1" .rar) ;;
+      *.gz)       gunzip $1 && cd $(basename "$1" .gz) ;;
+      *.tar)      tar xvf $1 && cd $(basename "$1" .tar) ;;
+      *.tbz2)     tar xvjf $1 && cd $(basename "$1" .tbz2) ;;
+      *.tgz)      tar xvzf $1 && cd $(basename "$1" .tgz) ;;
+      *.zip)      unzip $1 && cd $(basename "$1" .zip) ;;
+      *.Z)        uncompress $1 && cd $(basename "$1" .Z) ;;
+      *.7z)       7z x $1 && cd $(basename "$1" .7z) ;;
+      *)          echo "don't know how to extract '$1'..." ;;
+    esac
+  else
+    echo "'$1' is not a valid file!"
+  fi
+}
 
 # DB Aliases live in ~/.bash_osx and ~/.bash_linux

@@ -7,6 +7,10 @@ if exists("g:loaded_tmux_navigator") || &cp || v:version < 700
 endif
 let g:loaded_tmux_navigator = 1
 
+if !exists("g:tmux_navigator_save_on_switch")
+  let g:tmux_navigator_save_on_switch = 0
+endif
+
 function! s:UseTmuxNavigatorMappings()
   return !exists("g:tmux_navigator_no_mappings") || !g:tmux_navigator_no_mappings
 endfunction
@@ -32,6 +36,10 @@ function! s:TmuxWinCmd(direction)
   endif
 endfunction
 
+function! s:NeedsVitalityRedraw()
+  return exists('g:loaded_vitality') && v:version < 704 && !has("patch481")
+endfunction
+
 function! s:TmuxAwareNavigate(direction)
   let nr = winnr()
   let tmux_last_pane = (a:direction == 'p' && s:tmux_is_last_pane)
@@ -42,9 +50,12 @@ function! s:TmuxAwareNavigate(direction)
   " a) we're toggling between the last tmux pane;
   " b) we tried switching windows in vim but it didn't have effect.
   if tmux_last_pane || nr == winnr()
+    if g:tmux_navigator_save_on_switch
+      update
+    endif
     let cmd = 'tmux select-pane -' . tr(a:direction, 'phjkl', 'lLDUR')
     silent call system(cmd)
-    if exists('g:loaded_vitality')
+    if s:NeedsVitalityRedraw()
       redraw!
     endif
     let s:tmux_is_last_pane = 1

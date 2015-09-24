@@ -8,10 +8,11 @@ from weakref import WeakValueDictionary, ref
 import zsh
 
 from powerline.shell import ShellPowerline
-from powerline.lib import parsedotval
-from powerline.lib.unicode import unicode
+from powerline.lib.overrides import parsedotval, parse_override_var
+from powerline.lib.unicode import unicode, u
 from powerline.lib.encoding import (get_preferred_output_encoding,
                                     get_preferred_environment_encoding)
+from powerline.lib.dict import mergeargs
 
 
 used_powerlines = WeakValueDictionary()
@@ -24,7 +25,13 @@ def shutdown():
 
 def get_var_config(var):
 	try:
-		return [parsedotval(i) for i in zsh.getvalue(var).items()]
+		val = zsh.getvalue(var)
+		if isinstance(val, dict):
+			return mergeargs([parsedotval((u(k), u(v))) for k, v in val.items()])
+		elif isinstance(val, (unicode, str, bytes)):
+			return mergeargs(parse_override_var(u(val)))
+		else:
+			return None
 	except:
 		return None
 
@@ -35,18 +42,12 @@ class Args(object):
 	renderer_module = '.zsh'
 
 	@property
-	def config(self):
-		try:
-			return get_var_config('POWERLINE_CONFIG')
-		except IndexError:
-			return None
+	def config_override(self):
+		return get_var_config('POWERLINE_CONFIG_OVERRIDES')
 
 	@property
-	def theme_option(self):
-		try:
-			return get_var_config('POWERLINE_THEME_CONFIG')
-		except IndexError:
-			return None
+	def theme_override(self):
+		return get_var_config('POWERLINE_THEME_OVERRIDES')
 
 	@property
 	def config_path(self):
@@ -56,7 +57,11 @@ class Args(object):
 			return None
 		else:
 			if isinstance(ret, (unicode, str, bytes)):
-				return ret.split(type(ret)(':'))
+				return [
+					path
+					for path in ret.split((b':' if isinstance(ret, bytes) else ':'))
+					if path
+				]
 			else:
 				return ret
 
@@ -96,7 +101,20 @@ class Environment(object):
 			return False
 
 
-environ = Environment()
+if hasattr(getattr(zsh, 'environ', None), '__contains__'):
+	environ = zsh.environ
+else:
+	environ = Environment()
+
+
+if hasattr(zsh, 'expand') and zsh.expand('${:-}') == '':
+	zsh_expand = zsh.expand
+else:
+	def zsh_expand(s):
+		zsh.eval('_POWERLINE_REPLY="' + s + '"')
+		ret = zsh.getvalue('_POWERLINE_REPLY')
+		zsh.setvalue('_POWERLINE_REPLY', None)
+		return ret
 
 
 class ZshPowerline(ShellPowerline):
@@ -130,29 +148,43 @@ class Prompt(object):
 		self.theme = theme
 
 	def __str__(self):
-		zsh.eval('_POWERLINE_PARSER_STATE="${(%):-%_}"')
-		zsh.eval('_POWERLINE_SHORTENED_PATH="${(%):-%~}"')
+		parser_state = u(zsh_expand('${(%):-%_}'))
+		shortened_path = u(zsh_expand('${(%):-%~}'))
+		try:
+			mode = u(zsh.getvalue('_POWERLINE_MODE'))
+		except IndexError:
+			mode = None
+		try:
+			default_mode = u(zsh.getvalue('_POWERLINE_DEFAULT_MODE'))
+		except IndexError:
+			default_mode = None
 		segment_info = {
 			'args': self.args,
 			'environ': environ,
 			'client_id': 1,
 			'local_theme': self.theme,
-			'parser_state': zsh.getvalue('_POWERLINE_PARSER_STATE'),
-			'shortened_path': zsh.getvalue('_POWERLINE_SHORTENED_PATH'),
+			'parser_state': parser_state,
+			'shortened_path': shortened_path,
+			'mode': mode,
+			'default_mode': default_mode,
 		}
-		zsh.setvalue('_POWERLINE_PARSER_STATE', None)
-		zsh.setvalue('_POWERLINE_SHORTENED_PATH', None)
+		try:
+			zle_rprompt_indent = zsh.getvalue('ZLE_RPROMPT_INDENT')
+		except IndexError:
+			zle_rprompt_indent = 1
 		r = ''
 		if self.above:
 			for line in self.powerline.render_above_lines(
-				width=zsh.columns() - 1,
+				width=zsh.columns() - zle_rprompt_indent,
 				segment_info=segment_info,
 			):
-				r += line + '\n'
+				if line:
+					r += line + '\n'
 		r += self.powerline.render(
 			width=zsh.columns(),
 			side=self.side,
 			segment_info=segment_info,
+			mode=mode,
 		)
 		if type(r) is not str:
 			if type(r) is bytes:
@@ -174,7 +206,7 @@ def set_prompt(powerline, psvar, side, theme, above=False):
 		savedps = None
 	zpyvar = 'ZPYTHON_POWERLINE_' + psvar
 	prompt = Prompt(powerline, side, theme, psvar, savedps, above)
-	zsh.eval('unset ' + zpyvar)
+	zsh.setvalue(zpyvar, None)
 	zsh.set_special_string(zpyvar, prompt)
 	zsh.setvalue(psvar, '${' + zpyvar + '}')
 	return ref(prompt)
@@ -183,6 +215,11 @@ def set_prompt(powerline, psvar, side, theme, above=False):
 def reload():
 	for powerline in tuple(used_powerlines.values()):
 		powerline.reload()
+
+
+def reload_config():
+	for powerline in used_powerlines.values():
+		powerline.create_renderer(load_main=True, load_colors=True, load_colorscheme=True, load_theme=True)
 
 
 def setup(zsh_globals):

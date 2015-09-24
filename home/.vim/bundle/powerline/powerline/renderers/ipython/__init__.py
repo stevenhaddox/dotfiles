@@ -2,6 +2,7 @@
 from __future__ import (unicode_literals, division, absolute_import, print_function)
 
 from powerline.renderers.shell import ShellRenderer
+from powerline.renderers.shell.readline import ReadlineRenderer
 from powerline.theme import Theme
 
 
@@ -33,15 +34,21 @@ class IPythonRenderer(ShellRenderer):
 			if 'theme' in match:
 				match['theme'].shutdown()
 
-	def render(self, *args, **kwargs):
+	def render(self, **kwargs):
 		# XXX super(ShellRenderer), *not* super(IPythonRenderer)
-		return super(ShellRenderer, self).render(*args, **kwargs)
+		return super(ShellRenderer, self).render(**kwargs)
+
+	def do_render(self, segment_info, **kwargs):
+		segment_info.update(client_id='ipython')
+		return super(IPythonRenderer, self).do_render(
+			segment_info=segment_info,
+			**kwargs
+		)
 
 
-class IPythonPromptRenderer(IPythonRenderer):
+class IPythonPromptRenderer(IPythonRenderer, ReadlineRenderer):
 	'''Powerline ipython prompt (in and in2) renderer'''
-	escape_hl_start = '\x01'
-	escape_hl_end = '\x02'
+	pass
 
 
 class IPythonNonPromptRenderer(IPythonRenderer):

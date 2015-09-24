@@ -273,6 +273,7 @@ if has("gui_running") || &t_Co == 88 || &t_Co == 256
 	call <SID>X("Structure", s:purple, "", "")
 	call <SID>X("Function", s:blue, "", "")
 	call <SID>X("Constant", s:orange, "", "")
+	call <SID>X("Keyword", s:orange, "", "")
 	call <SID>X("String", s:green, "", "")
 	call <SID>X("Special", s:foreground, "", "")
 	call <SID>X("PreProc", s:purple, "", "")
@@ -314,6 +315,21 @@ if has("gui_running") || &t_Co == 88 || &t_Co == 256
 	call <SID>X("rubyControl", s:purple, "", "")
 	call <SID>X("rubyException", s:purple, "", "")
 
+	" Crystal Highlighting
+	call <SID>X("crystalSymbol", s:green, "", "")
+	call <SID>X("crystalConstant", s:yellow, "", "")
+	call <SID>X("crystalAccess", s:yellow, "", "")
+	call <SID>X("crystalAttribute", s:blue, "", "")
+	call <SID>X("crystalInclude", s:blue, "", "")
+	call <SID>X("crystalLocalVariableOrMethod", s:orange, "", "")
+	call <SID>X("crystalCurlyBlock", s:orange, "", "")
+	call <SID>X("crystalStringDelimiter", s:green, "", "")
+	call <SID>X("crystalInterpolationDelimiter", s:orange, "", "")
+	call <SID>X("crystalConditional", s:purple, "", "")
+	call <SID>X("crystalRepeat", s:purple, "", "")
+	call <SID>X("crystalControl", s:purple, "", "")
+	call <SID>X("crystalException", s:purple, "", "")
+
 	" Python Highlighting
 	call <SID>X("pythonInclude", s:purple, "", "")
 	call <SID>X("pythonStatement", s:purple, "", "")
@@ -336,11 +352,11 @@ if has("gui_running") || &t_Co == 88 || &t_Co == 256
 	call <SID>X("javascriptGlobal", s:blue, "", "")
 	call <SID>X("javascriptStatement", s:red, "", "")
 
-        " CoffeeScript Highlighting
-        call <SID>X("coffeeRepeat", s:purple, "", "")
-        call <SID>X("coffeeConditional", s:purple, "", "")
-        call <SID>X("coffeeKeyword", s:purple, "", "")
-        call <SID>X("coffeeObject", s:yellow, "", "")
+	" CoffeeScript Highlighting
+	call <SID>X("coffeeRepeat", s:purple, "", "")
+	call <SID>X("coffeeConditional", s:purple, "", "")
+	call <SID>X("coffeeKeyword", s:purple, "", "")
+	call <SID>X("coffeeObject", s:yellow, "", "")
 
 	" HTML Highlighting
 	call <SID>X("htmlTag", s:red, "", "")
@@ -381,8 +397,10 @@ if has("gui_running") || &t_Co == 88 || &t_Co == 256
 	call <SID>X("goTodo", s:yellow, "", "")
 	call <SID>X("goDeclType", s:blue, "", "")
 	call <SID>X("goBuiltins", s:purple, "", "")
+	call <SID>X("goRepeat", s:purple, "", "")
+	call <SID>X("goLabel", s:purple, "", "")
 
-	" Clojure "highlighting
+	" Clojure Highlighting
 	call <SID>X("clojureConstant", s:orange, "", "")
 	call <SID>X("clojureBoolean", s:orange, "", "")
 	call <SID>X("clojureCharacter", s:orange, "", "")
@@ -407,7 +425,7 @@ if has("gui_running") || &t_Co == 88 || &t_Co == 256
 	call <SID>X("clojureRepeat", s:blue, "", "")
 	call <SID>X("clojureDispatch", s:blue, "", "")
 
-	" Scala "highlighting
+	" Scala Highlighting
 	call <SID>X("scalaKeyword", s:purple, "", "")
 	call <SID>X("scalaKeywordModifier", s:purple, "", "")
 	call <SID>X("scalaOperator", s:blue, "", "")
@@ -450,6 +468,11 @@ if has("gui_running") || &t_Co == 88 || &t_Co == 256
 	call <SID>X("scalaXml", s:green, "", "")
 	call <SID>X("scalaConstructorSpecializer", s:yellow, "", "")
 	call <SID>X("scalaBackTick", s:blue, "", "")
+
+	" Git
+	call <SID>X("diffAdded", s:green, "", "")
+	call <SID>X("diffRemoved", s:red, "", "")
+	call <SID>X("gitcommitSummary", "", "", "bold")
 
 	" Delete Functions
 	delf <SID>X

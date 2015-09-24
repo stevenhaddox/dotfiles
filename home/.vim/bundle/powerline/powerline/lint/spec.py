@@ -7,8 +7,17 @@ import re
 from copy import copy
 
 from powerline.lib.unicode import unicode
-from powerline.lint.markedjson.error import echoerr, DelayedEchoErr
+from powerline.lint.markedjson.error import echoerr, DelayedEchoErr, NON_PRINTABLE_STR
 from powerline.lint.selfcheck import havemarks
+
+
+NON_PRINTABLE_RE = re.compile(
+	NON_PRINTABLE_STR.translate({
+		ord('\t'): None,
+		ord('\n'): None,
+		0x0085: None,
+	})
+)
 
 
 class Spec(object):
@@ -300,11 +309,16 @@ class Spec(object):
 		``self.specs[start:end]`` is matched by the given value.
 		'''
 		havemarks(value)
-		new_echoerr = DelayedEchoErr(echoerr)
+		new_echoerr = DelayedEchoErr(
+			echoerr,
+			'One of the either variants failed. Messages from the first variant:',
+			'messages from the next variant:'
+		)
 
 		hadproblem = False
 		for spec in self.specs[start:end]:
 			proceed, hadproblem = spec.match(value, value.mark, data, context, new_echoerr)
+			new_echoerr.next_variant()
 			if not proceed:
 				break
 			if not hadproblem:
@@ -341,6 +355,26 @@ class Spec(object):
 			if not proceed:
 				return False, hadproblem
 		return True, hadproblem
+
+	def check_printable(self, value, context_mark, data, context, echoerr, _):
+		'''Check that given unicode string contains only printable characters
+		'''
+		hadproblem = False
+		for match in NON_PRINTABLE_RE.finditer(value):
+			hadproblem = True
+			echoerr(
+				context=self.cmsg.format(key=context.key),
+				context_mark=value.mark,
+				problem='found not printable character U+{0:04x} in a configuration string'.format(
+					ord(match.group(0))),
+				problem_mark=value.mark.advance_string(match.start() + 1)
+			)
+		return True, hadproblem
+
+	def printable(self, *args):
+		self.type(unicode)
+		self.checks.append(('check_printable', args))
+		return self
 
 	def type(self, *args):
 		'''Describe value that has one of the types given in arguments

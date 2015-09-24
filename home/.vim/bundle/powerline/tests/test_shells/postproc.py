@@ -6,6 +6,8 @@ import os
 import socket
 import sys
 import codecs
+import platform
+import re
 
 
 test_type = sys.argv[1]
@@ -14,6 +16,8 @@ shell = sys.argv[3]
 fname = os.path.join('tests', 'shell', '.'.join((shell, test_type, test_client, 'full.log')))
 new_fname = os.path.join('tests', 'shell', '.'.join((shell, test_type, test_client, 'log')))
 pid_fname = os.path.join('tests', 'shell', '3rd', 'pid')
+
+is_pypy = platform.python_implementation() == 'PyPy'
 
 
 try:
@@ -24,18 +28,29 @@ except IOError:
 hostname = socket.gethostname()
 user = os.environ['USER']
 
+REFS_RE = re.compile(r'^\[\d+ refs\]\n')
+IPYPY_DEANSI_RE = re.compile(r'\033(?:\[(?:\?\d+[lh]|[^a-zA-Z]+[a-ln-zA-Z])|[=>])')
+
+start_str = 'cd tests/shell/3rd'
+if shell == 'pdb':
+	start_str = 'class Foo(object):'
+
 with codecs.open(fname, 'r', encoding='utf-8') as R:
 	with codecs.open(new_fname, 'w', encoding='utf-8') as W:
 		found_cd = False
+		i = -1
 		for line in (R if shell != 'fish' else R.read().split('\n')):
+			i += 1
 			if not found_cd:
-				found_cd = ('cd tests/shell/3rd' in line)
+				found_cd = (start_str in line)
 				continue
 			if 'true is the last line' in line:
 				break
 			line = line.translate({
 				ord('\r'): None
 			})
+			if REFS_RE.match(line):
+				continue
 			line = line.replace(hostname, 'HOSTNAME')
 			line = line.replace(user, 'USER')
 			if pid is not None:
@@ -55,7 +70,7 @@ with codecs.open(fname, 'r', encoding='utf-8') as R:
 				try:
 					start = line.index('\033[0;')
 					end = line.index(' ', start)
-					line = line[start:end] + '\033[0m\n'
+					line = line[start:end] + '\n'
 				except ValueError:
 					line = ''
 			elif shell == 'mksh':
@@ -68,4 +83,43 @@ with codecs.open(fname, 'r', encoding='utf-8') as R:
 				# after the next line
 				if line.startswith('[1] + Terminated'):
 					continue
+			elif shell == 'ipython' and is_pypy:
+				try:
+					end_idx = line.rindex('\033[0m')
+					try:
+						idx = line[:end_idx].rindex('\033[1;1H')
+					except ValueError:
+						idx = line[:end_idx].rindex('\033[?25h')
+					line = line[idx + len('\033[1;1H'):]
+				except ValueError:
+					pass
+				try:
+					data_end_idx = line.rindex('\033[1;1H')
+					line = line[:data_end_idx] + '\n'
+				except ValueError:
+					pass
+				if line == '\033[1;1H\n':
+					continue
+				was_empty = line == '\n'
+				line = IPYPY_DEANSI_RE.subn('', line)[0]
+				if line == '\n' and not was_empty:
+					line = ''
+			elif shell == 'rc':
+				if line == 'read() failed: Connection reset by peer\n':
+					line = ''
+			elif shell == 'pdb':
+				if is_pypy:
+					if line == '\033[?1h\033=\033[?25l\033[1A\n':
+						line = ''
+					line = IPYPY_DEANSI_RE.subn('', line)[0]
+					if line == '\n':
+						line = ''
+				if line.startswith(('>',)):
+					line = ''
+				elif line == '-> self.quitting = 1\n':
+					line = '-> self.quitting = True\n'
+				elif line == '\n':
+					line = ''
+				if line == '-> self.quitting = True\n':
+					break
 			W.write(line)

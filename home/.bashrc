@@ -7,6 +7,8 @@ fi
 PATH="${HOME}/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
 export PATH
 
+export GPGKEY="43A1BCFC"
+
 # Prompt/Title
 export TITLEBAR='\[\033]0;\h \007\]'
 export PROMPT_COMMAND='echo -ne "\033]0;${HOSTNAME} \007"' # iTerm
@@ -68,3 +70,6 @@ elif [[ -s $HOME/.rbenv ]] ; then
   export PATH
   eval "$(rbenv init -)"
 fi
+
+### Added by the Heroku Toolbelt
+export PATH="/usr/local/heroku/bin:$PATH"

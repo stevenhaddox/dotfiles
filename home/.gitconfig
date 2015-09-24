@@ -19,8 +19,11 @@
   lg1-all = log --graph --all --format=format:'%C(blue)%h%C(reset) - %C(green)(%ar)%C(reset) %C(white)%s%C(reset) %C(bold white)— %an%C(reset)%C(yellow)%d%C(reset)' --abbrev-commit --date=relative
   lg2     = log --graph --format=format:'%C(blue)%h%C(reset) - %C(cyan)%aD%C(reset) %C(green)(%ar)%C(reset)%C(yellow)%d%C(reset)%n''          %C(white)%s%C(reset) %C(bold white)— %an%C(reset)' --abbrev-commit
   lg2-all = log --graph --all --format=format:'%C(blue)%h%C(reset) - %C(cyan)%aD%C(reset) %C(green)(%ar)%C(reset)%C(yellow)%d%C(reset)%n''          %C(white)%s%C(reset) %C(bold white)— %an%C(reset)' --abbrev-commit
+  graph-branch = log --color --date-order --graph --oneline --decorate --simplify-by-decoration
   graph-old = log --graph --format='%h %Cred %ar %Cgreen %s %Cblue %an'
   today = log --since=midnight --author='Steven Haddox' --oneline
+  subs-update = !"git submodule update --remote" # git fetch, pull, add for next commit on all submodules
+  subs-init   = !"git submodule init; git subs-update" # Initialize a new clone's existing submodules
 [branch "master"]
   rebase = true
 [config "branch"]

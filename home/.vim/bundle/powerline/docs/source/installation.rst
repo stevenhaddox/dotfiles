@@ -5,8 +5,17 @@ Installation
 Generic requirements
 ====================
 
-* Python 2.6 or later, 3.2 or later, PyPy 2.0 or later. It is the only 
-  non-optional requirement.
+* Python 2.6 or later, 3.2 or later, PyPy 2.0 or later, PyPy3 2.3 or later. It 
+  is the only non-optional requirement.
+
+  .. warning:
+     It is highly advised to use UCS-4 version of Python because UCS-2 version 
+     uses significantly slower text processing (length determination and 
+     non-printable character replacement) functions due to the need of 
+     supporting unicode characters above U+FFFF which are represented as 
+     surrogate pairs. This price will be paid even if configuration has no such 
+     characters.
+
 * C compiler. Required to build powerline client on linux. If it is not present 
   then powerline will fall back to shell script or python client.
 * ``socat`` program. Required for shell variant of client which runs a bit 
@@ -31,51 +40,55 @@ Generic requirements
 Pip installation
 ================
 
-This project is currently unavailable from PyPI due to a naming conflict with an 
-unrelated project, thus you will have to use the following command to install 
-powerline with ``pip``:
+Due to a naming conflict with an unrelated project powerline is available on 
+PyPI under the ``powerline-status`` name:
 
 .. code-block:: sh
 
-    pip install --user git+git://github.com/Lokaltog/powerline
+    pip install powerline-status
 
-. You may also choose to clone powerline repository somewhere and use
+is the preferred method because this will get the latest release. To get current 
+development version
 
 .. code-block:: sh
 
-    pip install -e --user {path_to_powerline}
+    pip install --user git+git://github.com/powerline/powerline
 
-, but note that in this case ``pip`` will not install ``powerline`` executable 
-and you will have to do something like
+may be used. If powerline was already checked out into some directory
+
+.. code-block:: sh
+
+    pip install --user --editable={path_to_powerline}
+
+is useful, but note that in this case ``pip`` will not install ``powerline`` 
+executable and something like
 
 .. code-block:: sh
 
     ln -s {path_to_powerline}/scripts/powerline ~/.local/bin
 
-(:file:`~/.local/bin` should be replaced with some path present in ``$PATH``).
+will have to be done (:file:`~/.local/bin` should be replaced with some path 
+present in ``$PATH``).
 
 .. note::
-    If your ISP blocks git protocol for some reason github also provides ``ssh`` 
-    (``git+ssh://git@github.com/Lokaltog/powerline``) and ``https`` 
-    (``git+https://github.com/Lokaltog/powerline``) protocols. ``git`` protocol 
+    If ISP blocks git protocol for some reason github also provides ``ssh`` 
+    (``git+ssh://git@github.com/powerline/powerline``) and ``https`` 
+    (``git+https://github.com/powerline/powerline``) protocols. ``git`` protocol 
     should be the fastest, but least secure one though.
-
-To install release version uploaded to PyPI use
-
-.. code-block:: sh
-
-   pip install powerline-status
 
 Fonts installation
 ==================
 
 Powerline uses several special glyphs to get the arrow effect and some custom 
-symbols for developers. This requires that you either have a symbol font or 
-a patched font on your system. Your terminal emulator must also support either 
-patched fonts or fontconfig for Powerline to work properly.
+symbols for developers. This requires having either a symbol font or a patched 
+font installed in the system. Used application (e.g. terminal emulator) must 
+also either be configured to use patched fonts (in some cases even support it 
+because custom glyphs live in private use area which some applications reserve 
+for themselves) or support fontconfig for powerline to work properly with 
+powerline-specific glyphs.
 
-You can also enable :ref:`24-bit color support <config-common-term_truecolor>` 
-if your terminal emulator supports it (see :ref:`the terminal emulator support 
+:ref:`24-bit color support <config-common-term_truecolor>` may be enabled if 
+used terminal emulator supports it (see :ref:`the terminal emulator support 
 matrix <usage-terminal-emulators>`).
 
 There are basically two ways to get powerline glyphs displayed: use 
@@ -90,11 +103,10 @@ Patched fonts
 This method is the fallback method and works for every terminal, with the 
 exception of :ref:`rxvt-unicode <tips-and-tricks-urxvt>`.
 
-Download the font of your choice from `powerline-fonts`_. If you can’t find 
-your preferred font in the `powerline-fonts`_ repo, you’ll have to patch your 
-own font instead.
+Download the font from `powerline-fonts`_. If preferred font can’t be found in 
+the `powerline-fonts`_ repo, then patching the preferred font is needed instead.
 
-.. _powerline-fonts: https://github.com/Lokaltog/powerline-fonts
+.. _powerline-fonts: https://github.com/powerline/fonts
 
 After downloading this font refer to platform-specific instructions.
 

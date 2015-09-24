@@ -33,12 +33,7 @@ class MarkedUnicode(unicode):
 		pointdiff = 1
 		r = []
 		for s in part_result:
-			mark = self.mark.copy()
-			# XXX Does not work properly with escaped strings, but this requires 
-			# saving much more information in mark.
-			mark.column += pointdiff
-			mark.pointer += pointdiff
-			r.append(MarkedUnicode(s, mark))
+			r.append(MarkedUnicode(s, self.mark.advance_string(pointdiff)))
 			pointdiff += len(s)
 		return tuple(r)
 
@@ -70,7 +65,28 @@ class MarkedDict(dict):
 		r.keydict = dict(((key, key) for key in r))
 		return r
 
+	def setmerged(self, d):
+		try:
+			self.mark.set_merged_mark(d.mark)
+		except AttributeError:
+			pass
+
 	def __setitem__(self, key, value):
+		try:
+			old_value = self[key]
+		except KeyError:
+			pass
+		else:
+			try:
+				key.mark.set_old_mark(self.keydict[key].mark)
+			except AttributeError:
+				pass
+			except KeyError:
+				pass
+			try:
+				value.mark.set_old_mark(old_value.mark)
+			except AttributeError:
+				pass
 		dict.__setitem__(self, key, value)
 		self.keydict[key] = key
 

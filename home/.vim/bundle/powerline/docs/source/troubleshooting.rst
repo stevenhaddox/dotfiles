@@ -13,29 +13,6 @@ System-specific issues
 Common issues
 =============
 
-I’m using tmux and Powerline looks like crap, what’s wrong?
------------------------------------------------------------
-
-* You need to tell tmux that it has 256-color capabilities. Add this to your 
-  :file:`.tmux.conf` to solve this issue::
-
-    set -g default-terminal "screen-256color"
-* If you’re using iTerm2, make sure that you have enabled the setting 
-  :guilabel:`Set locale variables automatically` in :menuselection:`Profiles --> 
-  Terminal --> Environment`.
-* Make sure tmux knows that terminal it is running in support 256 colors. You 
-  may tell it tmux by using ``-2`` option when launching it.
-
-I’m using tmux/screen and Powerline is colorless
-------------------------------------------------
-
-* If the above advices do not help, then you need to disable 
-  :ref:`term_truecolor <config-common-term_truecolor>`.
-* Alternative: set :ref:`additional_escapes <config-common-additional_escapes>` 
-  to ``"tmux"`` or ``"screen"``. Note that it is known to work perfectly in 
-  screen, but in tmux it may produce ugly spaces.
-
-
 After an update something stopped working
 -----------------------------------------
 
@@ -47,9 +24,9 @@ two possible explanations:
 * Update brought some bug to powerline.
 
 In the second case you, of course, should report the bug to `powerline bug 
-tracker <https://github.com/Lokaltog/powerline>`_.  In the first you should make 
-sure you either have only one powerline installation or you update all of them 
-simultaneously (beware that in the second case you are not supported). To 
+tracker <https://github.com/powerline/powerline>`_.  In the first you should 
+make sure you either have only one powerline installation or you update all of 
+them simultaneously (beware that in the second case you are not supported). To 
 diagnose this problem you may do the following:
 
 #) If this problem is observed within the shell make sure that
@@ -120,8 +97,61 @@ make powerline package importable anywhere: use
 
      pip install --user --editable path/to/powerline
 
+Tmux/screen-related issues
+==========================
+
+I’m using tmux and Powerline looks like crap, what’s wrong?
+-----------------------------------------------------------
+
+* You need to tell tmux that it has 256-color capabilities. Add this to your 
+  :file:`.tmux.conf` to solve this issue::
+
+    set -g default-terminal "screen-256color"
+* If you’re using iTerm2, make sure that you have enabled the setting 
+  :guilabel:`Set locale variables automatically` in :menuselection:`Profiles --> 
+  Terminal --> Environment`.
+* Make sure tmux knows that terminal it is running in support 256 colors. You 
+  may tell it tmux by using ``-2`` option when launching it.
+
+I’m using tmux/screen and Powerline is colorless
+------------------------------------------------
+
+* If the above advices do not help, then you need to disable 
+  :ref:`term_truecolor <config-common-term_truecolor>`.
+* Alternative: set :ref:`additional_escapes <config-common-additional_escapes>` 
+  to ``"tmux"`` or ``"screen"``. Note that it is known to work perfectly in 
+  screen, but in tmux it may produce ugly spaces.
+
+  .. warning::
+    Both tmux and screen are not resending sequences escaped in such a way. Thus 
+    even though additional escaping will work for the last shown prompt, 
+    highlighting will eventually go away when tmux or screen will redraw screen 
+    for some reason.
+
+    E.g. in screen it will go away when you used copy mode and prompt got out of 
+    screen and in tmux it will go away immediately after you press ``<Enter>``.
+
+In tmux there is a green bar in place of powerline
+--------------------------------------------------
+
+In order for tmux bindings to work ``powerline-config`` script is required to be 
+present in ``$PATH``. Alternatively one may define ``$POWERLINE_CONFIG_COMMAND`` 
+environment variable pointing to the location of the script. *This variable must 
+be defined prior to launching tmux server and in the environment where server is 
+started from.*
+
 Shell issues
 ============
+
+When sourcing shell bindings it complains about missing command or file
+-----------------------------------------------------------------------
+
+If you are using ``pip`` based installation do not forget to add pip-specific 
+executable path to ``$PATH`` environment variable. This path usually looks 
+something like ``$HOME/.local/bin`` (linux) or 
+``$HOME/Library/Python/{python_version}/bin`` (OS X). One may check out where 
+``powerline-config`` script was installed by using ``pip show -f 
+powerline-status | grep powerline-config`` (does not always work).
 
 I am suffering bad lags before displaying shell prompt
 ------------------------------------------------------
@@ -171,8 +201,8 @@ My vim statusline has a lot of ``^`` or underline characters in it!
 -------------------------------------------------------------------
 
 * You need to configure the ``fillchars`` setting to disable statusline 
-  fillchars (see ``:h fillchars`` for details). Add this to your 
-  :file:`vimrc` to solve this issue:
+  fillchars (see ``:h 'fillchars'`` for details). Add this to your :file:`vimrc` 
+  to solve this issue:
 
    .. code-block:: vim
 
@@ -197,21 +227,23 @@ If your vimrc has something like
 
 .. code-block:: vim
 
-    autocmd! BufWritePost vimrc :source ~/.vimrc
+    autocmd! BufWritePost ~/.vimrc :source ~/.vimrc
 
-to automatically source vimrc after saving it you must then add ``nested`` after 
-pattern (``vimrc`` in this case):
+used to automatically source vimrc after saving it then you must add ``nested`` 
+after pattern (``vimrc`` in this case):
 
 .. code-block:: vim
 
-    autocmd! BufWritePost vimrc nested :source ~/.vimrc
+    autocmd! BufWritePost ~/.vimrc nested :source ~/.vimrc
 
 . Alternatively move ``:colorscheme`` command out of the vimrc to the file which 
-will not be automatically resourced. Observed problem is that when you use 
-``:colorscheme`` command existing highlighting groups are usually cleared, 
-including those defined by powerline. To workaround this issue powerline hooks 
-``Colorscheme`` event, but when you source vimrc with ``BufWritePost`` event, 
-but without ``nested`` this event is not launched. See also `autocmd-nested 
+will not be automatically resourced.
+
+Observed problem is that when you use ``:colorscheme`` command existing 
+highlighting groups are usually cleared, including those defined by powerline. 
+To workaround this issue powerline hooks ``Colorscheme`` event, but when you 
+source vimrc with ``BufWritePost`` (or any other) event, but without ``nested`` 
+this event is not launched. See also `autocmd-nested 
 <http://vimpluginloader.sourceforge.net/doc/autocmd.txt.html#autocmd-nested>`_ 
 Vim documentation.
 

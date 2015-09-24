@@ -26,11 +26,14 @@ function! RailsDetect(...) abort
     return 1
   endif
   let fn = fnamemodify(a:0 ? a:1 : expand('%'), ':p')
+  if fn =~# ':[\/]\{2\}'
+    return 0
+  endif
   if !isdirectory(fn)
     let fn = fnamemodify(fn, ':h')
   endif
   let file = findfile('config/environment.rb', escape(fn, ', ').';')
-  if !empty(file)
+  if !empty(file) && isdirectory(fnamemodify(file, ':p:h:h') . '/app')
     let b:rails_root = fnamemodify(file, ':p:h:h')
     return 1
   endif
