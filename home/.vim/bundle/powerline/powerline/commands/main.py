@@ -53,6 +53,7 @@ def finish_args(environ, args):
 		[path for path in environ.get('POWERLINE_CONFIG_PATHS', '').split(':') if path]
 		+ (args.config_path or [])
 	)
+	args.side = args.side[0]
 	return args
 
 
@@ -71,7 +72,7 @@ def get_argparser(ArgumentParser=argparse.ArgumentParser):
 		     '(usually `shell\' or `tmux\').'
 	)
 	parser.add_argument(
-		'side', nargs='?', choices=('left', 'right', 'above', 'aboveleft'),
+		'side', nargs=1, choices=('left', 'right', 'above', 'aboveleft'),
 		help='Side: `left\' and `right\' represent left and right side '
 		     'respectively, `above\' emits lines that are supposed to be printed '
 		     'just above the prompt and `aboveleft\' is like concatenating '

@@ -17,42 +17,32 @@ rhubarb.vim.
 
 ## Installation
 
-In addition to [fugitive.vim][], [Curl](http://curl.haxx.se/) is
-required (included with OS X).  There are 5 ways you can tell
-rhubarb.vim your GitHub credentials:
-
-1. In a netrc:
-
-        echo 'machine api.github.com login <user> password <password>'>>~/.netrc
-
-2. In Git:
-
-        git config --global github.user <user>
-        git config --global github.password <password>
-
-3. In your shell:
-
-        export GITHUB_USER=<user>
-        export GITHUB_PASSWORD=<password>
-
-4. In Vim:
-
-        let g:github_user = '<user>'
-        let g:github_password = '<password>'
-
-5. With an API token:
-
-        let g:RHUBARB_TOKEN = '<token>'
-
 If you don't have a preferred installation method, I recommend
 installing [pathogen.vim](https://github.com/tpope/vim-pathogen), and
 then simply copy and paste:
 
     cd ~/.vim/bundle
     git clone git://github.com/tpope/vim-rhubarb.git
+    vim -u NONE -c "helptags vim-rhubarb/doc" -c q
 
-Once help tags have been generated, you can view the manual with
-`:help rhubarb`.
+In addition to [fugitive.vim][], [Curl](http://curl.haxx.se/) is
+required (included with OS X).
+
+Provide your GitHub credentials by adding them to your netrc:
+
+    echo 'machine api.github.com login <user> password <password>' >> ~/.netrc
+
+If you'd rather not store your password in plain text, you can
+[generate a personal access token](https://github.com/settings/tokens/new)
+and use that instead:
+
+    echo 'machine api.github.com login <token> password x-oauth-basic' \
+      >> ~/.netrc
+
+If you are using GitHub Enterprise, repeat those steps for each domain (omit
+the `api.` portion). You'll also need to tell Rhubarb the root URLs:
+
+    let g:github_enterprise_urls = ['https://example.com']
 
 ## FAQ
 
