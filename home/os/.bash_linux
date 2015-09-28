@@ -16,9 +16,8 @@ fi
 
 # Base 16 Theme for PuTTY (and remote connections?)
 # Put the below into .bash_local if needed
-#if [ -f ${HOME}/.colors/base16.sh ]; then
-#  . ~/.colors/base16.sh
-#fi
+BASE16_SHELL="$HOME/.config/base16-shell/base16-default.dark.sh"
+[[ -s $BASE16_SHELL ]] && source $BASE16_SHELL
 
 if [ -n "$TMUX" ]; then
   echo ""
