@@ -2,8 +2,6 @@
 # = When adding aliases, remember to execute: $ . ~/.bash_profile  =
 # ==================================================================
 
-alias ls='ls --color=tty'
-
 # scripts
 alias scripts='cd ~/.scripts'
 alias crontab='VIM_CRONTAB=true crontab'

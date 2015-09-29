@@ -69,6 +69,7 @@ alias find_most_large_dirs="du --max-depth=3 / | sort -n -r" # Find largest fold
 alias iptables_pp="iptables -L —line-numbers -n -v"
 
 # Commands
+alias ls='ls --color=tty'
 alias services-apt="sudo sysv-rc-conf"
 alias start-redis="redis-server ~/.linuxbrew/etc/redis.conf"
 alias dns.flush="sudo /etc/init.d/nscd restart; sudo /etc/init.d/dnsmasq restart; sudo /etc/init.d/named restart"
