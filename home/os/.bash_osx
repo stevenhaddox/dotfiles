@@ -14,6 +14,11 @@ if [ -f `brew --prefix`/etc/bash_completion ]; then
   source ~/.bash_completion
 fi
 
+# Source git-comletion from homebrew installed git
+if [ -f `brew --prefix git`/etc/bash_completion.d/git-prompt.sh ]; then
+  source  `brew --prefix git`/etc/bash_completion.d/git-prompt.sh
+fi
+
 # Add homebrew python executables to PATH
 # This also hooks powerline
 if [ -d /usr/local/share/python ]; then
@@ -25,6 +30,10 @@ export POWERLINE="/usr/local/lib/python2.7/site-packages/powerline"
 if [ -d $POWERLINE ]; then
   source "$POWERLINE/bindings/bash/powerline.sh"
 fi
+#export POWERLINE="$HOME/Library/Python/2.7/lib/python/site-packages/powerline"
+#if [ -d $POWERLINE ]; then
+#  source "$POWERLINE/bindings/bash/powerline.sh"
+#fi
 
 if [ -f `brew --prefix`/etc/grc.bashrc ]; then
   source "`brew --prefix`/etc/grc.bashrc"

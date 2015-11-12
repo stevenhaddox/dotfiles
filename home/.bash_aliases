@@ -15,6 +15,7 @@ alias chefdev='rbenv shell chefdk; rbenv rehash; chef shell-init bash'
 # project aliases
 alias sites='cd ~/Sites'
 alias projects='cd ~/Sites/_projects'
+alias cookbooks='cd ~/Sites/_cookbooks'
 alias iphone='cd ~/Sites/iPhone'
 alias dotfiles='cd ~/.homesick/repos/dotfiles/home'
 alias rvm_fw='cd ~/Sites/_projects/rvm_fw'
