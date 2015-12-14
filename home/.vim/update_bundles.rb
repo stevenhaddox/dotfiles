@@ -13,6 +13,7 @@ git_bundles = %w{
   git://github.com/Lokaltog/powerline.git
   git://github.com/maksimr/vim-jsbeautify.git
   git://github.com/pangloss/vim-javascript.git
+  git://github.com/rizzatti/dash.vim.git
   git://github.com/scrooloose/nerdtree.git
   git://github.com/timcharper/textile.vim.git
   git://github.com/tomtom/tcomment_vim.git
@@ -67,6 +68,7 @@ FileUtils.cd(bundles_dir)
 git_bundles.each do |url|
   puts url
   `git clone -q #{url}`
+  #`git clone -v #{url}`
 end
 
 Dir["*/.git"].each {|f| FileUtils.rm_rf(f) }
