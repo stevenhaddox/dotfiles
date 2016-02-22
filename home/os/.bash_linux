@@ -23,7 +23,7 @@ if [ -n "$TMUX" ]; then
   echo ""
   # nothing, PS1 is good
 else
-  # Configure Powerline
+  # Determine proper $POWERLINE ENV path
   if [ -d ${HOME}/.local/lib/python2.7/site-packages/powerline ]; then
     export POWERLINE="$HOME/.local/lib/python2.7/site-packages/powerline"
   elif [ -d ${HOME}/.local/lib/python2.6 ]; then
@@ -32,10 +32,10 @@ else
     export POWERLINE="$HOME/.local/lib/python2.7/site-packages/Powerline-beta-py2.7.egg/powerline"
   fi
 
+  # Configure Powerline within $PATH
   if [ -f ${HOME}/.local/bin/powerline ]; then
     export PATH=${PATH}:${HOME}/.local/bin
     if [ -d $POWERLINE ]; then
-      export POWERLINE=$POWERLINE #placeholder
       . $POWERLINE/bindings/bash/powerline.sh
     fi
   fi
