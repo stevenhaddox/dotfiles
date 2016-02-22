@@ -52,9 +52,6 @@ fi
 if [ -f $HOME/.bash_linux ]; then
   source ~/.bash_linux
 fi
-if [ -f $HOME/.bash_local ]; then
-  source ~/.bash_local
-fi
 
 # Use base user python (virtualenv)
 #if [ -f ~/venv/base/bin/activate ]; then
@@ -80,4 +77,8 @@ fi
 if [[ -s ${HOME}/.nvm/nvm.sh ]] ; then
   export NVM_DIR="${HOME}/.nvm"
   [ -s "${NVM_DIR}/nvm.sh" ] && . "${NVM_DIR}/nvm.sh"  # This loads nvm
+fi
+
+if [ -f $HOME/.bash_local ]; then
+  source ~/.bash_local
 fi
