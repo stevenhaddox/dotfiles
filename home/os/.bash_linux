@@ -24,7 +24,9 @@ if [ -n "$TMUX" ]; then
   # nothing, PS1 is good
 else
   # Configure Powerline
-  if [ -d ${HOME}/.local/lib/python2.6 ]; then
+  if [ -d ${HOME}/.local/lib/python2.7/site-packages/powerline ]; then
+    export POWERLINE="$HOME/.local/lib/python2.7/site-packages/powerline"
+  elif [ -d ${HOME}/.local/lib/python2.6 ]; then
     export POWERLINE="$HOME/.local/lib/python2.6/site-packages/Powerline-beta-py2.6.egg/powerline"
   else
     export POWERLINE="$HOME/.local/lib/python2.7/site-packages/Powerline-beta-py2.7.egg/powerline"
