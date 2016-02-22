@@ -1,4 +1,5 @@
 .bash_local
+.config/proxpn
 database.yml
 config/*.yml
 log/*.log

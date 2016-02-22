@@ -66,10 +66,15 @@ alias chrome='google-chrome-stable > /dev/null 2>&1'
 # Sys Maintenance
 alias find_large_dirs="du -a / | sort -rn | head -n 20"
 alias find_most_large_dirs="du --max-depth=3 / | sort -n -r" # Find largest folders
-alias iptables_pp="iptables -L —line-numbers -n -v"
+alias iptables_pp="iptables -L line-numbers -n -v"
 
 # Commands
 alias ls='ls --color=tty'
 alias services-apt="sudo sysv-rc-conf"
 alias start-redis="redis-server ~/.linuxbrew/etc/redis.conf"
 alias dns.flush="sudo /etc/init.d/nscd restart; sudo /etc/init.d/dnsmasq restart; sudo /etc/init.d/named restart"
+
+# Linuxbrew
+export PATH="${HOME}/.linuxbrew/bin:${PATH}"
+export MANPATH="${HOME}/.linuxbrew/share/man:${MANPATH}"
+export INFOPATH="${INFOPATH}/.linuxbrew/share/info:${INFOPATH}"

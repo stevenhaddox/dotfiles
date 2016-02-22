@@ -66,9 +66,10 @@ FileUtils.mkdir(bundles_dir)
 FileUtils.cd(bundles_dir)
 
 git_bundles.each do |url|
+  puts "__"
   puts url
-  `git clone -q #{url}`
-  #`git clone -v #{url}`
+  #`git clone -q #{url}`
+  `git clone -v #{url}`
 end
 
 Dir["*/.git"].each {|f| FileUtils.rm_rf(f) }
