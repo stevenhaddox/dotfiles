@@ -65,12 +65,19 @@ fi
 if [[ -s $HOME/.rvm/scripts/rvm ]] ; then
   source $HOME/.rvm/scripts/rvm
 elif [[ -s $HOME/.rbenv ]] ; then
-  PATH="${HOME}/.rbenv/bin:${PATH}"
-  export PATH
+  export PATH="${HOME}/.rbenv/bin:${PATH}"
   eval "$(rbenv init -)"
 fi
 
-if [[ -s $HOME/.nvm/nvm.sh ]] ; then
+# Python env
+if [[ -d ${HOME}/.pyenv ]] ; then
+  export PYENV_ROOT="${HOME}/.pyenv"
+  export PATH="${PYENV_ROOT}/bin:${PATH}"
+  eval "$(pyenv init -)"
+fi
+
+# Node env
+if [[ -s ${HOME}/.nvm/nvm.sh ]] ; then
   export NVM_DIR="${HOME}/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+  [ -s "${NVM_DIR}/nvm.sh" ] && . "${NVM_DIR}/nvm.sh"  # This loads nvm
 fi
