@@ -9,6 +9,7 @@
   quotepath = false
   eol       = lf
   autocrlf  = input
+  excludesfile = ~/.gitignore
 [alias]
   ahead = log origin/master..HEAD --oneline
   serve = !git daemon --base-path=. --export-all --reuseaddr --informative-errors --verbose
