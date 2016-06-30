@@ -81,7 +81,7 @@ alias iptables_pp="iptables -L line-numbers -n -v"
 alias ls='ls --color=tty'
 alias services-apt="sudo sysv-rc-conf"
 alias start-redis="redis-server ~/.linuxbrew/etc/redis.conf"
-alias dns.flush="sudo /etc/init.d/nscd restart; sudo /etc/init.d/dnsmasq restart; sudo /etc/init.d/named restart"
+alias dns.flush="sudo nscd restart; sudo dnsmasq restart; sudo named restart"
 
 # Linuxbrew
 export PATH="${HOME}/.linuxbrew/bin:${PATH}"

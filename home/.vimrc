@@ -127,11 +127,7 @@ set modelines=0
 if isdirectory($HOME . '/.vim-bak') == 0
   :silent !mkdir -p ~/.vim-bak >/dev/null 2>&1
 endif
-set backupdir-=.
-set backupdir+=.
-set backupdir-=~/
-set backupdir^=~/.vim-bak/
-set backupdir^=./.vim-bak/
+set backupdir=$TEMP//,~/.vim-bak//,~/tmp,.
 set backup
 " }}}
 
@@ -142,10 +138,7 @@ set backup
 if isdirectory($HOME . '/.vim/swap') == 0
   :silent !mkdir -p ~/.vim-swap >/dev/null 2>&1
 endif
-set directory=./.vim-swp//
-set directory+=~/.vim-swp//
-set directory+=~/tmp//
-set directory+=.
+set directory=$TEMP//,~/.vim-swp//,~/tmp,.
 " }}}
 
 " viminfo stores (previous editing session) {{{

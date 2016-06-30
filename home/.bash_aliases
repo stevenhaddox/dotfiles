@@ -117,4 +117,38 @@ extract () {
   fi
 }
 
+function vms_stop {
+  current_vm=$(basename `pwd`)
+  current_vm=${current_vm#cookbook-}
+  stopped=false
+  for vmname in $(VBoxManage list runningvms | awk '{print $1}'); do
+    if [ "$1" == "all" -o -n "$(echo $vmname | grep $current_vm)" ]; then
+      vmname=$(echo "$vmname" | tr -d '"')
+      echo "Powering off $vmname"
+      VBoxManage controlvm $vmname poweroff
+      stopped=true
+    fi
+  done
+  if [ "$stopped" == "false" ]; then
+    echo "Could not find vms to stop"
+  fi
+}
+
+function vm_ports {
+  current_vm=$(basename `pwd`)
+  current_vm=${current_vm#cookbook-}
+  found=false
+  for vmname in $(VBoxManage list runningvms | awk '{print $1}'); do
+    if [ -n "$(echo $vmname | grep $current_vm)" ]; then
+      vmname=$(echo "$vmname" | tr -d '"')
+      echo "Ports for $vmname"
+      VBoxManage showvminfo $vmname | grep "NIC 1 Rule"
+      found=true
+    fi
+  done
+  if [ "$found" == "false" ]; then
+    echo "Could not find vm"
+  fi
+}
+
 # DB Aliases live in ~/.bash_osx and ~/.bash_linux
