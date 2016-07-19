@@ -1,5 +1,4 @@
 # OS X Colors
-# source $HOME/.colors/base16.sh # Shell colors
 export LSCOLORS="gxfxcxdxbxegedabagacad"
 
 # Pow: See ~/.powconfig
