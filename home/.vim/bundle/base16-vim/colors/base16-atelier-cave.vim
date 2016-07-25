@@ -1,6 +1,6 @@
 " base16-vim (https://github.com/chriskempson/base16-vim)
 " by Chris Kempson (http://chriskempson.com)
-" Brewer scheme by Timothée Poisot (http://github.com/tpoisot)
+" Atelier Cave scheme by Bram de Haan (http://atelierbramdehaan.nl)
 
 " This enables the coresponding base16-shell script to run so that
 " :colorscheme works in terminals supported by base16-shell scripts
@@ -8,27 +8,27 @@
 "   let g:base16_shell_path=base16-builder/output/shell/
 if !has('gui_running')
   if exists("g:base16_shell_path")
-    execute "silent !/bin/sh ".g:base16_shell_path."/base16-brewer.sh"
+    execute "silent !/bin/sh ".g:base16_shell_path."/base16-atelier-cave.sh"
   endif
 endif
 
 " GUI color definitions
-let s:gui00 = "0c0d0e"
-let s:gui01 = "2e2f30"
-let s:gui02 = "515253"
-let s:gui03 = "737475"
-let s:gui04 = "959697"
-let s:gui05 = "b7b8b9"
-let s:gui06 = "dadbdc"
-let s:gui07 = "fcfdfe"
-let s:gui08 = "e31a1c"
-let s:gui09 = "e6550d"
-let s:gui0A = "dca060"
-let s:gui0B = "31a354"
-let s:gui0C = "80b1d3"
-let s:gui0D = "3182bd"
-let s:gui0E = "756bb1"
-let s:gui0F = "b15928"
+let s:gui00 = "19171c"
+let s:gui01 = "26232a"
+let s:gui02 = "585260"
+let s:gui03 = "655f6d"
+let s:gui04 = "7e7887"
+let s:gui05 = "8b8792"
+let s:gui06 = "e2dfe7"
+let s:gui07 = "efecf4"
+let s:gui08 = "be4678"
+let s:gui09 = "aa573c"
+let s:gui0A = "a06e3b"
+let s:gui0B = "2a9292"
+let s:gui0C = "398bc6"
+let s:gui0D = "576ddb"
+let s:gui0E = "955ae7"
+let s:gui0F = "bf40bf"
 
 " Terminal color definitions
 let s:cterm00 = "00"
@@ -60,7 +60,7 @@ endif
 " Theme setup
 hi clear
 syntax reset
-let g:colors_name = "base16-brewer"
+let g:colors_name = "base16-atelier-cave"
 
 " Highlighting function
 fun <sid>hi(group, guifg, guibg, ctermfg, ctermbg, attr, guisp)

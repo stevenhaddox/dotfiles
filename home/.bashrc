@@ -17,8 +17,8 @@ export CLICOLOR=1
 
 # Base 16 Theme for PuTTY and Bash
 # Put the below into .bash_local if needed
-BASE16_SHELL="$HOME/.colors/base16-shell/base16-default.dark.sh"
-[[ -s $BASE16_SHELL ]] && source $BASE16_SHELL
+BASE16_SHELL=$HOME/.colors/base16-shell/
+[ -n "$PS1" ] && [ -s $BASE16_SHELL/profile_helper.sh ] && eval "$($BASE16_SHELL/profile_helper.sh)"
 
 # General settings
 export EDITOR=vim

@@ -1,6 +1,6 @@
 " base16-vim (https://github.com/chriskempson/base16-vim)
 " by Chris Kempson (http://chriskempson.com)
-" Brewer scheme by Timothée Poisot (http://github.com/tpoisot)
+" OceanicNext scheme by https://github.com/voronianski/oceanic-next-color-scheme
 
 " This enables the coresponding base16-shell script to run so that
 " :colorscheme works in terminals supported by base16-shell scripts
@@ -8,27 +8,27 @@
 "   let g:base16_shell_path=base16-builder/output/shell/
 if !has('gui_running')
   if exists("g:base16_shell_path")
-    execute "silent !/bin/sh ".g:base16_shell_path."/base16-brewer.sh"
+    execute "silent !/bin/sh ".g:base16_shell_path."/base16-oceanicnext.sh"
   endif
 endif
 
 " GUI color definitions
-let s:gui00 = "0c0d0e"
-let s:gui01 = "2e2f30"
-let s:gui02 = "515253"
-let s:gui03 = "737475"
-let s:gui04 = "959697"
-let s:gui05 = "b7b8b9"
-let s:gui06 = "dadbdc"
-let s:gui07 = "fcfdfe"
-let s:gui08 = "e31a1c"
-let s:gui09 = "e6550d"
-let s:gui0A = "dca060"
-let s:gui0B = "31a354"
-let s:gui0C = "80b1d3"
-let s:gui0D = "3182bd"
-let s:gui0E = "756bb1"
-let s:gui0F = "b15928"
+let s:gui00 = "1B2B34"
+let s:gui01 = "343D46"
+let s:gui02 = "4F5B66"
+let s:gui03 = "65737E"
+let s:gui04 = "A7ADBA"
+let s:gui05 = "C0C5CE"
+let s:gui06 = "CDD3DE"
+let s:gui07 = "D8DEE9"
+let s:gui08 = "EC5f67"
+let s:gui09 = "F99157"
+let s:gui0A = "FAC863"
+let s:gui0B = "99C794"
+let s:gui0C = "5FB3B3"
+let s:gui0D = "6699CC"
+let s:gui0E = "C594C5"
+let s:gui0F = "AB7967"
 
 " Terminal color definitions
 let s:cterm00 = "00"
@@ -60,7 +60,7 @@ endif
 " Theme setup
 hi clear
 syntax reset
-let g:colors_name = "base16-brewer"
+let g:colors_name = "base16-oceanicnext"
 
 " Highlighting function
 fun <sid>hi(group, guifg, guibg, ctermfg, ctermbg, attr, guisp)

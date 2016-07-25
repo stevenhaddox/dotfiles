@@ -27,20 +27,12 @@ nnoremap <leader>q gqip
 " }}}
 
 " Colorschemes
-set t_Co=256
-let base16colorspace=256
-colorscheme base16-default
-set background=dark
-
-" Old Colorschemes setup
-"if &term == "vt100"
-"  set t_Co=16
-"  colorscheme Tomorrow-Night
-"else
-"  colorscheme base16-default
-"  let base16colorspace=256  " Access colors present in 256 colorspace
-"  let g:solarized_termcolors=256
-"endif
+" set t_Co=256
+if filereadable(expand("${HOME}/.vimrc_background"))
+  let base16colorspace=256
+  source ${HOME}/.vimrc_background
+  set background=dark
+endif
 
 " Some semblance of sanity with Ruby spacing {{{
 set number
@@ -60,7 +52,6 @@ set hidden
 set wildmenu
 set wildmode=list:longest
 set visualbell
-set cursorline
 set ttyfast
 set ruler
 set backspace=indent,eol,start
@@ -68,12 +59,23 @@ set laststatus=2
 set relativenumber
 " }}}
 
-" Make the colorcolumn light gray {{{
+" Enable the colorcolumn {{{
 "Columns
 set wrap
 set textwidth=79
 set formatoptions=qrn1
 set colorcolumn=+1 " Column highlights 1 char beyond texwidth
+highlight ColorColumn ctermbg=19
+" }}}
+
+" Enable the cursorline background color {{{
+highlight CursorLine cterm=NONE ctermbg=19
+set cursorline
+" }}}
+
+" Line number color {{{
+highlight LineNr ctermfg=19
+highlight CursorLineNr ctermfg=4
 " }}}
 
 " Folding {{{
