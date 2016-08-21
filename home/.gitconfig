@@ -31,3 +31,9 @@
   autosetuprebase = always
 [push]
   default = current
+[url "git@github.com"]
+  insteadOf = gh
+[url "git@gitlab.com"]
+  insteadOf = gl
+[include]
+  path = ~/.gitconfig_local
