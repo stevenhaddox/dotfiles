@@ -32,6 +32,14 @@ export TSOCKS_CONF_FILE=~/.tsocks
 # vmail conf
 export VMAIL_HTML_PART_READER='elinks -dump'
 
+# Bash history preservation / sharing
+# Avoid duplicates
+export HISTCONTROL=ignoredups:erasedups
+# When the shell exits, append to the history file instead of overwriting it
+shopt -s histappend
+# After each command, append to the history file and reread it
+export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a; history -c; history -r"
+
 # Important for Jekyll / encoding issues in Ruby 1.9
 LANG=en_US.UTF-8
 LC_ALL=en_US.UTF-8

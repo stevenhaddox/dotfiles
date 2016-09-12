@@ -11,6 +11,8 @@ alias rserve='ruby -run -e httpd . -p'
 
 # Development aliases
 alias chefdev='rbenv shell chefdk; rbenv rehash; chef shell-init bash'
+alias kitchen_timer="notify-send 'Converge on ${PWD##*/} exited: $?'"
+alias kcdev="kitchen converge development; kitchen_timer;"
 
 # project aliases
 alias sites='cd ~/Sites'

@@ -38,19 +38,22 @@ else
   fi
 fi
 
-## SSH Agent Startup / Caching
+# SSH Agent Startup / Caching
 # $ eval "$(ssh-agent)"
 # $ ssh-add ~/.ssh/id_dsa
-SSH_ENV="$HOME/.ssh/environment"
+SSH_ENV="$HOME/.ssh/.agent"
 function start_agent {
   /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+  echo "New ssh-agent started"
   chmod 600 "${SSH_ENV}"
   . "${SSH_ENV}" > /dev/null
-  eval `cat ${SSH_ENV}`
+  /usr/bin/ssh-add;
 }
+
 # Source SSH settings, if applicable
 if [ -f "${SSH_ENV}" ]; then
   . "${SSH_ENV}" > /dev/null
+  #ps ${SSH_AGENT_PID} doesn't work under cywgin
   ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
     start_agent;
   }
