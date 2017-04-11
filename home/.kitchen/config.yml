@@ -1,0 +1,7 @@
+---
+driver:
+  name: vagrant
+  customize:
+    natdnshostresolver1: "on"
+    natdnsproxy1: "on"
+    memory: 528
