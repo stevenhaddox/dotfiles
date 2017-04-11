@@ -46,6 +46,8 @@ alias mysql.start="launchctl load ~/Library/LaunchAgents/homebrew.mxcl.mysql.pli
 alias mysql.stop="launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.mysql.plist"
 
 # command aliases
+alias gitdiff='git difftool -y -t Kaleidoscope'
+alias gitmerge='git mergetool -y -t Kaleidoscope'
 alias spotlight_off='sudo launchctl unload -w /System/Library/LaunchDaemons/com.apple.metadata.mds.plist'
 alias spotlight_on='sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.metadata.mds.plist'
 alias spotlight_hide='sudo chmod 600 /System/Library/CoreServices/Search.bundle/Contents/MacOS/Search; killall SystemUIServer'
