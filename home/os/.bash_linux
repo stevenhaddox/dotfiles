@@ -30,12 +30,13 @@ else
     export PATH=${PATH}:${HOME}/.local/bin
   fi
 
-  if [ -f `which powerline-daemon` ]; then
-    powerline-daemon -q
-    POWERLINE_BASH_CONTINUATION=1
-    POWERLINE_BASH_SELECT=1
-    . $POWERLINE/bindings/bash/powerline.sh
+  if [ -f "${POWERLINE}/bin/powerline-daemon" ]; then
+    ${POWERLINE}/bin/powerline-daemon -q
   fi
+
+  POWERLINE_BASH_CONTINUATION=1
+  POWERLINE_BASH_SELECT=1
+  . $POWERLINE/bindings/bash/powerline.sh
 fi
 
 # SSH Agent Startup / Caching
@@ -82,6 +83,6 @@ alias start-redis="redis-server ~/.linuxbrew/etc/redis.conf"
 alias dns.flush="sudo nscd restart; sudo dnsmasq restart; sudo named restart"
 
 # Linuxbrew
-export PATH="${HOME}/.linuxbrew/bin:${PATH}"
-export MANPATH="${HOME}/.linuxbrew/share/man:${MANPATH}"
+export PATH="/home/linuxbrew/.linuxbrew/bin:${HOME}/.linuxbrew/bin:${PATH}"
+export MANPATH="/home/linuxbrew/.linuxbrew/share/man:${HOME}/.linuxbrew/share/man:${MANPATH}"
 export INFOPATH="${INFOPATH}/.linuxbrew/share/info:${INFOPATH}"
