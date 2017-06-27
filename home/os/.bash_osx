@@ -1,5 +1,8 @@
 # OS X Colors
 export LSCOLORS="gxfxcxdxbxegedabagacad"
+if [ -f ${HOME}/.colors/base16.sh ]; then
+  source ${HOME}/.colors/base16.sh
+fi
 
 # Pow: See ~/.powconfig
 
