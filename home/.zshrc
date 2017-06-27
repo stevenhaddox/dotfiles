@@ -52,7 +52,7 @@ ZSH_THEME="powerlevel9k/powerlevel9k"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git brew bower bundler osx rake ruby history nvm node npm sudo tmux web-search)
+plugins=(git brew bower osx rbenv history nvm node npm sudo tmux web-search)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -90,7 +90,6 @@ if [ -f ${HOME}/.colors/base16.sh ]; then
   source ${HOME}/.colors/base16.sh
 fi
 
-if [ -d /usr/local/opt/nvm ]; then
-  export NVM_DIR="$HOME/.nvm"
-  source /usr/local/opt/nvm/nvm.sh
+if [ -f ${HOME}/.aliases ]; then
+  source ${HOME}/.aliases
 fi

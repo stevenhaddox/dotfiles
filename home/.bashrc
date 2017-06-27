@@ -45,8 +45,8 @@ LANG=en_US.UTF-8
 LC_ALL=en_US.UTF-8
 
 # includes
-if [ -f $HOME/.bash_aliases ]; then
-  source ~/.bash_aliases
+if [ -f $HOME/.aliases ]; then
+  source ~/.aliases
 fi
 if [ -d "/usr/local/heroku/bin" ]; then
   export PATH="${PATH}:/usr/local/heroku/bin"
