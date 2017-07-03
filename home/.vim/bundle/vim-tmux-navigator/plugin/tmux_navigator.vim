@@ -11,21 +11,46 @@ if !exists("g:tmux_navigator_save_on_switch")
   let g:tmux_navigator_save_on_switch = 0
 endif
 
+if !exists("g:tmux_navigator_disable_when_zoomed")
+  let g:tmux_navigator_disable_when_zoomed = 0
+endif
+
+function! s:TmuxOrTmateExecutable()
+  return (match($TMUX, 'tmate') != -1 ? 'tmate' : 'tmux')
+endfunction
+
 function! s:UseTmuxNavigatorMappings()
-  return !exists("g:tmux_navigator_no_mappings") || !g:tmux_navigator_no_mappings
+  return !get(g:, 'tmux_navigator_no_mappings', 0)
 endfunction
 
 function! s:InTmuxSession()
   return $TMUX != ''
 endfunction
 
-function! s:TmuxPaneCurrentCommand()
-  echo system("tmux display-message -p '#{pane_current_command}'")
+function! s:TmuxVimPaneIsZoomed()
+  return s:TmuxCommand("display-message -p '#{window_zoomed_flag}'") == 1
 endfunction
-command! TmuxPaneCurrentCommand call <SID>TmuxPaneCurrentCommand()
+
+function! s:TmuxSocket()
+  " The socket path is the first value in the comma-separated list of $TMUX.
+  return split($TMUX, ',')[0]
+endfunction
+
+function! s:TmuxCommand(args)
+  let cmd = s:TmuxOrTmateExecutable() . ' -S ' . s:TmuxSocket() . ' ' . a:args
+  return system(cmd)
+endfunction
+
+function! s:TmuxPaneCurrentCommand()
+  echo s:TmuxCommand("display-message -p '#{pane_current_command}'")
+endfunction
+command! TmuxPaneCurrentCommand call s:TmuxPaneCurrentCommand()
 
 let s:tmux_is_last_pane = 0
-au WinEnter * let s:tmux_is_last_pane = 0
+augroup tmux_navigator
+  au!
+  autocmd WinEnter * let s:tmux_is_last_pane = 0
+augroup END
 
 " Like `wincmd` but also change tmux panes instead of vim windows when needed.
 function! s:TmuxWinCmd(direction)
@@ -40,21 +65,37 @@ function! s:NeedsVitalityRedraw()
   return exists('g:loaded_vitality') && v:version < 704 && !has("patch481")
 endfunction
 
+function! s:ShouldForwardNavigationBackToTmux(tmux_last_pane, at_tab_page_edge)
+  if g:tmux_navigator_disable_when_zoomed && s:TmuxVimPaneIsZoomed()
+    return 0
+  endif
+  return a:tmux_last_pane || a:at_tab_page_edge
+endfunction
+
 function! s:TmuxAwareNavigate(direction)
   let nr = winnr()
   let tmux_last_pane = (a:direction == 'p' && s:tmux_is_last_pane)
   if !tmux_last_pane
     call s:VimNavigate(a:direction)
   endif
+  let at_tab_page_edge = (nr == winnr())
   " Forward the switch panes command to tmux if:
   " a) we're toggling between the last tmux pane;
   " b) we tried switching windows in vim but it didn't have effect.
-  if tmux_last_pane || nr == winnr()
-    if g:tmux_navigator_save_on_switch
-      update
+  if s:ShouldForwardNavigationBackToTmux(tmux_last_pane, at_tab_page_edge)
+    if g:tmux_navigator_save_on_switch == 1
+      try
+        update " save the active buffer. See :help update
+      catch /^Vim\%((\a\+)\)\=:E32/ " catches the no file name error
+      endtry
+    elseif g:tmux_navigator_save_on_switch == 2
+      try
+        wall " save all the buffers. See :help wall
+      catch /^Vim\%((\a\+)\)\=:E141/ " catches the no file name error
+      endtry
     endif
-    let cmd = 'tmux select-pane -' . tr(a:direction, 'phjkl', 'lLDUR')
-    silent call system(cmd)
+    let args = 'select-pane -t ' . shellescape($TMUX_PANE) . ' -' . tr(a:direction, 'phjkl', 'lLDUR')
+    silent call s:TmuxCommand(args)
     if s:NeedsVitalityRedraw()
       redraw!
     endif
@@ -72,11 +113,11 @@ function! s:VimNavigate(direction)
   endtry
 endfunction
 
-command! TmuxNavigateLeft call <SID>TmuxWinCmd('h')
-command! TmuxNavigateDown call <SID>TmuxWinCmd('j')
-command! TmuxNavigateUp call <SID>TmuxWinCmd('k')
-command! TmuxNavigateRight call <SID>TmuxWinCmd('l')
-command! TmuxNavigatePrevious call <SID>TmuxWinCmd('p')
+command! TmuxNavigateLeft call s:TmuxWinCmd('h')
+command! TmuxNavigateDown call s:TmuxWinCmd('j')
+command! TmuxNavigateUp call s:TmuxWinCmd('k')
+command! TmuxNavigateRight call s:TmuxWinCmd('l')
+command! TmuxNavigatePrevious call s:TmuxWinCmd('p')
 
 if s:UseTmuxNavigatorMappings()
   nnoremap <silent> <c-h> :TmuxNavigateLeft<cr>

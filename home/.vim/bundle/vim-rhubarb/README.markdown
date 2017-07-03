@@ -1,17 +1,17 @@
 # rhubarb.vim
 
-If [fugitive.vim][] is the Git, rhubarb.vim is the Hub.  Or at least it
-could be.  One day.  Right now it's pretty stupid.  I almost named it
-chubby.vim, but it just didn't feel right.
+If [fugitive.vim][] is the Git, rhubarb.vim is the Hub.  Here's the full list
+of features:
 
-So far there's only one feature:  In Git commit messages, GitHub issues
-and collaborators can be omni-completed (`<C-X><C-O>`, see `:help
-compl-omni`).  This makes inserting those `Closes #123` remarks slightly
-easier than copying and pasting from the browser.
+* Enables `:Gbrowse` from fugitive.vim to open GitHub URLs.
 
-Maybe I'll extract `:Gbrowse` out of fugitive.vim and put it here
-instead.  Or maybe I'll add some cool Gist stuff.  You never know with
-rhubarb.vim.
+* Sets up `:Git` to use [`hub`](https://github.com/github/hub) if installed
+  rather than `git`.
+
+* In commit messages, GitHub issues, issue URLs, and collaborators can be
+  omni-completed (`<C-X><C-O>`, see `:help compl-omni`).  This makes inserting
+  those `Closes #123` remarks slightly easier than copying and pasting from
+  the browser.
 
 [fugitive.vim]: https://github.com/tpope/vim-fugitive
 
@@ -22,25 +22,20 @@ installing [pathogen.vim](https://github.com/tpope/vim-pathogen), and
 then simply copy and paste:
 
     cd ~/.vim/bundle
-    git clone git://github.com/tpope/vim-rhubarb.git
+    git clone https://github.com/tpope/vim-rhubarb.git
     vim -u NONE -c "helptags vim-rhubarb/doc" -c q
 
-In addition to [fugitive.vim][], [Curl](http://curl.haxx.se/) is
-required (included with OS X).
+You'll also need [fugitive.vim][].
 
-Provide your GitHub credentials by adding them to your netrc:
+[Curl](http://curl.haxx.se/) (included with macOS) is required for features
+that use the GitHub API (i.e., `:Gbrowse` doesn't need it).
+[Generate a personal access token](https://github.com/settings/tokens/new)
+with repo permissions and add it to your `.netrc`:
 
-    echo 'machine api.github.com login <user> password <password>' >> ~/.netrc
+    echo 'machine api.github.com login <user> password <token>' >> ~/.netrc
 
-If you'd rather not store your password in plain text, you can
-[generate a personal access token](https://github.com/settings/tokens/new)
-and use that instead:
-
-    echo 'machine api.github.com login <token> password x-oauth-basic' \
-      >> ~/.netrc
-
-If you are using GitHub Enterprise, repeat those steps for each domain (omit
-the `api.` portion). You'll also need to tell Rhubarb the root URLs:
+If you are using GitHub Enterprise, repeat this step for each domain (omit the
+`api.` portion). You'll also need to tell Rhubarb the root URLs:
 
     let g:github_enterprise_urls = ['https://example.com']
 

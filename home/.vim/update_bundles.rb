@@ -45,6 +45,8 @@ git_bundles = %w{
   git://github.com/tristen/vim-sparkup.git
   git://github.com/tsaleh/vim-shoulda.git
   git://github.com/tsaleh/vim-tmux.git
+  git://github.com/vim-airline/vim-airline.git
+  git://github.com/vim-airline/vim-airline-themes.git
   git://github.com/vim-ruby/vim-ruby.git
   git://github.com/vim-scripts/Gist.vim.git
   git://github.com/vim-scripts/IndexedSearch.git

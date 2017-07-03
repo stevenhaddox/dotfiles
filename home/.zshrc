@@ -9,6 +9,8 @@ export ZSH=${HOME}/.oh-my-zsh
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 #ZSH_THEME="agnoster"
 ZSH_THEME="powerlevel9k/powerlevel9k"
+POWERLEVEL9K_SHORTEN_DIR_LENGTH=2
+POWERLEVEL9K_SHORTEN_STRATEGY=truncate_folders
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -52,7 +54,7 @@ ZSH_THEME="powerlevel9k/powerlevel9k"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git brew bower osx rbenv history nvm node npm sudo tmux web-search)
+plugins=(sudo history brew git bower osx rbenv nvm node npm tmux tmuxinator pyenv web-search)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -92,4 +94,27 @@ fi
 
 if [ -f ${HOME}/.aliases ]; then
   source ${HOME}/.aliases
+fi
+
+if [ -d "/usr/local/heroku/bin" ]; then
+  export PATH="${PATH}:/usr/local/heroku/bin"
+fi
+
+# Python env
+if [[ -d ${HOME}/.pyenv ]] ; then
+  export PYENV_ROOT="${HOME}/.pyenv"
+  export PATH="${PYENV_ROOT}/bin:${PATH}"
+  eval "$(pyenv init -)"
+fi
+
+if [ -f $HOME/.zsh_local ]; then
+  source ~/.zsh_local
+fi
+
+if [ -d $HOME/bin/ ]; then
+  export PATH="${PATH}:/${HOME}/bin"
+fi
+
+if [ -d $HOME/.scripts/ ]; then
+  export PATH="${PATH}:/${HOME}/.scripts"
 fi

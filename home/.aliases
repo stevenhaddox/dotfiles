@@ -29,6 +29,7 @@ alias proxychains='proxychains4'
 alias sproxy='ssh -N tunnel.slk'
 alias wproxy='ssh -N onyx'
 alias work='cd ~/Sites/work'
+alias excella='cd ~/Sites/work/excella'
 alias sshuttle='~/scripts/sshuttle/sshuttle --dns -Nr'
 alias slkd='cd ~/Sites/SLKd'
 

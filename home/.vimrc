@@ -108,16 +108,6 @@ nnoremap <tab> %
 vnoremap <tab> %`
 " }}}
 
-" Powerline bar config {{{
-"set t_Co=256 " Needed for OS X iTerm but not Linux terminals?
-set rtp+=$POWERLINE/bindings/vim
-let g:Powerline_colorscheme = 'base16'
-set nocompatible
-set laststatus=2
-set encoding=utf-8
-let g:Powerline_symbols = 'fancy'
-" }}}
-
 " File security {{{
 set modelines=0
 " }}}
@@ -167,3 +157,10 @@ if $VIM_CRONTAB == 'true'
   set nobackup
   set nowritebackup
 endif
+
+" vim-airline
+let g:airline_powerline_fonts = 1
+let g:airline_theme='bubblegum'
+"let g:airline_theme='base16-default'
+"let g:airline#themes#base16#constant = 1
+set laststatus=2

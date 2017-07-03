@@ -47,19 +47,40 @@ Then run
 :PluginInstall
 ```
 
-### Tmux
+### tmux
 
-Add the following to your `tmux.conf` file to configure the tmux side of
-this customization.
+To configure the tmux side of this customization there are two options:
+
+#### Add a snippet
+
+Add the following to your `~/.tmux.conf` file:
 
 ``` tmux
-# Smart pane switching with awareness of vim splits
-is_vim='echo "#{pane_current_command}" | grep -iqE "(^|\/)g?(view|n?vim?)(diff)?$"'
-bind -n C-h if-shell "$is_vim" "send-keys C-h" "select-pane -L"
-bind -n C-j if-shell "$is_vim" "send-keys C-j" "select-pane -D"
-bind -n C-k if-shell "$is_vim" "send-keys C-k" "select-pane -U"
-bind -n C-l if-shell "$is_vim" "send-keys C-l" "select-pane -R"
-bind -n C-\ if-shell "$is_vim" "send-keys C-\\" "select-pane -l"
+# Smart pane switching with awareness of Vim splits.
+# See: https://github.com/christoomey/vim-tmux-navigator
+is_vim="ps -o state= -o comm= -t '#{pane_tty}' \
+    | grep -iqE '^[^TXZ ]+ +(\\S+\\/)?g?(view|n?vim?x?)(diff)?$'"
+bind-key -n C-h if-shell "$is_vim" "send-keys C-h"  "select-pane -L"
+bind-key -n C-j if-shell "$is_vim" "send-keys C-j"  "select-pane -D"
+bind-key -n C-k if-shell "$is_vim" "send-keys C-k"  "select-pane -U"
+bind-key -n C-l if-shell "$is_vim" "send-keys C-l"  "select-pane -R"
+bind-key -n C-\\ if-shell "$is_vim" "send-keys C-\\" "select-pane -l"
+bind-key -T copy-mode-vi C-h select-pane -L
+bind-key -T copy-mode-vi C-j select-pane -D
+bind-key -T copy-mode-vi C-k select-pane -U
+bind-key -T copy-mode-vi C-l select-pane -R
+bind-key -T copy-mode-vi C-\\ select-pane -l
+```
+
+#### TPM
+
+If you'd prefer, you can use the Tmux Plugin Manager ([TPM][]) instead of
+copying the snippet.
+When using TPM, add the following lines to your ~/.tmux.conf:
+
+``` tmux
+set -g @plugin 'christoomey/vim-tmux-navigator'
+run '~/.tmux/plugins/tpm/tpm'
 ```
 
 Thanks to Christopher Sexton who provided the updated tmux configuration in
@@ -82,7 +103,7 @@ Add the following to your `~/.vimrc` to define your custom maps:
 ``` vim
 let g:tmux_navigator_no_mappings = 1
 
-nnoremap <silent> {Left-mapping} :TmuxNavigateLeft<cr>
+nnoremap <silent> {Left-Mapping} :TmuxNavigateLeft<cr>
 nnoremap <silent> {Down-Mapping} :TmuxNavigateDown<cr>
 nnoremap <silent> {Up-Mapping} :TmuxNavigateUp<cr>
 nnoremap <silent> {Right-Mapping} :TmuxNavigateRight<cr>
@@ -93,13 +114,39 @@ nnoremap <silent> {Previous-Mapping} :TmuxNavigatePrevious<cr>
 in the above code with the desired mapping. Ie, the mapping for `<ctrl-h>` =>
 Left would be created with `nnoremap <silent> <c-h> :TmuxNavigateLeft<cr>`.
 
-
 ##### Autosave on leave
 
-    let g:tmux_navigator_save_on_switch = 1
+You can configure the plugin to write the current buffer, or all buffers, when navigating from Vim to tmux. This functionality is exposed via the `g:tmux_navigator_save_on_switch` variable, which can have either of the following values:
 
-This will execute the update command on leaving vim to a tmux pane. Default is Zero
+Value  | Behavior
+------ | ------
+1      | `:update` (write the current buffer, but only if changed)
+2      | `:wall` (write all buffers)
 
+To enable this, add the following (with the desired value) to your ~/.vimrc:
+
+```vim
+" Write all buffers before navigating from Vim to tmux pane
+let g:tmux_navigator_save_on_switch = 2
+```
+
+##### Disable While Zoomed
+
+By default, if you zoom the tmux pane running Vim and then attempt to navigate
+"past" the edge of the Vim session, tmux will unzoom the pane. This is the
+default tmux behavior, but may be confusing if you've become accustomed to
+navigation "wrapping" around the sides due to this plugin.
+
+We provide an option, `g:tmux_navigator_disable_when_zoomed`, which can be used
+to disable this unzooming behavior, keeping all navigation within Vim until the
+tmux pane is explicitly unzoomed.
+
+To disable navigation when zoomed, add the following to your ~/.vimrc:
+
+```vim
+" Disable tmux navigator when zooming the Vim pane
+let g:tmux_navigator_disable_when_zoomed = 1
+```
 
 #### Tmux
 
@@ -149,7 +196,7 @@ bind -r C-h run "tmux select-pane -L"
 bind -r C-j run "tmux select-pane -D"
 bind -r C-k run "tmux select-pane -U"
 bind -r C-l run "tmux select-pane -R"
-bind -r C-\ run "tmux select-pane -l"
+bind -r C-\\ run "tmux select-pane -l"
 ```
 
 Troubleshooting
@@ -199,6 +246,32 @@ detail.
 
 [tmate]: http://tmate.io/
 
+### It Doesn't Work in Neovim (specifically C-h)
+
+[Neovim][] is a Vim fork. While Neovim is intended to be a drop-in replacement
+for Vim, it does handle some keyboard input differently than Vim does. Some
+users (including those on OS X) may find that all of their pane-switching
+keybindings work with the exception of <kbd>Ctrl</kbd>+<kbd>h</kbd>, which
+instead returns a backspace. The explanation of what is going on vastly exceeds
+the scope of this guide, but you can read the discussion on this Neovim
+[issue][].
+
+The simplest and hackiest solution is to add the following to your Neovim
+`init.vim`, capturing the <kbd>Backspace</kbd> that Neovim receives when
+<kbd>Ctrl</kbd>+<kbd>h</kbd> is typed in normal mode:
+
+```vimL
+nnoremap <silent> <BS> :TmuxNavigateLeft<cr>
+```
+
+A more complete and less-hacky solution would be to update the incorrect
+terminfo entry that is part of the problem on OS X (and some Linux
+distributions) as described in this [comment][].
+
+[Neovim]: https://neovim.io/
+[issue]: https://github.com/neovim/neovim/issues/2048
+[comment]: https://github.com/neovim/neovim/issues/2048#issuecomment-78045837
+
 ### It Still Doesn't Work!!!
 
 The tmux configuration uses an inlined grep pattern match to help determine if
@@ -210,6 +283,7 @@ script][] which has a more robust check.
 [Mislav Marohnić's]: http://mislav.uniqpath.com/
 [Mislav's original external script]: https://github.com/mislav/dotfiles/blob/master/bin/tmux-vim-select-pane
 [Vundle]: https://github.com/gmarik/vundle
+[TPM]: https://github.com/tmux-plugins/tpm
 [configuration section below]: #custom-key-bindings
 [this blog post]: http://www.codeography.com/2013/06/19/navigating-vim-and-tmux-splits
 [this gist]: https://gist.github.com/mislav/5189704

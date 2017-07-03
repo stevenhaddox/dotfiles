@@ -32,7 +32,7 @@ let s:supportedFileTypes = ['js', 'css', 'html', 'jsx', 'json']
 
 "% Helper functions and variables
 let s:plugin_Root_directory = fnamemodify(expand("<sfile>"), ":h")
-let s:paths_Editorconfig = map(['$HOME/.editorconfig', '$HOME/.vim/.editorconfig', s:plugin_Root_directory.'/.editorconfig'], 'expand(v:val)')
+let s:paths_Editorconfig = map(['$HOME/.editorconfig', '$HOME/.vim/.editorconfig', '$HOME/.config/nvim/.editorconfig', s:plugin_Root_directory.'/.editorconfig'], 'expand(v:val)')
 
 " Function for debugging
 " @param {Any} content Any type which will be converted
@@ -216,13 +216,13 @@ endfunction
 " @param {String} type Some of the types js, html or css
 func s:getPathByType(type)
   let type = a:type
-  let rootPtah = s:plugin_Root_directory."/lib/js/lib/"
-  let path = rootPtah."beautify.js"
+  let rootPath = s:plugin_Root_directory."/lib/js/lib/"
+  let path = rootPath."beautify.js"
 
   if type == 'html'
-    let path = rootPtah."beautify-html.js"
+    let path = rootPath."beautify-html.js"
   elseif type == 'css'
-    let path = rootPtah."beautify-css.js"
+    let path = rootPath."beautify-css.js"
   endif
 
   return path
@@ -270,7 +270,7 @@ function! s:getCursorPosition(numberOfNonBlankCharactersFromTheStartOfFile)
         let nonBlankCount = nonBlankCount + 1
       endif
       let charIndex = charIndex + 1
-      if nonBlankCount == a:numberOfNonBlankCharactersFromTheStartOfFile 
+      if nonBlankCount == a:numberOfNonBlankCharactersFromTheStartOfFile
         "Found position!
         return {'line': lineNumber,'column': charIndex}
       end
@@ -296,7 +296,7 @@ endfunction
 
 
 function! s:getCursorAndMarksPositions()
-  let localMarks = map(range(char2nr('a'), char2nr('z'))," \"'\".nr2char(v:val) ") 
+  let localMarks = map(range(char2nr('a'), char2nr('z'))," \"'\".nr2char(v:val) ")
   let marks = ['.'] + localMarks
   let result = {}
   for positionType in marks
@@ -320,7 +320,7 @@ endfunction
 function BeautifierApplyConfig(...)
 
   " Получаем путь который нам передали
-  let l:filepath = get(a:000, 0)
+  let l:filepath = expand(get(a:000, 0))
 
   " Проходимся по дефолтным путям только если
   " оказалось что нам не передали путь
