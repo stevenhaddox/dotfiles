@@ -10,7 +10,6 @@
   eol       = lf
   autocrlf  = input
   excludesfile = ~/.gitignore
-	editor = /usr/bin/vim
 [alias]
   ahead = log origin/master..HEAD --oneline
   serve = !git daemon --base-path=. --export-all --reuseaddr --informative-errors --verbose
@@ -38,3 +37,5 @@
   insteadOf = gl
 [include]
   path = ~/.gitconfig_local
+[diff]
+	tool = vimdiff

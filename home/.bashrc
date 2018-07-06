@@ -92,6 +92,6 @@ if [[ -s ${HOME}/.nvm/nvm.sh ]] ; then
   [ -s "${NVM_DIR}/nvm.sh" ] && . "${NVM_DIR}/nvm.sh"  # This loads nvm
 fi
 
-if [ -f $HOME/.bash_local ]; then
-  source ~/.bash_local
+if [ -f $HOME/.local_rc ]; then
+  source ~/.local_rc
 fi

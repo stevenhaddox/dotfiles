@@ -11,6 +11,12 @@ export ZSH=${HOME}/.oh-my-zsh
 ZSH_THEME="powerlevel9k/powerlevel9k"
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=2
 POWERLEVEL9K_SHORTEN_STRATEGY=truncate_folders
+#Heart segment separator
+#POWERLEVEL9K_LEFT_SEGMENT_SEPARATOR=$'\u2765'
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir nvm pyenv rbenv vcs)
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(aws host os_icon)
+#POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(icons_test)
+#POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(docker_machine kubecontext aws host os_icon)
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -107,8 +113,15 @@ if [[ -d ${HOME}/.pyenv ]] ; then
   eval "$(pyenv init -)"
 fi
 
-if [ -f $HOME/.zsh_local ]; then
-  source ~/.zsh_local
+# NVM
+if [[ -d ${HOME}/.nvm ]]; then
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+fi
+
+if [ -f $HOME/.local_rc ]; then
+  source ~/.local_rc
 fi
 
 if [ -d $HOME/bin/ ]; then

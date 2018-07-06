@@ -1,6 +1,5 @@
-# ==================================================================
-# = When adding aliases, remember to execute: $ . ~/.bash_profile  =
-# ==================================================================
+# PostgreSQL DB URL
+export DATABASE_URL="postgresql://${USER}@localhost"
 
 # scripts
 alias scripts='cd ~/.scripts'
@@ -22,6 +21,7 @@ alias iphone='cd ~/Sites/iPhone'
 alias dotfiles='cd ~/.homesick/repos/dotfiles/home'
 alias rvm_fw='cd ~/Sites/_projects/rvm_fw'
 alias presentations='cd ~/Sites/presentations'
+alias lpit='cd ~/Sites/_politics/lp'
 
 # work aliass
 alias proxy='proxychains4'
@@ -29,9 +29,11 @@ alias proxychains='proxychains4'
 alias sproxy='ssh -N tunnel.slk'
 alias wproxy='ssh -N onyx'
 alias work='cd ~/Sites/work'
-alias excella='cd ~/Sites/work/excella'
+alias excella='cd ~/work/excella'
 alias sshuttle='~/scripts/sshuttle/sshuttle --dns -Nr'
 alias slkd='cd ~/Sites/SLKd'
+alias excella_aws='export AWS_ACCESS_KEY_ID=$EXCELLA_AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$EXCELLA_AWS_SECRET_ACCESS_KEY'
+alias excella_drone_ci_dev='export TF_VAR_aws_region=us-east-2 TF_VAR_ami=ami-9cbf9bf9 && excella_aws'
 
 # Personal aliases
 alias blog='cd ~/Sites/blog.stevenhaddox.com'
@@ -63,6 +65,9 @@ alias marked='open -a Marked'
 alias vi='vim'
 alias size_dir='du -hs'
 alias subdirs="find -depth -type d |sed 'h; :b; $b; N; /^\(.*\)\/.*\n\1$/ { g; bb }; $ {x; b}; P; D' | sort"
+
+# Docker aliases
+alias dockerdie="docker rm $(docker ps -aq)"
 
 # Apache permissions
 alias chmod_public='find public -type f -print0 | xargs -0 chmod 664; find public -type d -print0 | xargs -0 chmod 755'
@@ -153,5 +158,3 @@ function vm_ports {
     echo "Could not find vm"
   fi
 }
-
-# DB Aliases live in ~/.bash_osx and ~/.bash_linux

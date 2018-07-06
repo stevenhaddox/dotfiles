@@ -1,0 +1,2 @@
+#! /usr/bin/env sh
+grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu

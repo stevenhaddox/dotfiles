@@ -164,3 +164,6 @@ let g:airline_theme='bubblegum'
 "let g:airline_theme='base16-default'
 "let g:airline#themes#base16#constant = 1
 set laststatus=2
+
+au BufReadPost Jenkinsfile set syntax=groovy
+au BufReadPost Jenkinsfile set filetype=groovy
