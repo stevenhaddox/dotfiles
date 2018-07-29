@@ -19,3 +19,9 @@ vendor/gems/specifications
 vendor/gems/doc
 vendor/gems/environment.rb
 .config/google-chrome/
+
+# Python
+__pycache__/
+*.py[cod]
+pip-log.txt
+pip-delete-this-directory.txt
