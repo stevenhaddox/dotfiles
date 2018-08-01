@@ -7,7 +7,7 @@ echo "Install all AppStore Apps at first!\n\n
 Remember to make the following preference changes:
 * Map caps lock to escape
 * Remove map for command-space (Spotlight)
-* Restore backup file for iTerm 2 profile (~/dotfiles/themes)
+* Restore backup file for iTerm 2 profile (~/dotfiles/.colors/theme_iterm2)
 * Create desktops and assign apps to those windows"
 
 # no solution to automate AppStore installs
@@ -82,6 +82,8 @@ if [ ! -d ~/.homesick/repos/dotfiles ]; then
   echo Installing homesick gem & dotfiles
   sudo gem install homesick
   homesick clone git@github.com:stevenhaddox/dotfiles.git
+  homesick symlink dotfiles
+  ln -s ~/.homesick/repos/dotfiles/home/os/.bash_osx ~
 fi
 
 # Install OhMyZsh when needed

@@ -7,14 +7,24 @@ export ZSH=${HOME}/.oh-my-zsh
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
-#ZSH_THEME="agnoster"
 ZSH_THEME="powerlevel9k/powerlevel9k"
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=2
 POWERLEVEL9K_SHORTEN_STRATEGY=truncate_folders
-#Heart segment separator
+POWERLEVEL9K_MODE='nerdfont-complete'
+
+# NerdFonts Overrides for PowerLevel9k existing icons
+#POWERLEVEL9K_HOME_SUB_ICON=$'\u'
+#POWERLEVEL9K_RIGHT_SEGMENT_SEPARATOR=$'\u'
+#POWERLEVEL9K_RIGHT_SUBSEGMENT_SEPARATOR=$'\u'
 #POWERLEVEL9K_LEFT_SEGMENT_SEPARATOR=$'\u2765'
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir nvm pyenv rbenv vcs)
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(aws host os_icon)
+#POWERLEVEL9K_LEFT_SUBSEGMENT_SEPARATOR=$'\u'
+# Heart prompt at end of left prompt
+#POWERLEVEL9K_LEFT_SEGMENT_END_SEPARATOR=$'\u2765'
+
+# Prompts for PowerLevel9k
+#POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir nvm pyenv rbenv vcs)
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs aws)
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status history root_indicator command_execution_time background_jobs custom_convox_rack rbenv pyenv host os_icon)
 #POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(icons_test)
 #POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(docker_machine kubecontext aws host os_icon)
 

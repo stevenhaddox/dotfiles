@@ -350,8 +350,10 @@ New Tab with Current Profile</string>
 	<true/>
 	<key>LoadPrefsFromCustomFolder</key>
 	<true/>
+	<key>NSFontPanelAttributes</key>
+	<string>1, 2</string>
 	<key>NSNavLastRootDirectory</key>
-	<string>~/.homesick/repos/dotfiles/home/theme_iterm2</string>
+	<string>~/.homesick/repos/dotfiles/home/.colors/theme_iterm2</string>
 	<key>NSNavPanelExpandedSizeForOpenMode</key>
 	<string>{712, 448}</string>
 	<key>NSQuotedKeystrokeBinding</key>
@@ -385,10 +387,17 @@ New Tab with Current Profile</string>
 	</data>
 	<key>NSTableView Supports v2 KeyBingingTable</key>
 	<true/>
+	<key>NSToolbar Configuration com.apple.NSColorPanel</key>
+	<dict>
+		<key>TB Is Shown</key>
+		<integer>1</integer>
+	</dict>
+	<key>NSWindow Frame NSFontPanel</key>
+	<string>1124 35 553 282 0 0 1680 1027 </string>
 	<key>NSWindow Frame SharedPreferences</key>
-	<string>893 598 770 429 0 0 1680 1027 </string>
+	<string>678 554 796 473 0 0 1680 1027 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>482 0 1193 1027 0 0 1680 1027 </string>
+	<string>0 7 1052 1020 0 0 1680 1027 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
 	<string>260 650 570 377 0 0 1680 1027 </string>
 	<key>New Bookmarks</key>
@@ -586,7 +595,7 @@ New Tab with Current Profile</string>
 			<key>Close Sessions On End</key>
 			<true/>
 			<key>Columns</key>
-			<integer>80</integer>
+			<integer>130</integer>
 			<key>Command</key>
 			<string></string>
 			<key>Cursor Color</key>
@@ -969,7 +978,7 @@ New Tab with Current Profile</string>
 			<key>Right Option Key Sends</key>
 			<integer>0</integer>
 			<key>Rows</key>
-			<integer>25</integer>
+			<integer>62</integer>
 			<key>Screen</key>
 			<integer>-1</integer>
 			<key>Scrollback Lines</key>
@@ -1700,6 +1709,8 @@ New Tab with Current Profile</string>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile_selection</key>
 	<integer>0</integer>
+	<key>NoSyncPermissionToShowTip</key>
+	<false/>
 	<key>NoSyncTimeOfFirstLaunchOfVersionWithTip</key>
 	<real>554661780.40491498</real>
 	<key>OnlyWhenMoreTabs</key>
@@ -1740,7 +1751,7 @@ New Tab with Current Profile</string>
 		</dict>
 	</dict>
 	<key>PrefsCustomFolder</key>
-	<string>/Users/steven/.homesick/repos/dotfiles/home/theme_iterm2</string>
+	<string>/Users/steven/.homesick/repos/dotfiles/home/.colors/theme_iterm2</string>
 	<key>PromptOnQuit</key>
 	<false/>
 	<key>QuitWhenAllWindowsClosed</key>
@@ -1754,7 +1765,7 @@ New Tab with Current Profile</string>
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2018-07-30T20:05:58Z</date>
+	<date>2018-08-01T06:12:47Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
 	<key>ShowBookmarkName</key>
