@@ -45,6 +45,7 @@ brew install docker
 brew install go
 brew install pyenv
 brew install rbenv
+brew install heroku
 
 #brew cask search
 #brew cask uninstall app
