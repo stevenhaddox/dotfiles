@@ -62,6 +62,8 @@ brew cask install --appdir="/Applications" transmit
 brew cask install --appdir="/Applications" vlc
 brew cask install --appdir="/Applications" java
 brew cask install --appdir="/Applications" mailplane
+brew cask install --appdir="/Applications" atom
+brew cask install --appdir="/Applications" macdown
 brew cask install --appdir="/Applications" zoomus
 #brew cask install --appdir="/Applications" little-snitch
 
