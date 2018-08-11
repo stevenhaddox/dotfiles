@@ -53,19 +53,22 @@ brew install heroku
 # Core Functionality
 echo Install Core Apps
 brew cask install --appdir="/Applications" alfred
-brew cask install --appdir="/Applications" caffeine
 brew cask install --appdir="/Applications" bartender
-brew cask install --appdir="/Applications" resilio-sync
-#brew cask install --appdir="/Applications" dropbox
+brew cask install --appdir="/Applications" caffeine
+brew cask install --appdir="/Applications" istat-menus
 brew cask install --appdir="/Applications" iterm2
+brew cask install --appdir="/Applications" macdown
 brew cask install --appdir="/Applications" google-chrome
+brew cask install --appdir="/Applications" mailplane
+brew cask install --appdir="/Applications" proxpn
+brew cask install --appdir="/Applications" resilio-sync
+brew cask install --appdir="/Applications" atom
 brew cask install --appdir="/Applications" transmit
+brew cask install --appdir="/Applications" transmission
 brew cask install --appdir="/Applications" vlc
 brew cask install --appdir="/Applications" java
-brew cask install --appdir="/Applications" mailplane
-brew cask install --appdir="/Applications" atom
-brew cask install --appdir="/Applications" macdown
 brew cask install --appdir="/Applications" zoomus
+#brew cask install --appdir="/Applications" dropbox
 #brew cask install --appdir="/Applications" little-snitch
 
 # Install Inconsolata Nerd Font if needed
