@@ -22,7 +22,6 @@ POWERLEVEL9K_MODE='nerdfont-complete'
 #POWERLEVEL9K_LEFT_SEGMENT_END_SEPARATOR=$'\u2765'
 
 # Prompts for PowerLevel9k
-#POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir nvm pyenv rbenv vcs)
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs aws)
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status history root_indicator command_execution_time background_jobs custom_convox_rack rbenv pyenv host os_icon)
 #POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(icons_test)
@@ -112,6 +111,7 @@ if [ -f ${HOME}/.aliases ]; then
   source ${HOME}/.aliases
 fi
 
+# Heroku
 if [ -d "/usr/local/heroku/bin" ]; then
   export PATH="${PATH}:/usr/local/heroku/bin"
 fi
@@ -140,4 +140,9 @@ fi
 
 if [ -d $HOME/.scripts/ ]; then
   export PATH="${PATH}:/${HOME}/.scripts"
+fi
+
+#OktaAWSCLI
+if [ -f "${HOME}/.okta/bash_functions" ]; then
+  . "${HOME}/.okta/bash_functions"
 fi

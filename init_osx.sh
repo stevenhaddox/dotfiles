@@ -68,7 +68,6 @@ brew cask install --appdir="/Applications" transmission
 brew cask install --appdir="/Applications" vlc
 brew cask install --appdir="/Applications" java
 brew cask install --appdir="/Applications" zoomus
-#brew cask install --appdir="/Applications" dropbox
 #brew cask install --appdir="/Applications" little-snitch
 
 # Install Inconsolata Nerd Font if needed
@@ -95,7 +94,6 @@ fi
 # Install OhMyZsh when needed
 if [ ! -f ~/.zshrc ]; then
   echo Installing OhMyZsh
-
   git clone https://github.com/bhilburn/powerlevel9k.git ~/.oh-my-zsh/custom/themes/powerlevel9k
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
   rm -rf ~/.zshrc
@@ -107,6 +105,30 @@ rbenv-init
 # Verify rbenv installation
 echo "Verifying rbenv installation"
 curl -fsSL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-doctor | bash
+
+# Install rb CLI shell tool
+if [ ! -f /usr/local/bin/rb ]; then
+  echo Installing rb CLI shell tool
+  sudo curl https://raw.githubusercontent.com/thisredone/rb/master/rb -o /usr/local/bin/rb && sudo chmod +x /usr/local/bin/rb
+fi
+
+# Install AWS CLI
+if [ ! -f /usr/local/bin/aws ]; then
+  echo Installing Python 2.7.15 and AWS CLI
+  pyenv install 2.7.15
+  pyenv global 2.7.15
+  pyenv rehash
+  pip install --upgrade pip
+  pip install awscli --upgrade
+fi
+
+# Install Okta AWS profile switcher (requires Java)
+if [ ! -f ~/.okta/okta-aws-cli-1.0.2.jar ]; then
+  echo Installing okta AWS CLI role tool
+  mkdir -p ~/sync/.okta
+  ln -s ~/sync/.okta ~/.okta
+  curl 'https://raw.githubusercontent.com/oktadeveloper/okta-aws-cli-assume-role/master/bin/install.sh' | bash
+fi
 
 echo "\n\n"
 echo fCB8IHwgfCAgICAgICAgICAgICAgICAgICAgICAgICB8IHwgfCB8ICAgICAgICAgIHwgfCAgKF8pICAgICAgICAgICB8IHwNCnwgfF98IHwgX18gXyBfIF9fICBfIF9fICBfICAgXyAgfCB8X3wgfCBfXyBfICBfX198IHwgX19fIF8gX18gICBfXyBffCB8DQp8ICBfICB8LyBfYCB8ICdfIFx8ICdfIFx8IHwgfCB8IHwgIF8gIHwvIF9gIHwvIF9ffCB8LyAvIHwgJ18gXCAvIF9gIHwgfA0KfCB8IHwgfCAoX3wgfCB8XykgfCB8XykgfCB8X3wgfCB8IHwgfCB8IChffCB8IChfX3wgICA8fCB8IHwgfCB8IChffCB8X3wNClxffCB8Xy9cX18sX3wgLl9fL3wgLl9fLyBcX18sIHwgXF98IHxfL1xfXyxffFxfX198X3xcX1xffF98IHxffFxfXywgKF8pDQogICAgICAgICAgICB8IHwgICB8IHwgICAgIF9fLyB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgX18vIHwgIA0KICAgICAgICAgICAgfF98ICAgfF98ICAgIHxfX18vICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfF9fXy8gICANCg== | base64 --decode
