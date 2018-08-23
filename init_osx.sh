@@ -60,6 +60,7 @@ brew cask install --appdir="/Applications" iterm2
 brew cask install --appdir="/Applications" macdown
 brew cask install --appdir="/Applications" google-chrome
 brew cask install --appdir="/Applications" mailplane
+brew cask install --appdir="/Applications" astro
 brew cask install --appdir="/Applications" proxpn
 brew cask install --appdir="/Applications" resilio-sync
 brew cask install --appdir="/Applications" atom
@@ -67,6 +68,8 @@ brew cask install --appdir="/Applications" transmit
 brew cask install --appdir="/Applications" transmission
 brew cask install --appdir="/Applications" vlc
 brew cask install --appdir="/Applications" java
+brew cask install --appdir="/Applications" signal
+brew cask install --appdir="/Applications" keybase
 brew cask install --appdir="/Applications" zoomus
 #brew cask install --appdir="/Applications" little-snitch
 
@@ -112,18 +115,22 @@ if [ ! -f /usr/local/bin/rb ]; then
   sudo curl https://raw.githubusercontent.com/thisredone/rb/master/rb -o /usr/local/bin/rb && sudo chmod +x /usr/local/bin/rb
 fi
 
-# Install AWS CLI
-if [ ! -f /usr/local/bin/aws ]; then
-  echo Installing Python 2.7.15 and AWS CLI
+if [ ! -d ${HOME}/.pyenv/versions/2.7.15 ]; then
+  echo Installing Python 2.7.15 via pyenv
   pyenv install 2.7.15
   pyenv global 2.7.15
   pyenv rehash
   pip install --upgrade pip
+fi
+
+# Install AWS CLI
+if [ ! -f ${HOME}/.pyenv/shims/aws ]; then
+  echo "Installing AWS CLI"
   pip install awscli --upgrade
 fi
 
 # Install Okta AWS profile switcher (requires Java)
-if [ ! -f ~/.okta/okta-aws-cli-1.0.2.jar ]; then
+if [ ! -f ~/.okta/okta-aws-cli.jar ]; then
   echo Installing okta AWS CLI role tool
   mkdir -p ~/sync/.okta
   ln -s ~/sync/.okta ~/.okta
