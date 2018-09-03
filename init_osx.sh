@@ -20,7 +20,6 @@ Remember to make the following preference changes:
 # iNet
 # Moom
 # Line
-# DaisyDisk
 # Desktop Curtain
 # Pixelmator
 # Key Codes
@@ -71,6 +70,7 @@ brew cask install --appdir="/Applications" java
 brew cask install --appdir="/Applications" signal
 brew cask install --appdir="/Applications" keybase
 brew cask install --appdir="/Applications" zoomus
+brew cask install --appdir="/Applications" daisydisk
 #brew cask install --appdir="/Applications" little-snitch
 
 # Install Inconsolata Nerd Font if needed
@@ -136,6 +136,14 @@ if [ ! -f ~/.okta/okta-aws-cli.jar ]; then
   ln -s ~/sync/.okta ~/.okta
   curl 'https://raw.githubusercontent.com/oktadeveloper/okta-aws-cli-assume-role/master/bin/install.sh' | bash
 fi
+
+# Extras
+echo "--------------------------------------"
+echo "Installng extra applications & misc..."
+echo "--------------------------------------"
+
+# Install Convox
+brew install convox
 
 echo "\n\n"
 echo fCB8IHwgfCAgICAgICAgICAgICAgICAgICAgICAgICB8IHwgfCB8ICAgICAgICAgIHwgfCAgKF8pICAgICAgICAgICB8IHwNCnwgfF98IHwgX18gXyBfIF9fICBfIF9fICBfICAgXyAgfCB8X3wgfCBfXyBfICBfX198IHwgX19fIF8gX18gICBfXyBffCB8DQp8ICBfICB8LyBfYCB8ICdfIFx8ICdfIFx8IHwgfCB8IHwgIF8gIHwvIF9gIHwvIF9ffCB8LyAvIHwgJ18gXCAvIF9gIHwgfA0KfCB8IHwgfCAoX3wgfCB8XykgfCB8XykgfCB8X3wgfCB8IHwgfCB8IChffCB8IChfX3wgICA8fCB8IHwgfCB8IChffCB8X3wNClxffCB8Xy9cX18sX3wgLl9fL3wgLl9fLyBcX18sIHwgXF98IHxfL1xfXyxffFxfX198X3xcX1xffF98IHxffFxfXywgKF8pDQogICAgICAgICAgICB8IHwgICB8IHwgICAgIF9fLyB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgX18vIHwgIA0KICAgICAgICAgICAgfF98ICAgfF98ICAgIHxfX18vICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfF9fXy8gICANCg== | base64 --decode
