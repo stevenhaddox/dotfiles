@@ -45,6 +45,7 @@ brew install go
 brew install pyenv
 brew install rbenv
 brew install heroku
+brew install teleport
 
 #brew cask search
 #brew cask uninstall app
