@@ -40,7 +40,6 @@ echo Install Homebrew, cask, wget, git
 brew install wget
 brew install git
 brew install tmux
-brew install docker
 brew install go
 brew install pyenv
 brew install rbenv
@@ -67,6 +66,7 @@ brew cask install --appdir="/Applications" transmit
 brew cask install --appdir="/Applications" transmission
 brew cask install --appdir="/Applications" vlc
 brew cask install --appdir="/Applications" java
+brew cask install --appdir="/Applications" docker
 brew cask install --appdir="/Applications" signal
 brew cask install --appdir="/Applications" keybase
 brew cask install --appdir="/Applications" zoomus
