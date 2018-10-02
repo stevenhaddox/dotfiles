@@ -71,6 +71,9 @@ brew cask install --appdir="/Applications" signal
 brew cask install --appdir="/Applications" keybase
 brew cask install --appdir="/Applications" zoomus
 brew cask install --appdir="/Applications" daisydisk
+brew cask install --appdir="/Applications" virtualbox
+brew cask install --appdir="/Applications" vagrant
+brew cask install --appdir="/Applications" vagrant-manager
 #brew cask install --appdir="/Applications" little-snitch
 
 # Install Inconsolata Nerd Font if needed
