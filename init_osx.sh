@@ -35,16 +35,41 @@ echo  '\n'
 mkdir ~/tmp
 cd ~/tmp
 
+# echo "Install OS X 10.14 (Mojave) SDK headers"
+# TODO: This step is needed for Python 2.7.15 and 3.x to install via asdf
+# sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
+
 echo Install Homebrew, cask, wget, git
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew install wget
+brew install gpg
 brew install git
+brew install jq
 brew install tmux
-brew install go
-brew install pyenv
-brew install rbenv
 brew install heroku
 brew install teleport
+
+echo Installing asdf-vm and dependencies
+
+# asdf suggested brew dependencies
+brew install coreutils automake autoconf openssl libyaml readline libxslt libtool unixodbc
+# ruby-build suggested brew dependencies
+brew install libffi
+# required for building Ruby <= 1.9.3-p0:
+#brew tap homebrew/dupes && brew install apple-gcc42
+brew install asdf
+
+# asdf plugins
+asdf plugin-add ruby https://github.com/asdf-vm/asdf-ruby.git
+asdf plugin-add python https://github.com/tuvistavie/asdf-python.git
+asdf plugin-add elixir https://github.com/asdf-vm/asdf-elixir.git
+asdf plugin-add erlang https://github.com/asdf-vm/asdf-erlang.git
+asdf plugin-add golang https://github.com/kennyp/asdf-golang.git
+asdf plugin-add rust https://github.com/code-lever/asdf-rust.git
+# asdf node.js plugin
+asdf plugin-add nodejs https://github.com/asdf-vm/asdf-nodejs.git
+export GNUPGHOME="bash /usr/local/opt/asdf/keyrings/nodejs" && mkdir -p "$GNUPGHOME" && chmod 0700 "$GNUPGHOME"
+source /usr/local/opt/asdf/plugins/nodejs/bin/import-release-team-keyring
 
 #brew cask search
 #brew cask uninstall app
@@ -53,7 +78,6 @@ brew install teleport
 echo Install Core Apps
 brew cask install --appdir="/Applications" alfred
 brew cask install --appdir="/Applications" bartender
-brew cask install --appdir="/Applications" caffeine
 brew cask install --appdir="/Applications" istat-menus
 brew cask install --appdir="/Applications" iterm2
 brew cask install --appdir="/Applications" macdown
@@ -61,6 +85,8 @@ brew cask install --appdir="/Applications" google-chrome
 brew cask install --appdir="/Applications" mailplane
 brew cask install --appdir="/Applications" proxpn
 brew cask install --appdir="/Applications" resilio-sync
+brew cask install --appdir="/Applications" kaleidoscope
+brew cask install --appdir="/Applications" gitkraken
 brew cask install --appdir="/Applications" atom
 brew cask install --appdir="/Applications" transmit
 brew cask install --appdir="/Applications" transmission
@@ -116,6 +142,8 @@ curl -fsSL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-doctor 
 if [ ! -f /usr/local/bin/rb ]; then
   echo Installing rb CLI shell tool
   sudo curl https://raw.githubusercontent.com/thisredone/rb/master/rb -o /usr/local/bin/rb && sudo chmod +x /usr/local/bin/rb
+  # Unalias rb to fix "ruby: aliased to ruby"
+  unalias rb
 fi
 
 if [ ! -d ${HOME}/.pyenv/versions/2.7.15 ]; then

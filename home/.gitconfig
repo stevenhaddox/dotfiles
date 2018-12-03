@@ -1,6 +1,6 @@
 [user]
   name = Steven Haddox
-  email = steven@haddox.us
+  email = steven.haddox@gmail.com
 [github]
   user = stevenhaddox
 [color]
@@ -37,5 +37,20 @@
   insteadOf = gl
 [include]
   path = ~/.gitconfig_local
+[difftool "Kaleidoscope"]
+  cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
 [diff]
-	tool = vimdiff
+  tool = Kaleidoscope
+[difftool]
+  prompt = false
+[mergetool "Kaleidoscope"]
+  cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" \"$REMOTE\"
+  trustExitCode = true
+[merge]
+  tool = Kaleidoscope
+[mergetool]
+  prompt = false
+  keepBackup = false
+[pager]
+  diff = false
+  tag = false

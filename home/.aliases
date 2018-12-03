@@ -35,6 +35,7 @@ alias lovebit='cd ~/Sites/lovebit.me'
 alias excella_aws='export AWS_ACCESS_KEY_ID=$EXCELLA_AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$EXCELLA_AWS_SECRET_ACCESS_KEY'
 alias excella_drone_ci_dev='export TF_VAR_aws_region=us-east-2 TF_VAR_ami=ami-9cbf9bf9 && excella_aws'
 alias boxen='cd ~/Sites/work/decisiv/boxes'
+alias depends='cd ~/Sites/work/decisiv/depends'
 
 # Personal aliases
 alias blog='cd ~/Sites/blog.stevenhaddox.com'
