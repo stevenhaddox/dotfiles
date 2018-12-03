@@ -160,6 +160,11 @@ if [ -f ${HOME}/.aliases_local ]; then
   source ${HOME}/.aliases_local
 fi
 
+# asdf-vm
+if [ -f /usr/local/opt/asdf/asdf.sh ]; then
+  source /usr/local/opt/asdf/asdf.sh
+fi
+
 # Heroku
 if [ -d "/usr/local/heroku/bin" ]; then
   export PATH="${PATH}:/usr/local/heroku/bin"
