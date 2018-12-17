@@ -84,6 +84,7 @@ brew cask install --appdir="/Applications" macdown
 brew cask install --appdir="/Applications" google-chrome
 brew cask install --appdir="/Applications" mailplane
 brew cask install --appdir="/Applications" proxpn
+brew cask install --appdir="/Applications" viscosity
 brew cask install --appdir="/Applications" resilio-sync
 brew cask install --appdir="/Applications" kaleidoscope
 brew cask install --appdir="/Applications" gitkraken

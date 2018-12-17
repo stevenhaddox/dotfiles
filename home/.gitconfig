@@ -10,6 +10,7 @@
   eol       = lf
   autocrlf  = input
   excludesfile = ~/.gitignore
+	pager = less -FRSX
 [alias]
   ahead = log origin/master..HEAD --oneline
   serve = !git daemon --base-path=. --export-all --reuseaddr --informative-errors --verbose

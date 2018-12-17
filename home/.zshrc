@@ -161,8 +161,9 @@ if [ -f ${HOME}/.aliases_local ]; then
 fi
 
 # asdf-vm
-if [ -f /usr/local/opt/asdf/asdf.sh ]; then
-  source /usr/local/opt/asdf/asdf.sh
+if [ -f $(brew --prefix asdf)/asdf.sh ]; then
+  source $(brew --prefix asdf)/asdf.sh
+  source /usr/local/etc/bash_completion.d
 fi
 
 # Heroku
