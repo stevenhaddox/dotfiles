@@ -1,5 +1,10 @@
 /* Theme styles:
 
+--primary: #FFF;
+--text: #CCC;
+--background: #225;
+--background-elevated: #114;
+
 // Default for caiseA's theme
 --primary: #61AFEF;
 --text: white;
@@ -17,13 +22,13 @@
 --background: #282C34;
 --background-elevated: #3B4048;
 
-Low Contrast:
+// Low Contrast:
 --primary: #CCC;
 --text: #999;
 --background: #222;
 --background-elevated: #444;
 
-Navy:
+// Navy:
 --primary: #FFF;
 --text: #CCC;
 --background: #225;
@@ -33,7 +38,7 @@ Navy:
 :root {
 /* Modify these to change your theme colors: */
 --primary: #61AFEF;
---text: #ABB2BF;
+--text: white;
 }
 body {
     font-family: 'Lato', sans-serif !important;
