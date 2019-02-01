@@ -1,7 +1,9 @@
 :root {
 /* Modify these to change your theme colors: */
---primary: #61AFEF;
---text: white;
+--primary: #09F;
+--text: #CCC;
+--background: #080808;
+--background-elevated: #222;
 }
 
 /* Full options from widget-'s original slack black theme src:
@@ -9,9 +11,14 @@
 --text: #CCC;
 --background: #080808;
 --background-elevated: #222;
-*/
 
-/* widget-'s variants:
+
+// Default for caiseA's theme
+--primary: #61AFEF;
+--text: white;
+
+
+// widget-'s variants:
 
 Default:
 --primary: #09F;
