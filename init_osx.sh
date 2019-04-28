@@ -115,6 +115,9 @@ if [ ! -f /Library/Fonts/Inconsolata\ Nerd\ Font\ Complete.otf ]; then
   cd ~/tmp
 fi
 
+# Install SFMono fonts globally:
+cp -v /Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SFMono-* ~/Library/Fonts
+
 # Clone dotfiles when needed
 if [ ! -d ~/.homesick/repos/dotfiles ]; then
   echo Installing homesick gem & dotfiles
