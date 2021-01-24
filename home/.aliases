@@ -53,7 +53,9 @@ alias size_dir='du -hs'
 alias subdirs="find -depth -type d |sed 'h; :b; $b; N; /^\(.*\)\/.*\n\1$/ { g; bb }; $ {x; b}; P; D' | sort"
 
 # Docker aliases
-alias dockerdie="docker rm $(docker ps -aq)"
+if type "docker" &> /dev/null; then
+  alias dockerdie="docker rm $(docker ps -aq)"
+fi
 
 # Apache permissions
 alias chmod_public='find public -type f -print0 | xargs -0 chmod 664; find public -type d -print0 | xargs -0 chmod 755'

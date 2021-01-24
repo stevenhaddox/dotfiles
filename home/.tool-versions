@@ -1,6 +1,1 @@
-# Enable support for .ruby-version, etc.
-legacy_version_file = yes
-
-ruby 2.5.3
-python 2.7.15
-elixir 1.7.4
+/Users/steven/.homesick/repos/dotfiles/home/.tool-versions

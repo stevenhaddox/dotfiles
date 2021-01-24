@@ -164,6 +164,10 @@ fi
 if [ -f $(brew --prefix asdf)/asdf.sh ]; then
   source $(brew --prefix asdf)/asdf.sh
   source /usr/local/etc/bash_completion.d
+  # Hook direnv into your shell (https://github.com/asdf-community/asdf-direnv)
+  eval "$(direnv hook zsh)"
+  # Add direnv shortcut function
+  direnv() { asdf exec direnv "$@"; }
 fi
 
 # Heroku
@@ -189,4 +193,12 @@ if [ -f "${HOME}/.okta/bash_functions" ]; then
 fi
 
 # Remove ruby alias
-unalias rb
+if type "rb" &> /dev/null; then
+  unalias rb
+fi
+
+# Set homebrew OpenJDK as first Java in PATH:
+if [ -d "/usr/local/opt/openjdk/bin" ]; then
+  export PATH="/usr/local/opt/openjdk/bin:$PATH"
+  export JAVA_HOME=$(/usr/libexec/java_home)
+fi

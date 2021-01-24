@@ -20,6 +20,9 @@ vendor/gems/doc
 vendor/gems/environment.rb
 .config/google-chrome/
 
+# Direnv
+.envrc
+
 # Python
 __pycache__/
 *.py[cod]
