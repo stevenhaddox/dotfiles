@@ -3,7 +3,7 @@
 source 'https://rubygems.org'
 
 group :test do
-  gem 'rake', '~> 11.2.0'
+  gem 'rake', '~> 12.3.3'
   gem 'guard', '~> 2.14.0'
   gem 'guard-rspec', '~> 4.7.0'
   gem 'vimrunner', '~> 0.3.0'
