@@ -5,7 +5,7 @@ echo "\n\n"
 
 # Add symlink for .init_osx.sh when needed
 if [ ! -f ~/.init_osx.sh]; then
-  ln -s ~/.homesick/repos/dotfiles/init_osx.sh ~
+  ln -s ~/.homesick/repos/dotfiles/init_osx.sh ~/.init_osx.sh
 fi
 
 echo "#TODO: Remember to make the following preference changes:\n\n
@@ -132,12 +132,12 @@ if [ ! -d ~/.homesick/repos/dotfiles ]; then
   sudo gem install homesick
   homesick clone git@github.com:stevenhaddox/dotfiles.git
   homesick symlink dotfiles
-  ln -s ~/.homesick/repos/dotfiles/home/os/.bash_osx ~
+  ln -s ~/.homesick/repos/dotfiles/home/os/.bash_osx ~/.bash_osx
 fi
 
 # Add symlink for direnv when needed
 if [ ! -f ~/.direnvrc ]; then
-  ln -s ~/.homesick/repos/dotfiles/home/.direnvrc ~
+  ln -s ~/.homesick/repos/dotfiles/home/.direnvrc ~/.direnvrc
 fi
 
 # Add symlink for asdf global .tool-versions when needed
